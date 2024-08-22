@@ -1,0 +1,45 @@
+[custom.all.cyby-draw]
+type    = "local"
+path    = "."
+ipkg    = "cyby-draw.ipkg"
+
+[custom.all.cyby-draw-app]
+type    = "local"
+path    = "app"
+ipkg    = "cyby-draw-app.ipkg"
+
+[custom.all.chem]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-chem"
+commit = "latest:main"
+ipkg   = "chem.ipkg"
+
+[custom.all.chem-generators]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-chem"
+commit = "latest:main"
+ipkg   = "chem-generators/chem-generators.ipkg"
+
+[custom.all.ref1]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-ref1"
+commit = "latest:main"
+ipkg   = "ref1.ipkg"
+
+[custom.all.array]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-array"
+commit = "latest:main"
+ipkg   = "array.ipkg"
+
+[custom.all.bytestring]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-bytestring"
+commit = "latest:main"
+ipkg   = "bytestring.ipkg"
+
+[custom.all.indexed-graph]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-indexed-graph"
+commit = "latest:main"
+ipkg   = "indexed-graph.ipkg"

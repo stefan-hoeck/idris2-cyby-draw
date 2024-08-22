@@ -1,0 +1,33 @@
+package cyby-draw
+
+authors = "claudio-etterli, stefan-hoeck"
+version = 0.1.0
+sourcedir = "src"
+depends = base        >= 0.6.0
+        , chem
+        , dom
+        , dom-mvc
+        , containers
+        , svg
+
+modules = CyBy.Draw
+
+        , CyBy.Draw.Internal.Abbreviations
+        , CyBy.Draw.Internal.Atom
+        , CyBy.Draw.Internal.CoreDims
+        , CyBy.Draw.Internal.DoubleBond
+        , CyBy.Draw.Internal.Color
+        , CyBy.Draw.Internal.Graph
+        , CyBy.Draw.Internal.Label
+        , CyBy.Draw.Internal.Ring
+        , CyBy.Draw.Internal.Role
+        , CyBy.Draw.Internal.Settings
+        , CyBy.Draw.Internal.Wedge
+
+        , CyBy.Draw.Draw
+        , CyBy.Draw.Event
+        , CyBy.Draw.MoleculeCanvas
+        , CyBy.Draw.PeriodicTableCanvas
+        , CyBy.Draw.Residue
+
+        , Text.Measure

@@ -1,0 +1,339 @@
+/* Page */
+html {
+  height : 100%;
+  font-size : 10px;
+}
+
+body {
+  background-color : darkgrey;
+  color : black;
+  display : flex;
+  flex-direction : column;
+  font-family : "sans-serif";
+  height : 100%;
+  margin : 0px;
+}
+
+.cyby_draw_main_content {
+  display : grid;
+  grid-template-columns : max-content max-content;
+  column-gap : 10px;
+  background-color : darkgrey;
+  padding : 20px;
+}
+
+/* Buttons and Icons */
+
+.cyby_draw_btn {
+  text-align : center;
+  background-color : rgb(238,238,238);
+  border-radius : 2px
+}
+
+.cyby_draw_icon {
+  width : 20px;
+  height : 20px;
+  border : none;
+  background-size : 100%;
+  background-color : transparent;
+}
+
+.cyby_draw_icon:hover {
+  border-radius : 3px;
+  background-color : rgb(158,158,158);
+}
+
+.cyby_draw_icon:disabled {
+  opacity : 0.5;
+}
+
+.cyby_draw_icon:disabled:hover {
+  opacity : 0.5;
+  background-color : transparent;
+}
+
+.cyby_draw_radio_icon {
+  appearance : none;
+  width : 20px;
+  height : 20px;
+  border : none;
+  background-size : 100%;
+  margin : 0px;
+  border-radius : 3px;
+  border        : 1px solid darkgrey;
+}
+
+.cyby_draw_radio_icon:checked {
+  border        : 1px solid black;
+  background-color : rgb(189,189,189);
+}
+
+.cyby_draw_radio_icon:hover {
+  background-color : rgb(158,158,158);
+}
+
+
+/* Sketcher with Canvas and Buttons */
+.cyby_draw_sketcher_div {
+  background-color : rgb(238,238,238);
+  grid-column      : 1;
+  grid-row         : 1;
+  display          : grid;
+  padding          : 3px;
+  row-gap : 3px;
+  column-gap : 3px;
+  grid-template-columns : min-content 1fr min-content;
+  grid-template-rows : max-content 1fr max-content;
+  grid-template-areas : "top top dot"
+                        "left draw right"
+                        "left bot right";
+}
+
+.cyby_draw_toolbar_top {
+  display : grid;
+  grid-template-columns : repeat(15,min-content);
+  column-gap : 3px;
+  grid-area : top;
+}
+
+.cyby_draw_toolbar_left {
+  display : grid;
+  grid-template-rows : repeat(9,min-content);
+  row-gap : 3px;
+  grid-area : left;
+}
+
+.cyby_draw_toolbar_right {
+  display : grid;
+  grid-template-rows : repeat(3,max-content);
+  row-gap : 6px;
+  grid-area : right;
+}
+
+.cyby_draw_toolbar_bottom_outer {
+  display : grid;
+  grid-template-columns : repeat(2,min-content);
+  column-gap : 3px;
+  align-items : center;
+  grid-area : bot;
+}
+
+.cyby_draw_toolbar_bottom_inner {
+  display : grid;
+  grid-template-columns : repeat(7,min-content);
+  column-gap : 3px;
+}
+
+.cyby_draw_btn.reset {
+  justify-self : start;
+}
+
+.cyby_draw_info_label {
+  font-weight : bold
+}
+
+.cyby_draw_radio_icon.sel {
+  background-image : url('icons/icon_select.svg');
+}
+
+.cyby_draw_radio_icon.erase {
+  background-image : url('icons/icon_eraser.svg');
+}
+
+.cyby_draw_icon.clear {
+  background-image : url('icons/icon_trash.svg');
+}
+
+.cyby_draw_icon.undo {
+  background-image : url('icons/icon_undo.svg');
+}
+
+.cyby_draw_icon.redo {
+  background-image : url('icons/icon_redo.svg');
+}
+
+.cyby_draw_icon.zoomIn {
+  background-image : url('icons/icon_zoomIn.svg');
+}
+
+.cyby_draw_icon.center {
+  background-image : url('icons/icon_centering.svg');
+}
+
+.cyby_draw_icon.zoomOut {
+  background-image : url('icons/icon_zoomOut.svg');
+}
+
+.cyby_draw_radio_icon.benzene {
+  background-image : url('icons/icon_benzene.svg');
+}
+
+.cyby_draw_radio_icon.cyclopropane {
+  background-image : url('icons/icon_cyclopropane.svg');
+}
+
+.cyby_draw_radio_icon.cyclobutane {
+  background-image : url('icons/icon_cyclobutane.svg');
+}
+
+.cyby_draw_radio_icon.cyclopentane {
+  background-image : url('icons/icon_cyclopentane.svg');
+}
+
+.cyby_draw_radio_icon.cyclohexane {
+  background-image : url('icons/icon_cyclohexane.svg');
+}
+
+.cyby_draw_radio_icon.cycloheptane {
+  background-image : url('icons/icon_cycloheptane.svg');
+}
+
+.cyby_draw_radio_icon.cyclooctane {
+  background-image : url('icons/icon_cyclooctane.svg');
+}
+
+.cyby_draw_radio_icon.snglB {
+  background-image : url('icons/icon_snglB.svg');
+}
+
+.cyby_draw_radio_icon.snglBUp {
+  background-image : url('icons/icon_snglBUp.svg');
+}
+
+.cyby_draw_radio_icon.snglBDown {
+  background-image : url('icons/icon_snglBDown.svg');
+}
+
+.cyby_draw_radio_icon.snglBUpDown {
+  background-image : url('icons/icon_snglBUpDown.svg');
+}
+
+.cyby_draw_radio_icon.dblB {
+  background-image : url('icons/icon_dblB.svg');
+}
+
+.cyby_draw_radio_icon.trplB {
+  background-image : url('icons/icon_trplB.svg');
+}
+
+.cyby_draw_radio_icon.setC {
+  background-image : url('icons/icon_c.svg');
+}
+
+.cyby_draw_radio_icon.setN {
+  background-image : url('icons/icon_n.svg');
+}
+
+.cyby_draw_radio_icon.setO {
+  background-image : url('icons/icon_o.svg');
+}
+
+.cyby_draw_radio_icon.setS {
+  background-image : url('icons/icon_s.svg');
+}
+
+.cyby_draw_radio_icon.setF {
+  background-image : url('icons/icon_f.svg');
+}
+
+.cyby_draw_radio_icon.setP {
+  background-image : url('icons/icon_p.svg');
+}
+
+.cyby_draw_radio_icon.setB {
+  background-image : url('icons/icon_b.svg');
+}
+
+.cyby_draw_radio_icon.setCl {
+  background-image : url('icons/icon_cl.svg');
+}
+
+.cyby_draw_radio_icon.setBr {
+  background-image : url('icons/icon_br.svg');
+}
+
+.cyby_draw_radio_icon.pse {
+  background-image : url('icons/icon_pse.svg');
+}
+
+.cyby_draw_icon.toggleMol {
+  background-image : url('icons/icon_folder.svg');
+}
+
+.cyby_draw_molecule_canvas {
+  background-color : white;
+  border           : 1px solid white;
+  border-radius    : 3px;
+  grid-area        : draw;
+  justify-self     : center;
+  overflow         : hidden;
+  resize           : both;
+}
+
+.cyby_draw_molecule_canvas:focus {
+  border        : 1px solid black;
+}
+
+.cyby_draw_molecule_canvas.rotating {
+  cursor        : url('icons/icon_rotation.svg'), auto;
+}
+
+.cyby_draw_molecule_canvas.dragging {
+  cursor        : move;
+}
+
+
+/* Debug Information of the drawn molecule */
+.cyby_draw_info_list {
+  display : grid;
+  grid-template-columns : 150px max-content;
+  grid-auto-rows : max-content;
+  row-gap : 10px
+}
+
+.cyby_draw_formula_count {
+  font-variant-position: sub
+}
+
+.cyby_draw_neighbours {
+  display : grid;
+  grid-template-columns : max-content max-content;
+  column-gap : 3px
+}
+
+.cyby_draw_neighbour_index {
+  text-align : right;
+}
+
+.cyby_draw_neighbour_type {
+}
+
+
+.cyby_draw_detail {
+  display : grid;
+  grid-template-rows : max-content max-content;
+  row-gap : 2px;
+}
+
+.cyby_draw_label {
+  font-size : 1.1rem;
+}
+
+.cyby_draw_select {
+  font-size : 1.1rem;
+  height : 20px;
+  padding-top : 0px;
+  padding-bottom : 0px;
+}
+
+.cyby_draw_select.active {
+  border-radius : 3px;
+  border        : 1px solid black;
+  background-color : rgb(189,189,189);
+}
+
+
+/* Util */
+.hidden {
+  display : none;
+}
