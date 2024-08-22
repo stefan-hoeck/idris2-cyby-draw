@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 20 20" version="1.1">
+<g id="surface1">
+<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 5 1.25 L 1.25 1.25 L 1.25 5 L 2.5 5 L 2.5 2.5 L 5 2.5 Z M 5 1.25 "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 15 1.25 L 18.75 1.25 L 18.75 5 L 17.5 5 L 17.5 2.5 L 15 2.5 Z M 15 1.25 "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 5 18.75 L 1.25 18.75 L 1.25 15 L 2.5 15 L 2.5 17.5 L 5 17.5 Z M 5 18.75 "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 15 18.75 L 18.75 18.75 L 18.75 15 L 17.5 15 L 17.5 17.5 L 15 17.5 Z M 15 18.75 "/>
+<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 15 15 L 5 15 C 4.308594 15 3.75 14.441406 3.75 13.75 L 3.75 6.25 C 3.75 5.558594 4.308594 5 5 5 L 15 5 C 15.691406 5 16.25 5.558594 16.25 6.25 L 16.25 13.75 C 16.25 14.441406 15.691406 15 15 15 Z M 5 6.25 L 5 13.75 L 15 13.75 L 15 6.25 Z M 5 6.25 "/>
+</g>
+</svg>

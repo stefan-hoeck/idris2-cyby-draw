@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="20px"
+   height="20px"
+   viewBox="0 0 20 20"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="icon_c.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="42.3"
+     inkscape:cx="9.9881797"
+     inkscape:cy="10"
+     inkscape:window-width="1920"
+     inkscape:window-height="1052"
+     inkscape:window-x="0"
+     inkscape:window-y="28"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       dotted="false"
+       gridanglex="30"
+       gridanglez="30"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <path
+     d="m 10.376087,4.5824431 q -2.2279586,0 -3.4657135,1.4376999 -1.2377548,1.4281786 -1.2377548,3.9227307 0,2.4659883 1.2853608,3.9703363 1.294882,1.494827 3.4942775,1.494827 2.818272,0 4.23693,-2.789709 l 1.485305,0.742653 q -0.828343,1.732857 -2.332691,2.63737 -1.494827,0.904513 -3.475235,0.904513 -2.0280138,0 -3.5133196,-0.837864 Q 5.3774618,15.217614 4.5967241,13.656138 3.8255076,12.085142 3.8255076,9.9428737 q 0,-3.2086414 1.7328568,-5.0271889 1.7328568,-1.8185475 4.7986806,-1.8185475 2.142268,0 3.579967,0.8378649 1.4377,0.8378648 2.113705,2.4850308 L 14.327381,6.9913045 Q 13.860843,5.820198 12.823033,5.2013206 11.794745,4.5824431 10.376087,4.5824431 Z"
+     id="text1"
+     style="font-size:19.4994px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';font-variant-position:sub;stroke-width:2.74209"
+     aria-label="C" />
+</svg>

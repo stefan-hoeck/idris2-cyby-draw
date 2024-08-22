@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="20px"
+   height="20px"
+   viewBox="0 0 20 20"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="icon_cyclohexane.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="42.3"
+     inkscape:cx="9.9881797"
+     inkscape:cy="9.9763593"
+     inkscape:window-width="1920"
+     inkscape:window-height="1052"
+     inkscape:window-x="0"
+     inkscape:window-y="28"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1" />
+  <path
+     sodipodi:type="star"
+     style="fill:none;stroke:#000000;stroke-width:0.46488717;stroke-dasharray:none;stroke-opacity:1"
+     id="path2"
+     inkscape:flatsided="true"
+     sodipodi:sides="6"
+     sodipodi:cx="0.75390601"
+     sodipodi:cy="0.9375"
+     sodipodi:r1="8.3700056"
+     sodipodi:r2="7.2486372"
+     sodipodi:arg1="1.5707963"
+     sodipodi:arg2="2.0943951"
+     inkscape:rounded="0"
+     inkscape:randomized="0"
+     d="M 0.75390624,9.3075056 -6.4947314,5.122503 l -2e-7,-8.3700056 7.24863739,-4.185003 7.24863761,4.1850026 2e-7,8.3700056 z"
+     transform="matrix(1.0755298,0,0,1.0755298,9.1891516,9.2200565)" />
+</svg>

@@ -1,0 +1,27 @@
+svgrepo.com
+collection : calcite sharp line icons
+icons      : - lasso select svg vector
+             - cursor marquee svg vector
+             - Magnifying Glass Minus SVG Vector
+             - Magnifying Glass Plus SVG Vector
+             - Trash SVG Vector
+             - Folder Open SVG Vector
+             - Copy SVG Vector
+
+collection : neuicons oval line icons
+icons      : - line svg vector
+
+collection : bootstrap UI icons
+icons      : - eraser svg vector
+
+collection : dazzle line icons
+icons      : - Grip Lines Vertical SVG Vector (turned)
+
+collection : science icons
+icons      : - Molecule Hexagonal Shapes SVG
+
+collection : college
+icons      : - Hexagonal Molecule SVG Vector
+
+collection : science study
+icons      : - Molecule SVG Vector

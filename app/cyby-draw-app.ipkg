@@ -1,0 +1,12 @@
+package cyby-draw-app
+
+authors = "claudio-etterli, stefan-hoeck"
+version = 0.1.0
+sourcedir = "src"
+depends = cyby-draw
+        , pretty-show
+
+opts       = "--codegen javascript"
+
+main       = Main
+executable = "cyby-draw-app.js"

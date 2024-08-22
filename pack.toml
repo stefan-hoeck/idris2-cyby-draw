@@ -1,0 +1,21 @@
+[custom.all.cyby-draw]
+type    = "local"
+path    = "."
+ipkg    = "cyby-draw.ipkg"
+
+[custom.all.cyby-draw-app]
+type    = "local"
+path    = "app"
+ipkg    = "cyby-draw-app.ipkg"
+
+[custom.all.chem]
+type   = "git"
+url    = "git@github.zhaw.ch:hock/idris2-chem"
+commit = "latest:main"
+ipkg   = "chem.ipkg"
+
+[custom.all.chem-generators]
+type   = "git"
+url    = "git@github.zhaw.ch:hock/idris2-chem"
+commit = "latest:main"
+ipkg   = "chem-generators/chem-generators.ipkg"
