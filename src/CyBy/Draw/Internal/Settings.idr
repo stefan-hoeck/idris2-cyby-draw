@@ -34,6 +34,7 @@ record DrawSettings where
   maxZoom           : Scale
   minZoom           : Scale
   pseFontSize       : Nat
+  resizeCornerRad   : Double
 
 export
 defaultSettings : List Abbreviation -> DrawSettings
@@ -56,6 +57,7 @@ defaultSettings as =
    , maxZoom           = 20
    , minZoom           = 0.1
    , pseFontSize       = 11
+   , resizeCornerRad   = 20.0
    }
 
 export %inline %hint

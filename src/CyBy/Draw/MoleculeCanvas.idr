@@ -302,6 +302,13 @@ drawSelection s = case s.mode of
 -- Update State
 -----------------------------------------------------------------------------
 
+resizeCorner : (s : DrawState) -> Point s.transform
+resizeCorner s = let SD h w := s.dims in P h w
+
+maybeResizing : DrawSettings => DrawState -> Bool
+maybeResizing @{x} s =
+  distance s.curPos (resizeCorner s) <= x.resizeCornerRad
+
 reset : DrawSettings => DrawState -> DrawState
 reset s = {transform := iniTrans s.dims Reset s.mol, curPos := origin} s
 
@@ -373,36 +380,37 @@ parameters {auto ds : DrawSettings}
   -- the modification happens immediately.
   leftDown : DrawState -> DrawState
   leftDown s =
-    let pid := s.posId
-     in case s.mode of
-          Select      =>
-            applyWhenSel
-              s
-              (updateMode s (Dragging s.posMol))
-              (updateMode s (Rotating s.posMol))
-              (changeSelMode s)
+    if maybeResizing s then s else
+      let pid := s.posId
+       in case s.mode of
+            Select      =>
+              applyWhenSel
+                s
+                (updateMode s (Dragging s.posMol))
+                (updateMode s (Rotating s.posMol))
+                (changeSelMode s)
 
-          Erase       =>
-            case hoveredItem s.imol of
-              None => {mode := Erasing s.posId} s
-              N _  => delete $ {mol $= selectHovered Ignore One} s
-              E _  => delete $ {mol $= selectHovered One Ignore} s
+            Erase       =>
+              case hoveredItem s.imol of
+                None => {mode := Erasing s.posId} s
+                N _  => delete $ {mol $= selectHovered Ignore One} s
+                E _  => delete $ {mol $= selectHovered One Ignore} s
 
-          Draw        =>
-            case hoveredItem s.imol of
-              None => setMol (G _ $ insElemAt s.imol C pid HoverNew) s 
-              N x  =>
-                if isJust (groupNr s.imol (fst x))
-                   then s
-                   else {mode := Drawing Nothing, mol $= ifHover Origin} s
-              E (E x y $ CB r b)  => 
-                let b2 := newBond s.bond.type s.bond.stereo b
-                 in setMol (G _ $ insEdge (E x y $ CB r b2) s.imol) s
+            Draw        =>
+              case hoveredItem s.imol of
+                None => setMol (G _ $ insElemAt s.imol C pid HoverNew) s 
+                N x  =>
+                  if isJust (groupNr s.imol (fst x))
+                     then s
+                     else {mode := Drawing Nothing, mol $= ifHover Origin} s
+                E (E x y $ CB r b)  => 
+                  let b2 := newBond s.bond.type s.bond.stereo b
+                   in setMol (G _ $ insEdge (E x y $ CB r b2) s.imol) s
 
-          SetAtom   i => setMol (cleanup $ nextMol s) s
-          SetAbbr a   => {mode := Drawing (Just a), mol $= ifHover Origin} s
-          SetTempl  t => setMol (cleanup $ nextMol s) $ {mode := SetTempl t} s
-          _ => s
+            SetAtom   i => setMol (cleanup $ nextMol s) s
+            SetAbbr a   => {mode := Drawing (Just a), mol $= ifHover Origin} s
+            SetTempl  t => setMol (cleanup $ nextMol s) $ {mode := SetTempl t} s
+            _ => s
     where updateMode : DrawState -> Mode -> DrawState
           updateMode s m = {mode := m} s
 
