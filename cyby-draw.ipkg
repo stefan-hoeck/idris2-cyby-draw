@@ -1,6 +1,6 @@
 package cyby-draw
 
-authors = "claudio-etterli, stefan-hoeck"
+authors = "Claudio Etterli, Salome Heilig, Stefan Höck"
 brief   = "A drawing tool for molecules running in the browser"
 
 version = 0.1.0
