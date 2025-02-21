@@ -4,10 +4,19 @@ import CyBy.Draw.Internal.Abbreviations
 import CyBy.Draw.Internal.Color
 import CyBy.Draw.Internal.CoreDims
 import Text.SVG
+import Derive.Prelude
 import Chem
 import Geom
 
 %default total
+%language ElabReflection
+
+
+||| A data type for the different extensions supported at the moment.
+public export
+data Extension = Word
+
+%runElab derive "Extension" [Show, Eq]
 
 --------------------------------------------------------------------------------
 --          Settings
@@ -35,10 +44,11 @@ record DrawSettings where
   minZoom           : Scale
   pseFontSize       : Nat
   resizeCornerRad   : Double
+  usedExtension     : Maybe Extension
 
 export
-defaultSettings : List Abbreviation -> DrawSettings
-defaultSettings as =
+defaultSettings : List Abbreviation -> Maybe Extension -> DrawSettings
+defaultSettings as ext =
   MS {
      abbreviations     = as
    , core              = defaultCore
@@ -58,6 +68,7 @@ defaultSettings as =
    , minZoom           = 0.1
    , pseFontSize       = 11
    , resizeCornerRad   = 20.0
+   , usedExtension     = ext
    }
 
 export %inline %hint

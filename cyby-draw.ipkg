@@ -26,6 +26,9 @@ modules = CyBy.Draw
         , CyBy.Draw.Internal.Settings
         , CyBy.Draw.Internal.Wedge
 
+        , CyBy.Draw.Extensions.Word
+        , CyBy.Draw.Extensions.Util
+
         , CyBy.Draw.Draw
         , CyBy.Draw.Event
         , CyBy.Draw.MoleculeCanvas

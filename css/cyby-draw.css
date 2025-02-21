@@ -127,7 +127,11 @@ body {
   background-image: url("draw_icons/icon_trash.svg");
 }
 
-.cyby-draw-icon.svg {
+.cyby-draw-icon.svg-imp {
+  background-image: url("draw_icons/icon_svg.svg");
+}
+
+.cyby-draw-icon.svg-exp {
   background-image: url("draw_icons/icon_svg.svg");
 }
 

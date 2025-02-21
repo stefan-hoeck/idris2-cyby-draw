@@ -620,7 +620,8 @@ upd (Msg _)       s = s
 upd EndResize     s = s
 upd (EndResizeHW h w) s = endResize h w s
 upd StartPSE      s = {mode := PTable Nothing} s
-upd SVG           s = s
+upd SVGexp        s = s
+upd SVGimp        s = s
 
 ||| Convert an `AffineTransformation` to a transformation to be
 ||| used in an SVG element.
@@ -631,15 +632,16 @@ toTransform (AT (LT s r) (V x y)) =
       si  := s.value * sin r.value
    in Matrix co si (negate si) co x y
 
-scene : DrawSettings => DrawState -> SVGNode
-scene s =
+scene : DrawSettings => (withSelection : Bool) -> DrawState -> SVGNode
+scene b s =
   case s.mode of
     PTable me => displayPSE s.dims me
-    _         =>
+    mode      =>
       let m := nextMol s
        in g
             [transform $ toTransform s.transform]
-            (drawMolecule m ++ drawSelection s)
+            (if b then drawMolecule m ++ drawSelection s
+                  else drawMolecule $ clear m)
 
 display : DrawSettings => DrawState -> SVGNode
 display s =
@@ -648,7 +650,23 @@ display s =
     , width 100.perc
     , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] [scene s]
+    ] [scene True s]
+
+metadata : DrawSettings => DrawState -> SVGNode
+metadata s =
+  let m := nextMol s
+   in El "metadata" [] [Txt $ toMolStr s]
+
+export
+clipSVG : DrawSettings => DrawState -> String
+clipSVG s =
+  SVG.render $
+    svg
+      [ xmlns_2000
+      , width 100.perc
+      , height 100.perc
+      , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
+      ] [scene False s, metadata s]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState
