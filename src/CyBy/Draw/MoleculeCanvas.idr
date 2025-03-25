@@ -498,6 +498,33 @@ onKeyDown "c"       s = ifCtrl id (setElemStr "C") s
 onKeyDown "x"       s = ifCtrl id (setElemStr "X") s
 onKeyDown "z"       s = ifCtrl undo (setElemStr "Z") s
 onKeyDown "y"       s = ifCtrl redo (setElemStr "Y") s
+
+-- hock: First, pattern match on the currently hovered item
+--       make sure we are on a node, but not on an abbreviation
+--       (see `leftDown` for examples).
+--       If on a correct node, find the node's position (coordinates)
+--       As an alternative for testing, use the current mouse position
+--       (see the `Drawing Nothing` case in `nextMol` for an example)
+
+-- This is supposed to become the command where the keyboard input 
+-- 1 results in the addition of a Methyl group.
+
+-- The following line works but produces nothing when pressing '1'
+onKeyDown "1" s = setMol (addBond {t = Id} False Nothing (MkBond False Single NoBondStereo) s.imol) s
+
+-- test
+-- onKeyDown "1" s = setMol (addBond False (Just s.posMol) (MkBond False Single NoBondStereo) s.imol) s
+-- onKeyDown "1" s = setMol (addBond False Nothing (MkBond False Single NoBondStereo) s.imol) s
+
+-- onKeyDown "1" s = setMol (addBond False Nothing MolBond? (CDIGraph? k?))) s
+-- 
+-- :t setMol: CDGraph -> DrawState -> DrawState
+-- :t addBond: Bool -> Maybe (Point t) -> MolBond -> CDIGraph k -> CDGraph
+
+-- onKeyDown "1" s = setMol (addBond False Nothing bond?)
+
+
+
 onKeyDown x         s = setElemStr (toUpper x) s
 
 onKeyUp "Shift"   s = {modifier $= reset Shift} s

@@ -805,15 +805,16 @@ addBondE :
   -> {t : _}
   -> {auto cd   : CoreDims}
   -> (shiftDown : Bool)
-  -> (mousePos  : Point t)
+  -> (mousePos  : Maybe $ Point t)
   -> (newBond   : MolBond)
   -> CDIGraph k
   -> Either (CDIGraph k) (CDIGraph $ S k)
 addBondE @{cd} shiftDown p mb g =
   let b          := CB New mb -- new `CDBond`
       Just (n,a) := find (is Origin . snd) (labNodes g) | Nothing => Left g
-      pc         := pointId p -- current mouse position
       pa         := pointId a -- position of atom we attach new bond to
+      pc         := maybe pa pointId p -- current mouse position
+      
    in if near pa pc cd.radiusAtom
          -- if mouse is close to origin atom
          -- use largest bisector as new bond angle and draw a bond
@@ -836,7 +837,7 @@ addBond :
   -> {t : _}
   -> {auto cd   : CoreDims}
   -> (shiftDown : Bool)
-  -> (mousePos  : Point t)
+  -> (mousePos  : Maybe $ Point t)
   -> (newBond   : MolBond)
   -> CDIGraph k
   -> CDGraph
