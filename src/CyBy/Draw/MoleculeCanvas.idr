@@ -248,7 +248,7 @@ nextMol s =
       RotTempl p t     => addTemplate p (rotateTempl False p s.posMol t) s.mol
       RotTemplOvp g t => addTemplateRot s.posMol (Right (g.node,t.node)) t.graph.graph g.graph.graph
       RotTemplAtm g t => addTemplateRot s.posMol (Left g.node) t.graph g.graph.graph
-      Drawing Nothing  => addBond (s.modifier == Shift) s.posMol s.bond s.imol
+      Drawing Nothing  => addBond (s.modifier == Shift) (Just s.posMol) s.bond s.imol
       Drawing (Just $ A l _ g) => setAbbreviation (s.modifier == Shift) l s.posId g s.mol
 
 --------------------------------------------------------------------------------
@@ -484,6 +484,19 @@ stopTemplRot : DrawSettings => DrawState -> Mode -> Mode
 stopTemplRot s (RotTempl p g) = SetTempl (rotateTempl False p s.posMol g)
 stopTemplRot s m              = m
 
+-- Adds a bond to the molecule if hovering over a valid atom, 
+-- ensuring it's not an abbreviation. Uses CoreDims for dimensions.
+addBondShortcut : {auto cd : CoreDims} -> BondOrder -> BondStereo -> DrawState -> DrawState
+addBondShortcut bo bs s =
+  case hoveredItem s.imol of
+    N x =>
+      if isJust (groupNr s.imol (fst x))  -- Ensure it's not an abbreviation
+        then s  -- Do nothing if it's an abbreviation
+        else 
+          let s = {mol $= ifHover Origin} s  -- First set the Origin flag
+          in setMol (addBond {t = Id} False Nothing (MkBond False bo bs) s.imol) s
+    _ => s  -- If not hovering over a valid atom, do nothing
+
 onKeyDown, onKeyUp : DrawSettings => String -> DrawState -> DrawState
 onKeyDown "Escape"  s = {mode := Select, mol $= clear} s
 onKeyDown "Delete"  s = delete s
@@ -505,26 +518,14 @@ onKeyDown "y"       s = ifCtrl redo (setElemStr "Y") s
 --       If on a correct node, find the node's position (coordinates)
 --       As an alternative for testing, use the current mouse position
 --       (see the `Drawing Nothing` case in `nextMol` for an example)
+onKeyDown "1" s = addBondShortcut Single NoBondStereo s
+onKeyDown "2" s = addBondShortcut Dbl NoBondStereo s
+onKeyDown "3" s = addBondShortcut Triple NoBondStereo s
+onKeyDown "4" s = addBondShortcut Single Up s
+onKeyDown "5" s = addBondShortcut Single Down s
 
--- This is supposed to become the command where the keyboard input 
--- 1 results in the addition of a Methyl group.
-
--- The following line works but produces nothing when pressing '1'
-onKeyDown "1" s = setMol (addBond {t = Id} False Nothing (MkBond False Single NoBondStereo) s.imol) s
-
--- test
--- onKeyDown "1" s = setMol (addBond False (Just s.posMol) (MkBond False Single NoBondStereo) s.imol) s
--- onKeyDown "1" s = setMol (addBond False Nothing (MkBond False Single NoBondStereo) s.imol) s
-
--- onKeyDown "1" s = setMol (addBond False Nothing MolBond? (CDIGraph? k?))) s
--- 
 -- :t setMol: CDGraph -> DrawState -> DrawState
 -- :t addBond: Bool -> Maybe (Point t) -> MolBond -> CDIGraph k -> CDGraph
-
--- onKeyDown "1" s = setMol (addBond False Nothing bond?)
-
-
-
 onKeyDown x         s = setElemStr (toUpper x) s
 
 onKeyUp "Shift"   s = {modifier $= reset Shift} s
