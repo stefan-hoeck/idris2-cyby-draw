@@ -908,7 +908,7 @@ setAbbreviation sd lbl mouse (G (S m) a) (G k g) =
     Nothing     => G k g
     Just (n1,_) => case visibleNeighbours g n1 of
       [n2] => setAbbreviationAt lbl n1 n2 a g
-      _    => case addBondE sd mouse (cast Single) g of
+      _    => case addBondE sd (Just mouse) (cast Single) g of
         Left _   => G k g
         Right g2 => setAbbreviationAt lbl last (weaken n1) a g2
 
