@@ -248,7 +248,7 @@ nextMol s =
       RotTempl p t     => addTemplate p (rotateTempl False p s.posMol t) s.mol
       RotTemplOvp g t => addTemplateRot s.posMol (Right (g.node,t.node)) t.graph.graph g.graph.graph
       RotTemplAtm g t => addTemplateRot s.posMol (Left g.node) t.graph g.graph.graph
-      Drawing Nothing  => addBond (s.modifier == Shift) s.posMol s.bond s.imol
+      Drawing Nothing  => addBond (s.modifier == Shift) (Just s.posMol) s.bond s.imol
       Drawing (Just $ A l _ g) => setAbbreviation (s.modifier == Shift) l s.posId g s.mol
 
 --------------------------------------------------------------------------------
@@ -484,6 +484,24 @@ stopTemplRot : DrawSettings => DrawState -> Mode -> Mode
 stopTemplRot s (RotTempl p g) = SetTempl (rotateTempl False p s.posMol g)
 stopTemplRot s m              = m
 
+-- Adds a bond to the molecule if hovering over a valid atom, 
+-- ensuring it's not an abbreviation. Uses CoreDims for dimensions.
+addBondShortcut :
+    {auto cd : CoreDims}
+  -> Bool
+  -> BondOrder
+  -> BondStereo
+  -> DrawState
+  -> DrawState
+addBondShortcut bol bo bs s =
+  case hoveredItem s.imol of
+    N x => case inAbbreviation s.imol (fst x) of
+      True => s
+      False =>
+        let s = {mol $= ifHover Origin} s  -- First set the Origin flag -> das verstehen!
+        in setMol (addBond {t = Id} False Nothing (MkBond bol bo bs) s.imol) s
+    _ => s  -- If not hovering over a valid atom, do nothing
+
 onKeyDown, onKeyUp : DrawSettings => String -> DrawState -> DrawState
 onKeyDown "Escape"  s = {mode := Select, mol $= clear} s
 onKeyDown "Delete"  s = delete s
@@ -498,12 +516,35 @@ onKeyDown "c"       s = ifCtrl id (setElemStr "C") s
 onKeyDown "x"       s = ifCtrl id (setElemStr "X") s
 onKeyDown "z"       s = ifCtrl undo (setElemStr "Z") s
 onKeyDown "y"       s = ifCtrl redo (setElemStr "Y") s
+
+-- hock: First, pattern match on the currently hovered item
+--       make sure we are on a node, but not on an abbreviation
+--       (see `leftDown` for examples).
+--       If on a correct node, find the node's position (coordinates)
+--       As an alternative for testing, use the current mouse position
+--       (see the `Drawing Nothing` case in `nextMol` for an example)
+onKeyDown "1" s = addBondShortcut False Single NoBondStereo s
+onKeyDown "2" s = addBondShortcut False Dbl NoBondStereo s
+onKeyDown "3" s = addBondShortcut False Triple NoBondStereo s
+onKeyDown "4" s = addBondShortcut True Single Up s -- False bei MkBond auf True ändern um wedged bond zu drehen. 
+onKeyDown "5" s = addBondShortcut True Single Down s
+
+-- :t setMol: CDGraph -> DrawState -> DrawState
+-- :t addBond: Bool -> Maybe (Point t) -> MolBond -> CDIGraph k -> CDGraph
 onKeyDown x         s = setElemStr (toUpper x) s
 
 onKeyUp "Shift"   s = {modifier $= reset Shift} s
 onKeyUp "Control" s = {modifier $= reset Ctrl, mode $= stopTemplRot s} s
 onKeyUp "Meta"    s = {modifier $= reset Ctrl, mode $= stopTemplRot s} s
 onKeyUp _         s = s
+
+
+
+
+
+
+
+
 
 enableAbbr : DrawState -> DrawState
 enableAbbr s =
