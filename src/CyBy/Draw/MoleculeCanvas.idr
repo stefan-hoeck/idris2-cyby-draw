@@ -503,6 +503,42 @@ addBondShortcut bol bo bs s =
         in setMol (addBond {t = Id} False Nothing bnd g) s
     _ => s  -- If not hovering over a valid atom, do nothing
 
+-- For adding bonds sequentially, I esseentially need to first add 
+-- a new bond, lets say a methyl group. And then change the current hovering
+-- position to a new position (Probably by unvorering on the old node
+-- and starting to hover on the new node). The new position or rather the new node, will 
+-- be the node that was last added to the graph. This can be extracted by 
+-- somethin like: the (Fin 10) last. The hovering takes plase in Role.idr.
+-- What I also need to concider is a pattern match on the size of the graph
+-- because I will not be able to do the (Fin 0) last as this will give an error.
+-- Finally I need to understand, where unecessary labels are removed (like
+-- the label Origin that we add in addBondShortcut.) Stefan believed
+-- this label would be removed in SetMol, however he was not certain of this. 
+
+-- But this means, that addBondShortcut can largely be left as it is. 
+-- The only thing that needs to happen, after adding the methyl group is
+-- that we need to change the hovering position. The hovering position itself
+-- is part of the DrawState, thus I will be able to do something like this:
+-- changehoverpos (setMol xy s)
+
+
+-- Update:
+-- Hovering seems to be managed in Role.idr
+-- However there are examples of unhover and hovering in:
+-- Internal/Graph.idr starting from line 319
+
+-- Pseudocode:
+-- xy -> DrawState -> DrawState
+-- unHover s.imol
+-- xy -> DrawState -> DrawState
+-- ifHover s.imol[(Fin k) last]
+-- 
+
+-- next steps: 
+-- 1) find out how unHover and ifHover work 
+-- 2) Probably start to first unhover the current node (probably easier)
+-- 3) Try to start hovering on any given new node
+-- 4) Find out how to hover on the newest node the (Fin 10) last
 onKeyDown, onKeyUp : DrawSettings => String -> DrawState -> DrawState
 onKeyDown "Escape"  s = {mode := Select, mol $= clear} s
 onKeyDown "Delete"  s = delete s
