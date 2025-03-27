@@ -485,7 +485,7 @@ stopTemplRot s (RotTempl p g) = SetTempl (rotateTempl False p s.posMol g)
 stopTemplRot s m              = m
 
 -- Adds a bond to the molecule if hovering over a valid atom, 
--- ensuring it's not an abbreviation. Uses CoreDims for dimensions.
+-- ensuring it's not an abbreviation. 
 addBondShortcut :
     {auto cd : CoreDims}
   -> Bool
@@ -498,7 +498,7 @@ addBondShortcut bol bo bs s =
     N x => case inAbbreviation s.imol (fst x) of
       True => s
       False =>
-        let s = {mol $= ifHover Origin} s  -- First set the Origin flag -> das verstehen!
+        let s = {mol $= ifHover Origin} s  -- First set the Origin flag 
         in setMol (addBond {t = Id} False Nothing (MkBond bol bo bs) s.imol) s
     _ => s  -- If not hovering over a valid atom, do nothing
 
@@ -516,21 +516,11 @@ onKeyDown "c"       s = ifCtrl id (setElemStr "C") s
 onKeyDown "x"       s = ifCtrl id (setElemStr "X") s
 onKeyDown "z"       s = ifCtrl undo (setElemStr "Z") s
 onKeyDown "y"       s = ifCtrl redo (setElemStr "Y") s
-
--- hock: First, pattern match on the currently hovered item
---       make sure we are on a node, but not on an abbreviation
---       (see `leftDown` for examples).
---       If on a correct node, find the node's position (coordinates)
---       As an alternative for testing, use the current mouse position
---       (see the `Drawing Nothing` case in `nextMol` for an example)
 onKeyDown "1" s = addBondShortcut False Single NoBondStereo s
 onKeyDown "2" s = addBondShortcut False Dbl NoBondStereo s
 onKeyDown "3" s = addBondShortcut False Triple NoBondStereo s
-onKeyDown "4" s = addBondShortcut True Single Up s -- False bei MkBond auf True ändern um wedged bond zu drehen. 
+onKeyDown "4" s = addBondShortcut True Single Up s 
 onKeyDown "5" s = addBondShortcut True Single Down s
-
--- :t setMol: CDGraph -> DrawState -> DrawState
--- :t addBond: Bool -> Maybe (Point t) -> MolBond -> CDIGraph k -> CDGraph
 onKeyDown x         s = setElemStr (toUpper x) s
 
 onKeyUp "Shift"   s = {modifier $= reset Shift} s
