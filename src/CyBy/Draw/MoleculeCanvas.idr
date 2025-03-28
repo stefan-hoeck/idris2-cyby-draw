@@ -503,7 +503,23 @@ addBondShortcut bol bo bs s =
         in setMol (addBond {t = Id} False Nothing bnd g) s
     _ => s  -- If not hovering over a valid atom, do nothing
 
--- For adding bonds sequentially, I esseentially need to first add 
+
+unHoverAllNodes : DrawState -> DrawState
+unHoverAllNodes s = {mol $= ifHover None} s
+
+getCDIk : (s : DrawState) -> CDIGraph s.mol.order 
+getCDIk s = s.imol
+
+numberOfNodesInCDIG : {k : _} -> CDIGraph k -> Maybe Nat
+numberOfNodesInCDIG cdg = case nodes cdg of
+    []    => Nothing
+    nodes => Just (length nodes)
+
+
+HovernewNode : DrawState -> DrawState
+-- HovernewNode s = {mol $= ifNewNode? Hover} s
+
+-- For adding bonds sequentially, I essentially need to first add 
 -- a new bond, lets say a methyl group. And then change the current hovering
 -- position to a new position (Probably by unvorering on the old node
 -- and starting to hover on the new node). The new position or rather the new node, will 
