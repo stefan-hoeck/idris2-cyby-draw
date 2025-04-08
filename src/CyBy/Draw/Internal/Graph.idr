@@ -681,20 +681,14 @@ mergeGraphs' g t bs =
 mergeGraphsOnAtom : CoreDims => {k,m : _} -> Fin k -> CDIGraph k -> CDIGraph m -> CDGraph
 mergeGraphsOnAtom {m = 0}   _ g _ = G _ g
 mergeGraphsOnAtom {m = S _} n g t =
-  case bondAngles g n of
-    [an] =>
-      let a0     := preferredAngle False (bondAngles t 0)
-          tr     := rotate (an - a0) t
-          offset := point (lab g n) - point (lab tr 0)
-       in mergeGraphs' g (translate offset tr) []
-    as   =>
-      let an     := preferredAngle False as
-          a0     := preferredAngle False (bondAngles t 0)
-          tr     := rotate (an - a0 + pi) t
-          offset := point (lab g n) - point (lab tr 0)
-          v      := polar BondLengthInAngstrom an + offset
-          bond   := CB New $ cast Single
-       in mergeGraphs' g (translate v tr) [(n,0,bond)]
+  let as     := bondAngles g n
+      an     := preferredAngle False as
+      a0     := preferredAngle False (bondAngles t 0)
+      tr     := rotate (an - a0 + pi) t
+      offset := point (lab g n) - point (lab tr 0)
+      v      := polar BondLengthInAngstrom an + offset
+      bond   := CB New $ cast Single
+   in mergeGraphs' g (translate v tr) [(n,0,bond)]
 
 -- This connects a template to a graph by replacing the template's
 -- smallest edge given edge of the current molecule.
