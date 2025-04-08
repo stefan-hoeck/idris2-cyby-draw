@@ -258,7 +258,7 @@ nextMol s =
 -- overwrites the current molecule, adding it to the `undo` stack
 updateMol : (CDGraph -> CDGraph) -> DrawState -> DrawState
 updateMol f s =
-  let G o g := f s.mol
+  let G o g := cleanup $ f s.mol
       cm    := clear s.mol
    in if clear (G o g) == cm then s else
         { mol := G o $ adjAtomTypes g
@@ -425,7 +425,7 @@ parameters {auto ds : DrawSettings}
                   let b2 := newBond s.bond.type s.bond.stereo b
                    in setMol (G _ $ insEdge (E x y $ CB r b2) s.imol) s
 
-            SetAtom   i => setMol (cleanup $ nextMol s) s
+            SetAtom   i => setMol (nextMol s) s
             SetAbbr a   => {mode := Drawing (Just a), mol $= ifHover Origin} s
             SetTempl  t =>
                 case hoveredItem s.imol of
@@ -438,7 +438,7 @@ parameters {auto ds : DrawSettings}
                          [(fm, ft)] =>
                            {mode := RotTemplOvp (DN (G _ s.imol) fm) (DN (G _ t') ft)} s
                          _          =>
-                           setMol (cleanup $ nextMol s) $ {mode := SetTempl t} s
+                           setMol (nextMol s) $ {mode := SetTempl t} s
             _ => s
     where updateMode : DrawState -> Mode -> DrawState
           updateMode s m = {mode := m} s
@@ -452,12 +452,12 @@ parameters {auto ds : DrawSettings}
     case s.mode of
       Selecting _ => {mode := Select, mol := cleanup (nextMol s)} s
       Erasing   _ => delete $ {mode := Erase, mol := cleanup (nextMol s)} s
-      Dragging  _ => setMol (cleanup $ nextMol s) $ {mode := Select} s
-      Rotating  _ => setMol (cleanup $ nextMol s) $ {mode := Select} s
-      RotTemplAtm _ t => setMol (cleanup $ nextMol s) $ {mode := SetTempl t} s
-      RotTemplOvp _ t => setMol (cleanup $ nextMol s) $ {mode := SetTempl t.graph} s
-      Drawing (Just a) => setMol (cleanup $ nextMol s) $ {mode := SetAbbr a} s
-      Drawing Nothing  => setMol (cleanup $ nextMol s) $ {mode := Draw} s
+      Dragging  _ => setMol (nextMol s) $ {mode := Select} s
+      Rotating  _ => setMol (nextMol s) $ {mode := Select} s
+      RotTemplAtm _ t => setMol (nextMol s) $ {mode := SetTempl t} s
+      RotTemplOvp _ t => setMol (nextMol s) $ {mode := SetTempl t.graph} s
+      Drawing (Just a) => setMol (nextMol s) $ {mode := SetAbbr a} s
+      Drawing Nothing  => setMol (nextMol s) $ {mode := Draw} s
       PTable (Just el) => {mode := SetAtom (cast el)} s
       PTable Nothing   => s
       _           => {mol $= cleanup} s
@@ -498,8 +498,9 @@ addBondShortcut bol bo bs s =
     N x => case inAbbreviation s.imol (fst x) of
       True => s
       False =>
-        let s = {mol $= ifHover Origin} s  -- First set the Origin flag 
-        in setMol (addBond {t = Id} False Nothing (MkBond bol bo bs) s.imol) s
+       let bnd   := MkBond bol bo bs
+           G _ g := ifHover Origin s.mol
+        in setMol (addBond {t = Id} False Nothing bnd g) s
     _ => s  -- If not hovering over a valid atom, do nothing
 
 onKeyDown, onKeyUp : DrawSettings => String -> DrawState -> DrawState
