@@ -529,14 +529,6 @@ onKeyUp "Control" s = {modifier $= reset Ctrl, mode $= stopTemplRot s} s
 onKeyUp "Meta"    s = {modifier $= reset Ctrl, mode $= stopTemplRot s} s
 onKeyUp _         s = s
 
-
-
-
-
-
-
-
-
 enableAbbr : DrawState -> DrawState
 enableAbbr s =
   case s.abbr of

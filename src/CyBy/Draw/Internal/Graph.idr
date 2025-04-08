@@ -5,6 +5,8 @@ import CyBy.Draw.Internal.CoreDims
 import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Internal.Role
 import Data.Graph.Indexed.Subgraph
+import Data.SortedMap
+import Data.SortedSet
 import Derive.Prelude
 import Geom
 import Text.Molfile
@@ -157,6 +159,45 @@ inAbbreviation g = isJust . groupNr g
 export %inline
 maxGroupNr : {k : _} -> CDIGraph k -> Nat
 maxGroupNr = foldr (\a,n => maybe n (max n . nr) a.atom.label) 0
+
+||| Returns the group numbers found in a molecule
+export
+groupNrs : {k : _} -> CDIGraph k -> SortedSet Nat
+groupNrs =
+  foldr (\a,ss => maybe ss ((`insert` ss) . nr) a.atom.label) SortedSet.empty
+
+||| Generates a mapping from old group numbers to new group numbers.
+||| This is used to generated unique group numbers when inserting a
+||| template.
+export
+groupMap : (cur, templ : SortedSet Nat) -> SortedMap Nat Nat
+groupMap cur = go empty . Prelude.toList
+  where
+    next : Nat -> Nat
+    next k = if contains k cur then next (assert_smaller k $ S k) else k
+
+    go : SortedMap Nat Nat -> List Nat -> SortedMap Nat Nat
+    go m []        = m
+    go m (x :: xs) = go (insert x (next x) m) xs
+
+||| Adjusts abbreviation numbers of a template before merging it
+||| with an existing molecule.
+|||
+||| This avoids having several abbreviations with the same number
+||| in the new (merged) molecule, which would then all be expanded at
+||| the same time with a single double click.
+export
+adjTemplate : {k,m : _} -> CDIGraph k -> CDIGraph m -> CDIGraph m
+adjTemplate c t  =
+  let mp := groupMap (groupNrs c) (groupNrs t)
+   in map (adj mp) t
+
+  where
+    nr  : SortedMap Nat Nat -> AtomGroup -> AtomGroup
+    nr mp (G x lbl) = G (fromMaybe x $ lookup x mp) lbl
+
+    adj : SortedMap Nat Nat -> CDAtom -> CDAtom
+    adj mp (CA r a) = CA r $ {label $= map (nr mp)} a
 
 ||| True, if any neighbour of the given node is part of the given
 ||| abbreviation (given as its ID).
@@ -662,16 +703,17 @@ mergeGraphs' :
   -> List (Fin k, Fin m, CDBond)
   -> CDGraph
 mergeGraphs' g t bs =
-  let lMergeN   := nodesToMerge g t
-      offset    := offset g t lMergeN
-      lnewBonds := newEdges t lMergeN ++ bs
+  let t'        := adjTemplate g t
+      lMergeN   := nodesToMerge g t'
+      offset    := offset g t' lMergeN
+      lnewBonds := newEdges t' lMergeN ++ bs
       -- replaces bonds between merging (and therefore to be deleted) template
       -- atoms and origin atoms
       -- this is only done if there isn't already a bond from the origin
       -- molecule present at the same position
       mol'      :=
-        insEdges (mapMaybe (createStableBond lMergeN (edges g)) (edges t)) g
-      mol''     := mergeGraphsWithEdges mol' (translate offset t) lnewBonds
+        insEdges (mapMaybe (createStableBond lMergeN (edges g)) (edges t')) g
+      mol''     := mergeGraphsWithEdges mol' (translate offset t') lnewBonds
    in delNodes (mapMaybe (incNode k . snd) lMergeN) mol''
 
 -- This connects a template to a graph by connecting the template's
