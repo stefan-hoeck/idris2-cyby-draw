@@ -8,6 +8,8 @@ import Geom
 import Text.Measure
 import Text.Molfile
 
+import Debug.Trace
+
 %default total
 
 -- Radius of (possibly) colored background circles around atom labels
@@ -363,9 +365,18 @@ bestHPos : List Geom.Angle.Angle -> HPos
 bestHPos xs =
   if      all (\x => x >= halfPi && x <= threeHalfPi) xs then E
   else if all (\x => x <= halfPi || x >= threeHalfPi) xs then W
-  else if all (\x => x <= pi) xs then N
-  else if all (\x => x >= pi) xs then S
+  else if all (\x => x < angle (5 * pi / 4) || x > angle (7 * pi / 4)) xs
+                     -- in case several bonds point slightly north -> position H
+                     -- on the south side (or east)
+                     && checkIfRealyNorth xs then N
+  else if all (\x => x > angle (3 * pi / 4) || x < angle (pi / 4)) xs then S
   else E -- catch-all pattern for very crowded atoms
+  where 
+    checkIfRealyNorth : List Angle -> Bool
+    checkIfRealyNorth xs =
+      if (foldl (\acc,a => if a > pi then S acc else acc) Z xs) < 2
+         then True
+         else False
 
 ||| Determines the position of the "H" label (if any)
 ||| relative to an atom's symbol. To do this, this computes the angles
