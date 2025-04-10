@@ -8,8 +8,6 @@ import Geom
 import Text.Measure
 import Text.Molfile
 
-import Debug.Trace
-
 %default total
 
 -- Radius of (possibly) colored background circles around atom labels
