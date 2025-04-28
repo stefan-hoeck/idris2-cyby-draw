@@ -503,20 +503,17 @@ addBondShortcut bol bo bs s =
         in setMol (addBond {t = Id} False Nothing bnd g) s
     _ => s  -- If not hovering over a valid atom, do nothing
 
+-- Do I need this?
+-- getCDIk : (s : DrawState) -> CDIGraph s.mol.order 
+-- getCDIk s = s.imol
 
-unHoverAllNodes : DrawState -> DrawState
-unHoverAllNodes s = {mol $= ifHover None} s
+-- numberOfNodesInCDIG : {k : _} -> CDIGraph k -> Maybe Nat
+-- numberOfNodesInCDIG cdg = case nodes cdg of
+--    []    => Nothing
+--    -- Substracting 1 because Fin 10 means the length of our list is 10
+--    -- But the index of the node we want will be 9.
+--    nodes => Just (minus (length nodes) 1)
 
-getCDIk : (s : DrawState) -> CDIGraph s.mol.order 
-getCDIk s = s.imol
-
-numberOfNodesInCDIG : {k : _} -> CDIGraph k -> Maybe Nat
-numberOfNodesInCDIG cdg = case nodes cdg of
-    []    => Nothing
-    nodes => Just (length nodes)
-
-
-HovernewNode : DrawState -> DrawState
 -- HovernewNode s = {mol $= ifNewNode? Hover} s
 
 -- For adding bonds sequentially, I essentially need to first add 
@@ -555,6 +552,25 @@ HovernewNode : DrawState -> DrawState
 -- 2) Probably start to first unhover the current node (probably easier)
 -- 3) Try to start hovering on any given new node
 -- 4) Find out how to hover on the newest node the (Fin 10) last
+
+ifNewNode : Role -> CDGraph -> CDGraph
+ifNewNode r = map (\x => setIf r (is New x) x)
+
+ifNewAndHoverNode : Role -> CDGraph -> CDGraph
+ifNewAndHoverNode r = map (unset New)
+
+unHoverAllNodes : DrawState -> DrawState
+unHoverAllNodes s = {mol $= ifHover None} s
+
+hoverNewNode : DrawState -> DrawState
+hoverNewNode s = {mol $= ifNewNode Hover} s
+
+removeNewRole : DrawState -> DrawState
+removeNewRole s = {mol $= ifNewAndHoverNode Hover} s
+
+unHoverOldHoverNew : DrawState -> DrawState
+unHoverOldHoverNew s = removeNewRole (hoverNewNode (unHoverAllNodes s))
+
 onKeyDown, onKeyUp : DrawSettings => String -> DrawState -> DrawState
 onKeyDown "Escape"  s = {mode := Select, mol $= clear} s
 onKeyDown "Delete"  s = delete s
