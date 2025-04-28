@@ -488,7 +488,7 @@ stopTemplRot s m              = m
 -- Adds a bond to the molecule if hovering over a valid atom, 
 -- ensuring it's not an abbreviation. 
 addBondShortcut :
-    {auto cd : CoreDims}
+     {auto cd : CoreDims}
   -> Bool
   -> BondOrder
   -> BondStereo
@@ -507,7 +507,7 @@ addBondShortcut bol bo bs s =
 -- Adds a group to the molecule if hovering over a valid atom or bond, 
 -- ensuring it's not an abbreviation. 
 addGroupShortcut :
-     {auto cd : CoreDims}
+        {auto cd : CoreDims}
      -> CDGraph -- For example 'phenyl', '(readMolfile ac)' or '(ring 5)'
      -> DrawState
      -> DrawState
@@ -523,7 +523,7 @@ addGroupShortcut g s =
 -- Adds an abbreviation to the molecule if hovering over a valid atom, 
 -- ensuring it's not an abbreviation. 
 addAbbrShortcut :
-    {auto cd : CoreDims}
+     {auto cd : CoreDims}
   -> String
   -> CDGraph
   -> DrawState
