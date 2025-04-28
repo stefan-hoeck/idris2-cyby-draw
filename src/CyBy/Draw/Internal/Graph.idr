@@ -424,6 +424,24 @@ export %inline
 ifHover : Role -> CDGraph -> CDGraph
 ifHover r = map (\x => setIf r (is Hover x) x)
 
+||| Replaces a given old Role with a given new Role.
+||| For all other nodes, it removes the new Role.
+|||
+||| For example:
+||| - If 'New' is currently set, it removes 'New' and sets 'Hover'.
+||| - If 'Hover' is set, it removes 'Hover'.
+export
+replaceWith : Cast a Role => ModRole a => Role -> Role -> a -> a
+replaceWith old new a =
+  if      is old a then unset old (set new a)
+  else if is new a then unset new a
+  else a
+
+||| 'New' is replaced with 'Hover', and any existing 'Hover' roles are removed.
+export
+hoverIfNew : CDGraph -> CDGraph
+hoverIfNew = map (New `replaceWith` Hover)
+
 ||| Returns the currently hovered edges or atoms atoms
 export %inline
 hoveredItem : {k : _} -> CDIGraph k -> NOE (Fin k, CDAtom) (Edge k CDBond)
