@@ -8,6 +8,7 @@ import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Internal.CoreDims
 import CyBy.Draw.Internal.Graph
 import CyBy.Draw.Internal.Label
+import CyBy.Draw.Internal.Ring
 import CyBy.Draw.Internal.Role
 import CyBy.Draw.Internal.Settings
 import CyBy.Draw.PeriodicTableCanvas
@@ -500,76 +501,42 @@ addBondShortcut bol bo bs s =
       False =>
        let bnd   := MkBond bol bo bs
            G _ g := ifHover Origin s.mol
-        in setMol (addBond {t = Id} False Nothing bnd g) s
+        in setMol (hoverIfNew (addBond {t = Id} False Nothing bnd g)) s
     _ => s  -- If not hovering over a valid atom, do nothing
 
--- Do I need this?
--- getCDIk : (s : DrawState) -> CDIGraph s.mol.order 
--- getCDIk s = s.imol
+-- Adds a group to the molecule if hovering over a valid atom or bond, 
+-- ensuring it's not an abbreviation. 
+addGroupShortcut :
+     {auto cd : CoreDims}
+     -> CDGraph -- For example 'phenyl', '(readMolfile ac)' or '(ring 5)'
+     -> DrawState
+     -> DrawState
+addGroupShortcut g s =
+  case hoveredItem s.imol of
+    N x => case inAbbreviation s.imol (fst x) of 
+      True => s 
+      False =>  
+           setMol (mergeGraphs s.posId s.mol g) s
+    E e => setMol (mergeGraphs s.posId s.mol g) s
+    _ => s 
 
--- numberOfNodesInCDIG : {k : _} -> CDIGraph k -> Maybe Nat
--- numberOfNodesInCDIG cdg = case nodes cdg of
---    []    => Nothing
---    -- Substracting 1 because Fin 10 means the length of our list is 10
---    -- But the index of the node we want will be 9.
---    nodes => Just (minus (length nodes) 1)
-
--- HovernewNode s = {mol $= ifNewNode? Hover} s
-
--- For adding bonds sequentially, I essentially need to first add 
--- a new bond, lets say a methyl group. And then change the current hovering
--- position to a new position (Probably by unvorering on the old node
--- and starting to hover on the new node). The new position or rather the new node, will 
--- be the node that was last added to the graph. This can be extracted by 
--- somethin like: the (Fin 10) last. The hovering takes plase in Role.idr.
--- What I also need to concider is a pattern match on the size of the graph
--- because I will not be able to do the (Fin 0) last as this will give an error.
--- Finally I need to understand, where unecessary labels are removed (like
--- the label Origin that we add in addBondShortcut.) Stefan believed
--- this label would be removed in SetMol, however he was not certain of this. 
-
--- But this means, that addBondShortcut can largely be left as it is. 
--- The only thing that needs to happen, after adding the methyl group is
--- that we need to change the hovering position. The hovering position itself
--- is part of the DrawState, thus I will be able to do something like this:
--- changehoverpos (setMol xy s)
-
-
--- Update:
--- Hovering seems to be managed in Role.idr
--- However there are examples of unhover and hovering in:
--- Internal/Graph.idr starting from line 319
-
--- Pseudocode:
--- xy -> DrawState -> DrawState
--- unHover s.imol
--- xy -> DrawState -> DrawState
--- ifHover s.imol[(Fin k) last]
--- 
-
--- next steps: 
--- 1) find out how unHover and ifHover work 
--- 2) Probably start to first unhover the current node (probably easier)
--- 3) Try to start hovering on any given new node
--- 4) Find out how to hover on the newest node the (Fin 10) last
-
-ifNewNode : Role -> CDGraph -> CDGraph
-ifNewNode r = map (\x => setIf r (is New x) x)
-
-ifNewAndHoverNode : Role -> CDGraph -> CDGraph
-ifNewAndHoverNode r = map (unset New)
-
-unHoverAllNodes : DrawState -> DrawState
-unHoverAllNodes s = {mol $= ifHover None} s
-
-hoverNewNode : DrawState -> DrawState
-hoverNewNode s = {mol $= ifNewNode Hover} s
-
-removeNewRole : DrawState -> DrawState
-removeNewRole s = {mol $= ifNewAndHoverNode Hover} s
-
-unHoverOldHoverNew : DrawState -> DrawState
-unHoverOldHoverNew s = removeNewRole (hoverNewNode (unHoverAllNodes s))
+-- Adds an abbreviation to the molecule if hovering over a valid atom, 
+-- ensuring it's not an abbreviation. 
+addAbbrShortcut :
+    {auto cd : CoreDims}
+  -> String
+  -> CDGraph
+  -> DrawState
+  -> DrawState
+addAbbrShortcut l g s =
+  case hoveredItem s.imol of
+    N x => case inAbbreviation s.imol (fst x) of
+      True => s
+      False =>
+        let s = {mol $= ifHover Origin} s  -- First set the Origin flag 
+        in 
+        setMol (setAbbreviation False l s.posId g s.mol) s
+    _ => s  -- If not hovering over a valid atom, do nothing
 
 onKeyDown, onKeyUp : DrawSettings => String -> DrawState -> DrawState
 onKeyDown "Escape"  s = {mode := Select, mol $= clear} s
@@ -585,11 +552,16 @@ onKeyDown "c"       s = ifCtrl id (setElemStr "C") s
 onKeyDown "x"       s = ifCtrl id (setElemStr "X") s
 onKeyDown "z"       s = ifCtrl undo (setElemStr "Z") s
 onKeyDown "y"       s = ifCtrl redo (setElemStr "Y") s
+onKeyDown "0"       s = addAbbrShortcut "Ph" phenyl s
 onKeyDown "1"       s = addBondShortcut False Single NoBondStereo s
 onKeyDown "2"       s = addBondShortcut False Dbl NoBondStereo s
 onKeyDown "3"       s = addBondShortcut False Triple NoBondStereo s
-onKeyDown "4"       s = addBondShortcut True Single Up s 
-onKeyDown "5"       s = addBondShortcut True Single Down s
+onKeyDown "4"       s = addGroupShortcut phenyl s
+onKeyDown "5"       s = addGroupShortcut (ring 5) s
+onKeyDown "6"       s = addGroupShortcut (readMolfile cy) s
+onKeyDown "7"       s = addBondShortcut True Single Up s 
+onKeyDown "8"       s = addBondShortcut True Single Down s
+onKeyDown "9"       s = addGroupShortcut (readMolfile ac) s
 onKeyDown x         s = setElemStr (toUpper x) s
 
 onKeyUp "Shift"   s = {modifier $= reset Shift} s

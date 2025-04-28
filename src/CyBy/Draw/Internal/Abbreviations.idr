@@ -26,7 +26,9 @@ reverseLabel : String -> List Abbreviation -> String
 reverseLabel s []              = s
 reverseLabel s (A l r _ :: xs) = if s == l then r else reverseLabel s xs
 
+export
 ph, cy : String
+export
 ac, oAc, bn, bz : String
 
 export
