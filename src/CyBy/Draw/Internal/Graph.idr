@@ -509,6 +509,10 @@ selectedItems g = eons (selectedNodes g False) (selectedEdges g)
 nodeBounds : CDIGraph k -> Fin k -> Bounds2D Mol
 nodeBounds g = bounds . lab g
 
+export
+nodesBounds : CDGraph -> Bounds2D Mol
+nodesBounds g = bounds $ labels g.graph
+
 edgeBounds : CDIGraph k -> (Fin k,Fin k) -> Bounds2D Mol
 edgeBounds g (x,y) = bounds (lab g x) <+> bounds (lab g y)
 

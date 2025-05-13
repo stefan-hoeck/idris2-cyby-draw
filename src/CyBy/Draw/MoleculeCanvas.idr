@@ -632,16 +632,22 @@ toTransform (AT (LT s r) (V x y)) =
       si  := s.value * sin r.value
    in Matrix co si (negate si) co x y
 
-scene : DrawSettings => (withSelection : Bool) -> DrawState -> SVGNode
+-- Creates an SVGNode. If the export flag is set to True, then the graph is
+-- centered, scaled to the standard size and does not contain any selection
+-- marker.
+scene : DrawSettings => (exp : Bool) -> DrawState -> SVGNode
 scene b s =
   case s.mode of
     PTable me => displayPSE s.dims me
     mode      =>
       let m := nextMol s
-       in g
-            [transform $ toTransform s.transform]
-            (if b then drawMolecule m ++ drawSelection s
-                  else drawMolecule $ clear m)
+       in if b
+            then g
+                   [transform $ toTransform $ iniTrans s.dims Init s.mol]
+                   (drawMolecule $ clear m)
+            else g
+                   [transform $ toTransform s.transform]
+                   (drawMolecule m ++ drawSelection s)
 
 display : DrawSettings => DrawState -> SVGNode
 display s =
@@ -650,12 +656,27 @@ display s =
     , width 100.perc
     , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] [scene True s]
+    ] [scene False s]
 
 metadata : DrawSettings => DrawState -> SVGNode
 metadata s =
   let m := nextMol s
    in El "metadata" [] [Txt $ toMolStr s]
+
+-- Creates the view box customised to the present graph.
+-- The margin is dependent on the `selectBufferSize` value of the core
+-- dimensions.
+svgViewBoxSize : (se : DrawSettings) => DrawState -> SVGAttribute "svg"
+svgViewBoxSize {se} s =
+  case corners $ nodesBounds (nextMol s) of
+    Nothing      => viewBox 0.u 0.u 0.u 0.u
+    Just (p1,p2) =>
+      let (SZ _ _ s1 s2) := selectZones (convert p1) (convert p2)
+       in viewBox
+            (s1.x + s.dims.swidth / 2).u
+            (s1.y + s.dims.sheight / 2).u
+            (s2 - s1).x.u
+            (s2 - s1).y.u
 
 export
 clipSVG : DrawSettings => DrawState -> String
@@ -665,8 +686,8 @@ clipSVG s =
       [ xmlns_2000
       , width 100.perc
       , height 100.perc
-      , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-      ] [scene False s, metadata s]
+      , svgViewBoxSize s
+      ] [scene True s, metadata s]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState

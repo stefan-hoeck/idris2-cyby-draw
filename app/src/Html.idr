@@ -28,7 +28,7 @@ logAndDisplay e       s = clearMsg e <+> displaySketcher "app" e s
 covering export
 app : IO ()
 app =
-  let se := defaultSettings abbreviations Nothing
+  let se := defaultSettings abbreviations $ Just Word
    in runMVC
         update
         (logAndDisplay @{se})
