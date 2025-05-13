@@ -49,7 +49,7 @@ data Mode : Type where
   SetTempl    : CDGraph -> Mode
   RotTempl    : (start : Point Mol) -> (t : CDGraph) -> Mode
   RotTemplAtm : DepNode -> CDGraph -> Mode
-  RotTemplOvp : (g,t : DepNode) -> Mode
+  RotTemplOvp : (g,t : DepNode) -> (initPoint : Point Mol) -> Mode
   Selecting   : (start : Point Id) -> Mode
   Erasing     : (start : Point Id) -> Mode
   Dragging    : (start : Point Mol) -> Mode
@@ -247,7 +247,8 @@ nextMol s =
       Rotating p       => rotateSelected (s.modifier == Shift) p s.posMol s.mol
       SetTempl t       => addTemplate s.posMol t s.mol
       RotTempl p t     => addTemplate p (rotateTempl False p s.posMol t) s.mol
-      RotTemplOvp g t => addTemplateRot s.posMol (Right (g.node,t.node)) t.graph.graph g.graph.graph
+      RotTemplOvp g t p =>
+        addTemplateRot s.posMol (Right (g.node,t.node,p)) t.graph.graph g.graph.graph
       RotTemplAtm g t => addTemplateRot s.posMol (Left g.node) t.graph g.graph.graph
       Drawing Nothing  => addBond (s.modifier == Shift) (Just s.posMol) s.bond s.imol
       Drawing (Just $ A l _ g) => setAbbreviation (s.modifier == Shift) l s.posId g s.mol
@@ -437,7 +438,10 @@ parameters {auto ds : DrawSettings}
                     in case nodesToMerge s.imol t' of
                          -- exactly one overlap -> rotating around it possible
                          [(fm, ft)] =>
-                           {mode := RotTemplOvp (DN (G _ s.imol) fm) (DN (G _ t') ft)} s
+                           {mode := RotTemplOvp
+                                      (DN (G _ s.imol) fm)
+                                      (DN (G _ t') ft)
+                                      (convert s.curPos)} s
                          _          =>
                            setMol (nextMol s) $ {mode := SetTempl t} s
             _ => s
@@ -456,7 +460,7 @@ parameters {auto ds : DrawSettings}
       Dragging  _ => setMol (nextMol s) $ {mode := Select} s
       Rotating  _ => setMol (nextMol s) $ {mode := Select} s
       RotTemplAtm _ t => setMol (nextMol s) $ {mode := SetTempl t} s
-      RotTemplOvp _ t => setMol (nextMol s) $ {mode := SetTempl t.graph} s
+      RotTemplOvp _ t _ => setMol (nextMol s) $ {mode := SetTempl t.graph} s
       Drawing (Just a) => setMol (nextMol s) $ {mode := SetAbbr a} s
       Drawing Nothing  => setMol (nextMol s) $ {mode := Draw} s
       PTable (Just el) => {mode := SetAtom (cast el)} s

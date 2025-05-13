@@ -828,16 +828,19 @@ rotTemplOnAtom {m = S _} p n g t =
 -- rotate the template around the overlapping point in accordance of the cursor
 -- movement.
 -- Here, rotating the template is only allowed in defined step angles.
+-- To avoid unwanted rotation, the cursor has to be moved a minimum of
+-- 1/4 of a standard bond length from its initial position (left mouse
+-- button click).
 rotTemplAroundOverlap :
      {auto _ : CoreDims}
   -> {s,k,m : _}
-  -> (cursor : Point s)
+  -> (initCursor,cursor : Point s)
   -> (aMol : Fin k)
   -> (aTempl : Fin m)
   -> (mol : CDIGraph k)
   -> (templ : CDIGraph m)
   -> CDGraph
-rotTemplAroundOverlap p nm nt g t =
+rotTemplAroundOverlap ip p nm nt g t =
   let pMol    := point $ lab g nm
       pTemA   := point $ lab t nt
       offset  := pMol - pTemA
@@ -846,7 +849,9 @@ rotTemplAroundOverlap p nm nt g t =
       Just aM := angle (pMol - convert p) | Nothing => G _ t'
       angle   := aM - a0
       aSteps  := fromMaybe angle (closestAngle angle stepAngles)
-   in G _ $ rotateAt pMol aSteps t'
+   in if distance ip p > value (BondLengthInAngstrom / 4)
+         then G _ $ rotateAt pMol aSteps t'
+         else G _ t'
 
 ||| Attaches an atom to a mol graph.
 |||
@@ -1010,7 +1015,7 @@ addTemplateRot :
      {auto _ : CoreDims}
   -> {s,k,n : _}
   -> (cursor : Point s)
-  -> Either (Fin n) (Fin n, Fin k)
+  -> Either (Fin n) (Fin n, Fin k, Point s)
   -> (templ : CDIGraph k)
   -> (mol : CDIGraph n)
   -> CDGraph
@@ -1018,8 +1023,8 @@ addTemplateRot {n = S j,k = S i} p (Left f) t m =
   let rotTemp := rotTemplOnAtom p f m t
       bnd     := CB New $ cast Single
    in mergeGraphs' m rotTemp [(f,0,bnd)]
-addTemplateRot {n = S j,k = S i} p (Right (fm,ft)) t m =
-  let (G _ rotTemp) := rotTemplAroundOverlap p fm ft m t
+addTemplateRot {n = S j,k = S i} p (Right (fm,ft,ip)) t m =
+  let (G _ rotTemp) := rotTemplAroundOverlap ip p fm ft m t
    in mergeGraphs' m rotTemp []
 addTemplateRot _ _ _ m = G _ m
 
