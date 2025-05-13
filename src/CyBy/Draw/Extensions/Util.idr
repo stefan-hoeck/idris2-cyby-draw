@@ -4,6 +4,8 @@ import Data.SnocList
 
 %default total
 
+public export
+data ExtensionEvent = ExportSVG | ImportSVG
 
 -- extracts the content of the `<metadata>` tag
 export

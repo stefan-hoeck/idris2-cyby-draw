@@ -28,10 +28,15 @@ logAndDisplay e       s = clearMsg e <+> displaySketcher "app" e s
 covering export
 app : IO ()
 app =
-  let se := defaultSettings abbreviations $ Just Word
+  let extension := Word
+      se        := defaultSettings abbreviations extension
+      sceneDim  :=
+        case extension of
+          None => SD 600 400
+          Word => SD 400 266
    in runMVC
         update
         (logAndDisplay @{se})
         (putStrLn . dispErr)
         (KeyDown "Escape")
-        (init @{se} (SD 400 266) Init "")
+        (init @{se} sceneDim Init "")

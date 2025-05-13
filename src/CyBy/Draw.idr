@@ -24,6 +24,7 @@ import public CyBy.Draw.MoleculeCanvas
 import public CyBy.Draw.PeriodicTableCanvas
 import public Text.Molfile
 import public CyBy.Draw.Extensions.Word
+import public CyBy.Draw.Extensions.Util
 
 %default total
 
@@ -236,7 +237,7 @@ topBar {ds} pre s =
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
     , icon "svg-exp" SVGexp "export svg"
-    , if ds.usedExtension == Just Word
+    , if ds.usedExtension == Word
          then icon "svg-imp" SVGimp "import selected molecule"
          else Empty
     ]
@@ -420,8 +421,8 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = neutral
 
-  choseExt : Maybe Extension -> String -> DrawState -> Cmd DrawEvent
-  choseExt (Just Word) c s = dispWordExt c s
+  choseExt : Extension -> ExtensionEvent -> DrawState -> Cmd DrawEvent
+  choseExt Word we s = dispWordExt we s
   choseExt _           _ s = cmd_ (toClipboard $ clipSVG s)
 
   displayEv : DrawEvent -> DrawState -> Cmd DrawEvent
@@ -446,8 +447,8 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVGexp           s = choseExt ds.usedExtension "export" s
-  displayEv SVGimp           s = choseExt ds.usedExtension "import" s
+  displayEv SVGexp           s = choseExt ds.usedExtension ExportSVG s
+  displayEv SVGimp           s = choseExt ds.usedExtension ImportSVG s
   displayEv _                s = neutral
 
   export

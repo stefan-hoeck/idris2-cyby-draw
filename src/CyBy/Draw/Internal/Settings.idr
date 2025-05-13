@@ -14,7 +14,7 @@ import Geom
 
 ||| A data type for the different extensions supported at the moment.
 public export
-data Extension = Word
+data Extension = None | Word
 
 %runElab derive "Extension" [Show, Eq]
 
@@ -44,10 +44,10 @@ record DrawSettings where
   minZoom           : Scale
   pseFontSize       : Nat
   resizeCornerRad   : Double
-  usedExtension     : Maybe Extension
+  usedExtension     : Extension
 
 export
-defaultSettings : List Abbreviation -> Maybe Extension -> DrawSettings
+defaultSettings : List Abbreviation -> Extension -> DrawSettings
 defaultSettings as ext =
   MS {
      abbreviations     = as

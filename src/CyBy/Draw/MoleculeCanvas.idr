@@ -658,6 +658,9 @@ display s =
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
     ] [scene False s]
 
+-- Embeds a graph, in the MOL file format, in an SVG node `metadata`.
+-- Therefore, the SVG can be read in again later, and the graph can be
+-- parsed from the string of the MOL file inside the metadata tag.
 metadata : DrawSettings => DrawState -> SVGNode
 metadata s =
   let m := nextMol s
