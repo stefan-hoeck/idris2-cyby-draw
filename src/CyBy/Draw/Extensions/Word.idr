@@ -67,5 +67,5 @@ fromClipboard =
 ||| Parses a word event and forms a DrawEvent command.
 export
 dispWordExt : DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
-dispWordExt ExportSVG s = cmd_ (exportImageToWord $ clipSVG s)
+dispWordExt ExportSVG s = cmd_ (exportImageToWord $ exportSVG s)
 dispWordExt ImportSVG s = fromClipboard

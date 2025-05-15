@@ -632,31 +632,15 @@ toTransform (AT (LT s r) (V x y)) =
       si  := s.value * sin r.value
    in Matrix co si (negate si) co x y
 
--- Creates an SVGNode. If the export flag is set to True, then the graph is
--- centered, scaled to the standard size and does not contain any selection
--- marker.
-scene : DrawSettings => (exp : Bool) -> DrawState -> SVGNode
-scene b s =
+scene : DrawSettings => DrawState -> SVGNode
+scene s =
   case s.mode of
     PTable me => displayPSE s.dims me
     mode      =>
       let m := nextMol s
-       in if b
-            then g
-                   [transform $ toTransform $ iniTrans s.dims Init s.mol]
-                   (drawMolecule $ clear m)
-            else g
-                   [transform $ toTransform s.transform]
-                   (drawMolecule m ++ drawSelection s)
-
-display : DrawSettings => DrawState -> SVGNode
-display s =
-  svg
-    [ xmlns_2000
-    , width 100.perc
-    , height 100.perc
-    , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] [scene False s]
+       in g
+            [transform $ toTransform s.transform]
+            (drawMolecule m ++ drawSelection s)
 
 -- Embeds a graph, in the MOL file format, in an SVG node `metadata`.
 -- Therefore, the SVG can be read in again later, and the graph can be
@@ -666,37 +650,20 @@ metadata s =
   let m := nextMol s
    in El "metadata" [] [Txt $ toMolStr s]
 
--- Creates the view box customised to the present graph.
--- The margin is dependent on the `selectBufferSize` value of the core
--- dimensions.
-svgViewBoxSize : (se : DrawSettings) => DrawState -> SVGAttribute "svg"
-svgViewBoxSize {se} s =
-  case corners $ nodesBounds (nextMol s) of
-    Nothing      => viewBox 0.u 0.u 0.u 0.u
-    Just (p1,p2) =>
-      let (SZ _ _ s1 s2) := selectZones (convert p1) (convert p2)
-       in viewBox
-            (s1.x + s.dims.swidth / 2).u
-            (s1.y + s.dims.sheight / 2).u
-            (s2 - s1).x.u
-            (s2 - s1).y.u
-
-export
-clipSVG : DrawSettings => DrawState -> String
-clipSVG s =
-  SVG.render $
-    svg
-      [ xmlns_2000
-      , width 100.perc
-      , height 100.perc
-      , svgViewBoxSize s
-      ] [scene True s, metadata s]
+display : DrawSettings => DrawState -> (metadata : Bool) -> SVGNode
+display s m =
+  svg
+    [ xmlns_2000
+    , width 100.perc
+    , height 100.perc
+    , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
+    ] [scene s, if m then metadata s else Empty]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState
 update e s =
   let s2 := upd e s
-   in {prevSVG := s.curSVG, curSVG := render (display s2)} s2
+   in {prevSVG := s.curSVG, curSVG := render (display s2 False)} s2
 
 --------------------------------------------------------------------------------
 -- Initialization
@@ -726,18 +693,27 @@ parameters {auto ds : DrawSettings}
   ||| Initializes the drawing state for the given mol graph.
   |||
   ||| The `SceneDims` are used for centering the molecule, as well
-  ||| as for scaling it to fill the scene in case the given bool is
-  ||| set to `True`.
+  ||| as for scaling it to fill the scene. The `exp` flag is used
+  ||| to decide if the graph is atached to the SVG in form of a
+  ||| MOL file string (metadata).
   export
-  initMol : SceneDims -> ScaleMode -> CDGraph -> DrawState
-  initMol sd sm g =
+  initMol : SceneDims -> ScaleMode -> (exp : Bool) -> CDGraph -> DrawState
+  initMol sd sm exp g =
     let s := initST sd sm g
-     in {curSVG := render (display s)} s
+     in {curSVG := render (display s exp)} s
   
   export %inline
   init : SceneDims -> ScaleMode -> String -> DrawState
-  init sd sm = initMol sd sm . readMolfile
+  init sd sm = initMol sd sm False . readMolfile
   
   export %inline
   fromMol : SceneDims -> ScaleMode -> MolGraphAT -> DrawState
-  fromMol sd sm = initMol sd sm . initGraph
+  fromMol sd sm = initMol sd sm False . initGraph
+
+  ||| Generates an SVG string out of the current DrawState. The
+  ||| graph is included as MOL file string inside the metadata tag.
+  export
+  exportSVG : DrawState -> String
+  exportSVG s =
+    let bounds := nodesBounds (nextMol s)
+     in curSVG $ initMol (SD (width bounds) (height bounds)) Fill True s.mol

@@ -423,7 +423,7 @@ parameters {auto ds : DrawSettings}
 
   choseExt : Extension -> ExtensionEvent -> DrawState -> Cmd DrawEvent
   choseExt Word we s = dispWordExt we s
-  choseExt _           _ s = cmd_ (toClipboard $ clipSVG s)
+  choseExt _           _ s = cmd_ (toClipboard $ exportSVG s)
 
   displayEv : DrawEvent -> DrawState -> Cmd DrawEvent
   displayEv Focus            s = focusCurrentApp
@@ -469,4 +469,4 @@ displayMol :
 displayMol sd g m =
   let cdg    := initGraph g
       G o mg := maybe cdg (\ns => highlight ns cdg) m
-   in Raw . curSVG $ initMol sd Fill $ G o mg
+   in Raw . curSVG $ initMol sd Fill False $ G o mg
