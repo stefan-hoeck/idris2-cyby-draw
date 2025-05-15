@@ -200,7 +200,9 @@ parameters {auto ds : DrawSettings}
       scaleToBounds : (Bounds2D Id, Scale)
       scaleToBounds =
         case sm of
-          Init  => (neutral,1.0)
+          Init  =>
+            let bs := foldMap bounds (Draw.labels g)
+             in (bs,1.0)
           Reset =>
            let bs := foldMap bounds (Draw.labels g)
             in (bs, min 1.0 (scaleFromBounds (sceneBounds sd) bs))
@@ -632,15 +634,16 @@ toTransform (AT (LT s r) (V x y)) =
       si  := s.value * sin r.value
    in Matrix co si (negate si) co x y
 
-scene : DrawSettings => DrawState -> SVGNode
-scene s =
+scene : DrawSettings => (exp : Bool) -> DrawState -> SVGNode
+scene exp s =
   case s.mode of
     PTable me => displayPSE s.dims me
     mode      =>
       let m := nextMol s
        in g
             [transform $ toTransform s.transform]
-            (drawMolecule m ++ drawSelection s)
+            (if exp then drawMolecule $ clear m
+                    else drawMolecule m ++ drawSelection s)
 
 -- Embeds a graph, in the MOL file format, in an SVG node `metadata`.
 -- Therefore, the SVG can be read in again later, and the graph can be
@@ -657,7 +660,8 @@ display s m =
     , width 100.perc
     , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] [scene s, if m then metadata s else Empty]
+    ] $ if m then [scene True s, metadata s]
+             else [scene False s]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState
@@ -712,8 +716,11 @@ parameters {auto ds : DrawSettings}
 
   ||| Generates an SVG string out of the current DrawState. The
   ||| graph is included as MOL file string inside the metadata tag.
+  ||| The border margin depends on the `CoreDims`s `selectBufferSize`
+  ||| field value.
   export
   exportSVG : DrawState -> String
   exportSVG s =
-    let bounds := nodesBounds (nextMol s)
-     in curSVG $ initMol (SD (width bounds) (height bounds)) Fill True s.mol
+    let Just (p1,p2) := corners $ nodesBounds s.mol | Nothing => ""
+        (SZ _ _ r1 r2) := selectZones (convert p1) (convert p2)
+     in curSVG $ initMol (SD (r2-r1).x (r2-r1).y) Init True s.mol
