@@ -1,3 +1,10 @@
+/* Main CSS file for the CyBy-Draw
+
+   Specialised classes are available in other CSS files
+   and will overwrite the classes here.
+*/
+
+
 /* Page */
 html {
   height: 100%;
@@ -125,10 +132,6 @@ body {
 
 .cyby-draw-icon.clear {
   background-image: url("draw_icons/icon_trash.svg");
-}
-
-.cyby-draw-icon.svg-imp {
-  background-image: url("draw_icons/icon_svg_imp.svg");
 }
 
 .cyby-draw-icon.svg-exp {

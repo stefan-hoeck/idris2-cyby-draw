@@ -1,0 +1,17 @@
+/* Specialised CSS file for the Word AddIn
+  
+   This rules overwrite the standard CyBy-Draw CSS settings
+   for adjusting it to the word addin style.
+*/
+
+
+/* replace the padding with the top margin*/
+.cyby-draw-main-content {
+  padding: 0px;
+  margin-top: 20px;
+}
+
+/* extra class for the svg import icon */
+.cyby-draw-icon.svg-imp {
+  background-image: url("draw_icons/icon_svg_imp.svg");
+}
