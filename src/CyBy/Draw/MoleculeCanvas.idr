@@ -637,13 +637,14 @@ toTransform (AT (LT s r) (V x y)) =
 scene : DrawSettings => (exp : Bool) -> DrawState -> SVGNode
 scene exp s =
   case s.mode of
-    PTable me => displayPSE s.dims me
-    mode      =>
+    (PTable me) => displayPSE s.dims me
+    _           =>
       let m := nextMol s
        in g
             [transform $ toTransform s.transform]
-            (if exp then drawMolecule $ clear m
-                    else drawMolecule m ++ drawSelection s)
+            (if exp
+               then drawMolecule $ clear m
+               else drawMolecule m ++ drawSelection s)
 
 -- Embeds a graph, in the MOL file format, in an SVG node `metadata`.
 -- Therefore, the SVG can be read in again later, and the graph can be
@@ -701,10 +702,10 @@ parameters {auto ds : DrawSettings}
   ||| to decide if the graph is atached to the SVG in form of a
   ||| MOL file string (metadata).
   export
-  initMol : SceneDims -> ScaleMode -> (exp : Bool) -> CDGraph -> DrawState
-  initMol sd sm exp g =
+  initMol : SceneDims -> ScaleMode -> (metadata : Bool) -> CDGraph -> DrawState
+  initMol sd sm metadata g =
     let s := initST sd sm g
-     in {curSVG := render (display s exp)} s
+     in {curSVG := render (display s metadata)} s
   
   export %inline
   init : SceneDims -> ScaleMode -> String -> DrawState
@@ -721,6 +722,6 @@ parameters {auto ds : DrawSettings}
   export
   exportSVG : DrawState -> String
   exportSVG s =
-    let Just (p1,p2) := corners $ nodesBounds s.mol | Nothing => ""
+    let Just (p1,p2) := corners $ bounds s.mol | Nothing => ""
         (SZ _ _ r1 r2) := selectZones (convert p1) (convert p2)
      in curSVG $ initMol (SD (r2-r1).x (r2-r1).y) Init True s.mol
