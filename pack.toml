@@ -8,6 +8,11 @@ type    = "local"
 path    = "app"
 ipkg    = "cyby-draw-app.ipkg"
 
+[custom.all.cyby-draw-word-addin]
+type    = "local"
+path    = "wordAddin"
+ipkg    = "cyby-draw-wordAddin.ipkg"
+
 [custom.all.chem]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"

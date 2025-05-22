@@ -28,10 +28,10 @@ logAndDisplay e       s = clearMsg e <+> displaySketcher "app" e s
 covering export
 app : IO ()
 app =
-  let se := defaultSettings abbreviations None
+  let se := defaultSettings abbreviations Word
    in runMVC
         update
         (logAndDisplay @{se})
         (putStrLn . dispErr)
         (KeyDown "Escape")
-        (init @{se} (SD 600 400) Init "")
+        (init @{se} (SD 400 266) Init "")
