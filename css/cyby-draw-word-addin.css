@@ -1,13 +1,13 @@
-/* Specialised CSS file for the Word AddIn
-  
-   This rules overwrite the standard CyBy-Draw CSS settings
-   for adjusting it to the word addin style.
-*/
+/* -----------------------------------------------------------------------------
+    Specialised CSS file for the Word AddIn
 
+    This rules overwrite the standard CyBy-Draw CSS settings
+    for adjusting it to the word addin style.
+ ---------------------------------------------------------------------------- */
 
-/* replace the padding with the top margin*/
+/* replace the padding with the top margin */
 .cyby-draw-main-content {
-  padding: 0px;
+  padding: 0;
   margin-top: 20px;
 }
 
