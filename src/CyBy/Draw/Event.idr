@@ -74,7 +74,7 @@ data DrawEvent : Type where
   EndResize        : DrawEvent
   EndResizeHW      : (h,w : Double) -> DrawEvent
   StartPSE         : DrawEvent
-  SVGexp           : DrawEvent
+  SVG              : DrawEvent
   SVGimp           : DrawEvent
 
 %runElab derive "DrawEvent" [Show, Eq]

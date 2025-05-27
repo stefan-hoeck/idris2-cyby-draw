@@ -10,8 +10,8 @@ ipkg    = "cyby-draw-app.ipkg"
 
 [custom.all.cyby-draw-word-addin]
 type    = "local"
-path    = "wordAddin"
-ipkg    = "cyby-draw-wordAddin.ipkg"
+path    = "word-addin"
+ipkg    = "cyby-draw-word-addin.ipkg"
 
 [custom.all.chem]
 type   = "git"

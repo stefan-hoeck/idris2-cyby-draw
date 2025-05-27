@@ -134,8 +134,8 @@ body {
   background-image: url("draw_icons/icon_trash.svg");
 }
 
-.cyby-draw-icon.svg-exp {
-  background-image: url("draw_icons/icon_svg_exp.svg");
+.cyby-draw-icon.svg {
+  background-image: url("draw_icons/icon_svg.svg");
 }
 
 .cyby-draw-icon.undo {

@@ -622,7 +622,7 @@ upd (Msg _)       s = s
 upd EndResize     s = s
 upd (EndResizeHW h w) s = endResize h w s
 upd StartPSE      s = {mode := PTable Nothing} s
-upd SVGexp        s = s
+upd SVG           s = s
 upd SVGimp        s = s
 
 ||| Convert an `AffineTransformation` to a transformation to be
@@ -637,8 +637,8 @@ toTransform (AT (LT s r) (V x y)) =
 scene : DrawSettings => (exp : Bool) -> DrawState -> SVGNode
 scene exp s =
   case s.mode of
-    (PTable me) => displayPSE s.dims me
-    _           =>
+    PTable me => displayPSE s.dims me
+    _         =>
       let m := nextMol s
        in g
             [transform $ toTransform s.transform]
@@ -661,8 +661,7 @@ display s m =
     , width 100.perc
     , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] $ if m then [scene True s, metadata s]
-             else [scene False s]
+    ] $ if not m then [scene False s] else [scene True s, metadata s]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState

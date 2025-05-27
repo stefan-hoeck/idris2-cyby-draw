@@ -236,7 +236,7 @@ topBar {ds} pre s =
     , bondIcon "single-up-down" (fromStereo UpOrDown) "single bond up or down" s
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
-    , icon "svg-exp" SVGexp "export svg"
+    , icon "svg" SVG "svg"
     , if ds.usedExtension == Word
          then icon "svg-imp" SVGimp "import selected molecule"
          else Empty
@@ -447,7 +447,7 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVGexp           s = choseExt ds.usedExtension ExportSVG s
+  displayEv SVG              s = choseExt ds.usedExtension ExportSVG s
   displayEv SVGimp           s = choseExt ds.usedExtension ImportSVG s
   displayEv _                s = neutral
 

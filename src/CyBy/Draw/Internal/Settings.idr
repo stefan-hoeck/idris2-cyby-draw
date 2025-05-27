@@ -47,8 +47,8 @@ record DrawSettings where
   usedExtension     : Extension
 
 export
-defaultSettings : List Abbreviation -> Extension -> DrawSettings
-defaultSettings as ext =
+defaultSettings : List Abbreviation -> DrawSettings
+defaultSettings as =
   MS {
      abbreviations     = as
    , core              = defaultCore
@@ -68,7 +68,7 @@ defaultSettings as ext =
    , minZoom           = 0.1
    , pseFontSize       = 11
    , resizeCornerRad   = 20.0
-   , usedExtension     = ext
+   , usedExtension     = None
    }
 
 export %inline %hint
