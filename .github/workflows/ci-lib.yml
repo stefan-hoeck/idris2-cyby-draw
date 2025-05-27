@@ -31,3 +31,5 @@ jobs:
         run: pack typecheck cyby-draw
       - name: Build app
         run: pack build cyby-draw-app
+      - name: Build word-addin
+        run: pack build cyby-draw-word-addin
