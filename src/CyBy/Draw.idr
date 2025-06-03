@@ -95,10 +95,6 @@ sketcherDivInner : String -> Ref Div
 sketcherDivInner pre = Id "\{pre}_sketcher_div_inner"
 
 export
-infoList : String -> Ref Div
-infoList pre = Id "\{pre}_info_list"
-
-export
 molReader : String -> Ref Div
 molReader pre = Id "\{pre}_mol_reader"
 
@@ -339,7 +335,6 @@ sketcher pre s =
           [ class "cyby-draw-toolbar-bottom-outer" ]
           [ bottomBar pre s, abbrs pre s ]
       ]
-      , div [ Id $ infoList pre, class "cyby-draw-info-list" ] []
     ]
 
 --------------------------------------------------------------------------------
