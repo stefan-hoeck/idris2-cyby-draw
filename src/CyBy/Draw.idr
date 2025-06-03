@@ -237,9 +237,9 @@ topBar {ds} pre s =
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
     , icon "svg" SVG "svg"
-    , if ds.usedExtension == Word
-         then icon "svg-imp" SVGimp "import selected molecule"
-         else Empty
+    , nodeIf
+        (ds.usedExtension == Word)
+        (icon "svg-imp" SVGimp "import selected molecule")
     ]
 
 template : (cls : String) -> CDGraph -> String -> DrawState -> Node DrawEvent
@@ -421,9 +421,9 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = neutral
 
-  choseExt : Extension -> ExtensionEvent -> DrawState -> Cmd DrawEvent
-  choseExt Word we s = dispWordExt we s
-  choseExt _           _ s = cmd_ (toClipboard $ exportSVG s)
+  chooseExt : Extension -> ExtensionEvent -> DrawState -> Cmd DrawEvent
+  chooseExt Word we s = dispWordExt we s
+  chooseExt None _  s = cmd_ (toClipboard $ exportSVG s)
 
   displayEv : DrawEvent -> DrawState -> Cmd DrawEvent
   displayEv Focus            s = focusCurrentApp
@@ -447,8 +447,8 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVG              s = choseExt ds.usedExtension ExportSVG s
-  displayEv SVGimp           s = choseExt ds.usedExtension ImportSVG s
+  displayEv SVG              s = chooseExt ds.usedExtension ExportSVG s
+  displayEv SVGimp           s = chooseExt ds.usedExtension ImportSVG s
   displayEv _                s = neutral
 
   export

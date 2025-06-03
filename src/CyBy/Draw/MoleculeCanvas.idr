@@ -661,7 +661,7 @@ display s m =
     , width 100.perc
     , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] $ if not m then [scene False s] else [scene True s, metadata s]
+    ] $ if m then [scene True s, metadata s] else [scene False s]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState
