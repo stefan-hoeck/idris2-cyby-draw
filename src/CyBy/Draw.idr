@@ -84,43 +84,43 @@ wheel wi =
 
 export
 moleculeCanvas : String -> Ref Div
-moleculeCanvas pre = Id "\{pre}_molecule_canvas"
+moleculeCanvas pre = Id "\{pre}-molecule-canvas"
 
 export
 sketcherDiv : String -> Ref Div
-sketcherDiv pre = Id "\{pre}_sketcher_div"
+sketcherDiv pre = Id "\{pre}-sketcher-div"
 
 export
 sketcherDivInner : String -> Ref Div
-sketcherDivInner pre = Id "\{pre}_sketcher_div_inner"
+sketcherDivInner pre = Id "\{pre}-sketcher-div-inner"
 
 export
 molReader : String -> Ref Div
-molReader pre = Id "\{pre}_mol_reader"
+molReader pre = Id "\{pre}-mol-reader"
 
 export
 molInput : String -> Ref TextArea
-molInput pre = Id "\{pre}_mol_input"
+molInput pre = Id "\{pre}-mol-input"
 
 export
 leftBarID : String -> Ref Div
-leftBarID pre = Id "\{pre}_left_bar"
+leftBarID pre = Id "\{pre}-left-bar"
 
 export
 rightBarID : String -> Ref Div
-rightBarID pre = Id "\{pre}_right_bar"
+rightBarID pre = Id "\{pre}-right-bar"
 
 export
 topBarID : String -> Ref Div
-topBarID pre = Id "\{pre}_top_bar"
+topBarID pre = Id "\{pre}-top-bar"
 
 export
 bottomBarID : String -> Ref Div
-bottomBarID pre = Id "\{pre}_bottom_bar"
+bottomBarID pre = Id "\{pre}-bottom-bar"
 
 export
 abbrID : String -> Ref Tag.Select
-abbrID pre = Id "\{pre}_abbreviations"
+abbrID pre = Id "\{pre}-abbreviations"
 
 --------------------------------------------------------------------------------
 --          View
