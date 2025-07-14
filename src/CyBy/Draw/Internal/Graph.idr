@@ -576,7 +576,7 @@ insElemAt g = insIsotopeAt g . cast
 ||| Computes the preferred angle for a new bond based on the bond type
 ||| and angles to already existing bonds.
 export
-preferredAngle : (hasTriple : Bool) -> List Angle -> Angle
+preferredAngle : (isLinear : Bool) -> List Angle -> Angle
 preferredAngle _     []  = (negate 1.0 / 6.0) * pi
 preferredAngle True  [x] = x + pi
 preferredAngle False [x] =
@@ -585,13 +585,20 @@ preferredAngle False [x] =
      else x - twoThirdPi
 preferredAngle _     xs  = largestBisector xs
 
+-- Checks if the geometry at an atom is linear.
+isLinear : List BondOrder -> Bool
+isLinear [Triple,_] = True
+isLinear [_,Triple] = True
+isLinear [Dbl,Dbl]  = True
+isLinear _          = False
+
 ||| Preferred position for a new atom bound to an existing one based on the
 ||| largest bisector of angles between existing bonds
 export
 bestPos : CDIGraph k -> MolBond -> Fin k -> Point Id -> Point Id
 bestPos g b n p =
-  let hasTrpl  := any ((Triple ==) . type) (b::map molBond (edgeLabels g n))
-      newAngle := preferredAngle hasTrpl (bondAngles g n)
+  let orders   := b.type :: map (type . molBond) (edgeLabels g n)
+      newAngle := preferredAngle (isLinear orders) (bondAngles g n)
    in translate (polar BondLengthInPixels newAngle) p
 
 ||| Equally spaced sequence of `s.angleSteps` angles from 0 until 2pi.
