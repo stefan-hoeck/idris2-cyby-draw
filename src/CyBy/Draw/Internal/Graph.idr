@@ -10,6 +10,7 @@ import Data.SortedSet
 import Derive.Prelude
 import Geom
 import Text.Molfile
+import Text.ParseError
 
 %language ElabReflection
 %default total
@@ -74,7 +75,7 @@ toMolGraph = bimap CDBond.molBond CDAtom.atom
 
 export %inline
 toMolfile : Graph CDBond CDAtom -> MolfileAT
-toMolfile = MkMolfile "" "created by cyby-draw 1.0" "" . toMolGraph
+toMolfile g = MkMolfile "" "created by cyby-draw 1.0" "" (toMolGraph g) []
 
 ||| Initialize a mol-file graph (with perceived atom types) to be used
 ||| in one of the drawing canvases. This includes normalizing the
@@ -87,9 +88,9 @@ initGraph (G o g) = G o $ bimap (CB None) (CA None) (normalizeMol g)
 export
 readMolfileE : String -> Either String CDGraph
 readMolfileE mol =
-  case readMol {es = [MolParseErr]} mol of
-    Left (Here e)             => Left "\{e}"
-    Right (MkMolfile _ _ _ g) => Right $ initGraph (perceiveMolAtomTypes g)
+  case readMol {es = [ParseError MolErr]} mol of
+    Left (Here e)               => Left "\{e}"
+    Right (MkMolfile _ _ _ g _) => Right $ initGraph (perceiveMolAtomTypes g)
 
 ||| Like `readMolfileE` but returns the empty graph in case of a read error.
 export
