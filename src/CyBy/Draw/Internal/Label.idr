@@ -55,7 +55,7 @@ export
 t.w = t.dims.txtWidth
 
 public export
-Bounded (Text $ Point Id) where
+Geom.Bounds.Bounded (Text $ Point Id) where
   btrans = Id
   bounds (T _ "" _ _) = neutral
   bounds (T _ _ (P x y) (TD _ cs w)) =
@@ -121,7 +121,7 @@ labels : AtomLabels a -> List (Text a)
 labels (AL v w x y z) = [v,w,x,y,z]
 
 public export
-Bounded (AtomLabels $ Point Id) where
+Geom.Bounds.Bounded (AtomLabels $ Point Id) where
   btrans = Id
   bounds = foldMap bounds . labels
 
@@ -279,7 +279,7 @@ circleBounds (P x y) =
   let r := cd.radiusAtom in BS (range (x-r) (x+r)) (range (y-r)(y+r))
 
 public export
-(cd : CoreDims) => Bounded Label where
+(cd : CoreDims) => Geom.Bounds.Bounded Label where
   btrans = Id
   bounds Hidden             = neutral
   bounds (NoLabel p)        = circleBounds p
