@@ -239,6 +239,12 @@ export
 visibleNodes : {k : _} -> CDIGraph k -> List (Fin k)
 visibleNodes g = filter (visible g) (nodes g)
 
+||| Returns the visible nodes that within the given bounds.
+export
+atomsIn : {k : _} -> CDIGraph k -> Bounds2D Mol ->  List (Fin k)
+atomsIn g bs =
+  filter (\n => visible g n && inBounds (point $ lab g n) bs) (nodes g)
+
 nonAbbreviatedNodes : {k : _} -> CDIGraph k -> List (Fin k)
 nonAbbreviatedNodes g = filter (not . inAnyGroup . lab g) (nodes g)
 
@@ -300,16 +306,22 @@ bondAngles g x =
 parameters {k : Nat}
            {auto cd : CoreDims}
 
+  ||| Returns the node closest to the given point,
+  ||| but only if it is closer than the defined atom radius.
+  export
+  closestNodeList : List (Fin k) -> Point Id -> CDIGraph k -> Maybe (Fin k)
+  closestNodeList ks p g = do
+    x <- minBy (distance p . pointId . lab g) ks
+    let q := pointAt g x
+    guard $ near p q cd.radiusAtom
+    pure x
+
   ||| Finds the visible node closest to the given point, but only
   ||| if it is closer than the defined atom radius and it fulfills
   ||| the given predicate.
   export
   closestNodeWhere : (Fin k -> Bool) -> Point Id -> CDIGraph k -> Maybe (Fin k)
-  closestNodeWhere pred p g = do
-    x <- minBy (distance p . pointId . lab g) . filter pred $ nodes g
-    let q := pointAt g x
-    guard $ near p q cd.radiusAtom
-    pure x
+  closestNodeWhere pred p g = closestNodeList (filter pred $ nodes g) p g
 
   ||| Finds the visible node closest to the given point, but only
   ||| if it is closer than the defined atom radius.
@@ -645,9 +657,10 @@ nodesToMerge :
   -> CDIGraph m
   -> List (Fin k, Fin m)
 nodesToMerge g t =
-  mapMaybe
-    (\x => (x,) <$> closestNode (pointAt g x) t)
-    (nonAbbreviatedNodes g)
+ let area := overlap {margin = s.radiusAtom }(bounds g) (Geom.Bounds.bounds t)
+     ng   := g `atomsIn` area
+     nt   := t `atomsIn` area
+  in mapMaybe (\x => (x,) <$> closestNodeList nt (pointAt g x) t) ng
 
 -- Offset between origin atom and template atoms as a vector in `Mol` space.
 offset : CDIGraph k -> CDIGraph m -> List (Fin k, Fin m) -> Vector (transform Mol)
@@ -727,12 +740,14 @@ mergeGraphs' g t bs =
       lMergeN   := nodesToMerge g t'
       offset    := offset g t' lMergeN
       lnewBonds := newEdges t' lMergeN ++ bs
+      mergeEsG  := lMergeN >>= edgesTo g . fst
+      mergeEsT  := lMergeN >>= edgesTo t' . snd
       -- replaces bonds between merging (and therefore to be deleted) template
       -- atoms and origin atoms
       -- this is only done if there isn't already a bond from the origin
       -- molecule present at the same position
       mol'      :=
-        insEdges (mapMaybe (createStableBond lMergeN (edges g)) (edges t')) g
+        insEdges (mapMaybe (createStableBond lMergeN mergeEsG) mergeEsT) g
       mol''     := mergeGraphsWithEdges mol' (translate offset t') lnewBonds
    in delNodes (mapMaybe (incNode k . snd) lMergeN) mol''
 
