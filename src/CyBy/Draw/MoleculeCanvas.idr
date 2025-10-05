@@ -83,7 +83,7 @@ hoverAtom _            _ = False
 
 hoverDrawing : MolBond -> MolBond -> Bool -> Bool
 hoverDrawing (MkBond _ Single NoBondStereo) _ a = not a
-hoverDrawing (MkBond _ Single UpOrDown)     b _ = b.stereo /= UpOrDown
+hoverDrawing (MkBond _ Single Either)       b _ = b.stereo /= Either
 hoverDrawing (MkBond _ Single _)            _ _ = True
 hoverDrawing (MkBond _ x      _)            b a = not a && b.type /= x
 

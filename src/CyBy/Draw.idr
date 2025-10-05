@@ -229,7 +229,7 @@ topBar {ds} pre s =
     , bondIcon "single-bond" (cast Single) "single bond" s
     , bondIcon "single-up" (fromStereo Up) "single bond up" s
     , bondIcon "single-down" (fromStereo Down) "single bond down" s
-    , bondIcon "single-up-down" (fromStereo UpOrDown) "single bond up or down" s
+    , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
     , icon "svg" SVG "svg"

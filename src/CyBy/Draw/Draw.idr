@@ -272,10 +272,10 @@ parameters {auto s : DrawSettings}
           Hidden     => ns2
 
   snglBond : Maybe SVGColor -> Point Id -> Point Id -> BondStereo -> TNodes
-  snglBond c x y Up       ns = wedgeUp x y $ wedgeBG c x y ns
-  snglBond c x y UpOrDown ns = wave x y $ waveBG c x y ns
-  snglBond c x y Down     ns = wedgeDown x y $ wedgeBG c x y ns
-  snglBond c x y _        ns = line x y $ lineBG c x y ns
+  snglBond c x y Up     ns = wedgeUp x y $ wedgeBG c x y ns
+  snglBond c x y Either ns = wave x y $ waveBG c x y ns
+  snglBond c x y Down   ns = wedgeDown x y $ wedgeBG c x y ns
+  snglBond c x y _      ns = line x y $ lineBG c x y ns
 
   dblBond : Maybe SVGColor -> Fin k -> Fin k -> Point Id -> Point Id -> TNodes
   dblBond c x y px py ns =
