@@ -167,19 +167,13 @@ groupNrs : {k : _} -> CDIGraph k -> SortedSet Nat
 groupNrs =
   foldr (\a,ss => maybe ss ((`insert` ss) . nr) a.atom.label) SortedSet.empty
 
-||| Generates a mapping from old group numbers to new group numbers.
-||| This is used to generated unique group numbers when inserting a
-||| template.
-export
-groupMap : (cur, templ : SortedSet Nat) -> SortedMap Nat Nat
-groupMap cur = go empty . Prelude.toList
+groupMap : SortedSet Nat -> SortedMap Nat Nat -> List Nat -> SortedMap Nat Nat
+groupMap used m []      = m
+groupMap used m (x::xs) =
+ let n := next x in groupMap (insert n used) (insert x n m) xs
   where
     next : Nat -> Nat
-    next k = if contains k cur then next (assert_smaller k $ S k) else k
-
-    go : SortedMap Nat Nat -> List Nat -> SortedMap Nat Nat
-    go m []        = m
-    go m (x :: xs) = go (insert x (next x) m) xs
+    next k = if contains k used then next (assert_smaller k $ S k) else k
 
 ||| Adjusts abbreviation numbers of a template before merging it
 ||| with an existing molecule.
@@ -190,7 +184,7 @@ groupMap cur = go empty . Prelude.toList
 export
 adjTemplate : {k,m : _} -> CDIGraph k -> CDIGraph m -> CDIGraph m
 adjTemplate c t  =
-  let mp := groupMap (groupNrs c) (groupNrs t)
+  let mp := groupMap (groupNrs c) empty (Prelude.toList $ groupNrs t)
    in map (adj mp) t
 
   where
