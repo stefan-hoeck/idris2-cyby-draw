@@ -15,7 +15,7 @@ import CyBy.Draw.Internal.Graph
 import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Extensions.Util
 
-import CyBy.Draw.Extensions.DomBindings2
+import CyBy.Draw.Extensions.DomBindings
 
 
 %default total
@@ -200,9 +200,6 @@ exportImageToWord s mol = primIO $ prim__exportImageToWord s mol checkValidXmlOb
 exportImageToWord' : (svg,molFile : String) -> JSIO ()
 exportImageToWord' svg mol = do
   wordRun $ \c => do
-    doc <- document c
-    bdy <- body doc
-    prom1 <- promise bdy (insText "test")
     ?foo
 
 
