@@ -29,6 +29,7 @@ modules = CyBy.Draw
 
         , CyBy.Draw.Extensions.Word
         , CyBy.Draw.Extensions.Util
+        , CyBy.Draw.Extensions.DomBindings
 
         , CyBy.Draw.Draw
         , CyBy.Draw.Event

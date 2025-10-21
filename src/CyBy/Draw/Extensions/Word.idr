@@ -1,7 +1,11 @@
 ||| This module takes care of all events used for the word add-in (extension)
 module CyBy.Draw.Extensions.Word
 
+import PrimIO
+
+import Web.Dom
 import Web.MVC
+import Web.Html
 
 import Data.Graph.Indexed
 import CyBy.Draw.Event
@@ -10,6 +14,8 @@ import CyBy.Draw.Internal.Settings
 import CyBy.Draw.Internal.Graph
 import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Extensions.Util
+
+import CyBy.Draw.Extensions.DomBindings2
 
 
 %default total
@@ -188,6 +194,19 @@ prim__importImageFromWord : (helperF : String) -> (String -> PrimIO ()) -> PrimI
 exportImageToWord : (svg,molFile : String) -> JSIO ()
 exportImageToWord s mol = primIO $ prim__exportImageToWord s mol checkValidXmlObjects
 
+
+
+
+exportImageToWord' : (svg,molFile : String) -> JSIO ()
+exportImageToWord' svg mol = do
+  wordRun $ \c => do
+    doc <- document c
+    bdy <- body doc
+    prom1 <- promise bdy (insText "test")
+    ?foo
+
+
+
 fromClipboard : Cmd DrawEvent
 fromClipboard =
   C $ \h => primIO $ prim__importImageFromWord checkValidXmlObjects $ \s,w =>
@@ -199,5 +218,5 @@ fromClipboard =
 ||| Parses a word event and forms a DrawEvent command.
 export
 dispWordExt : DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
-dispWordExt ExportSVG s = cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
+dispWordExt ExportSVG s = cmd_ $ exportImageToWord' (exportSVG s) (toMolStr s)
 dispWordExt ImportSVG s = fromClipboard
