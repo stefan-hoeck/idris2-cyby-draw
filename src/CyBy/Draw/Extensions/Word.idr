@@ -1,11 +1,7 @@
 ||| This module takes care of all events used for the word add-in (extension)
 module CyBy.Draw.Extensions.Word
 
-import PrimIO
-
-import Web.Dom
 import Web.MVC
-import Web.Html
 
 import Data.Graph.Indexed
 import CyBy.Draw.Event
@@ -16,14 +12,15 @@ import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Extensions.Util
 
 import CyBy.Draw.Extensions.DomBindings
-
+import CyBy.Draw.Extensions.PromiseMonad
 
 %default total
 
 
+-- TODO: This will be replaced with Idris funcitons
 -- helper function for removing unused XML objects of deleted images
-checkValidXmlObjects : String
-checkValidXmlObjects =
+checkValidXmlObjects' : String
+checkValidXmlObjects' =
   """
     Word.run(async (context) => {
       // check first if some images were deleted
@@ -71,6 +68,7 @@ checkValidXmlObjects =
   """
 
 
+-- TODO: This will be replaced with Idris funcitons
 -- uses the Word-API for exporting an svg string to a word document
 -- image (inlinePicture)
 -- to preserve the graph, the image is labeled with an unique id
@@ -116,6 +114,7 @@ checkValidXmlObjects =
   """
 prim__exportImageToWord : (svg,molFile,helperF : String) -> PrimIO ()
 
+-- TODO: This will be replaced with Idris funcitons
 -- extracting the mol file from a molecular structure image (created by CyBy-Draw)
 -- for editing it in the CyBy-Draw editor
 -- async / await is needed for promises, see
@@ -190,23 +189,43 @@ prim__exportImageToWord : (svg,molFile,helperF : String) -> PrimIO ()
   """
 prim__importImageFromWord : (helperF : String) -> (String -> PrimIO ()) -> PrimIO ()
 
-%inline
-exportImageToWord : (svg,molFile : String) -> JSIO ()
-exportImageToWord s mol = primIO $ prim__exportImageToWord s mol checkValidXmlObjects
 
-
-
-
-exportImageToWord' : (svg,molFile : String) -> JSIO ()
-exportImageToWord' svg mol = do
+exportImage : (svg,mol : String) -> Prog ()
+exportImage svg mol = do
   wordRun $ \c => do
-    ?foo
+    -- TODO: cleanup the XML structure with `checkValidXmlObjects`
+    -- encrypting the SVG and adding it to the word file at the end
+    -- of the selection
+    b64 <- bToA svg
+    s <- selection c
+    img <- inlinePictureFromB64 s b64
+    addTrackedObj c img
+    load img ""
 
+    -- creating an id and adding it to the image's alt description
+    -- for reference
+    id <- uniqueId
+    addAltTextDescr img id
+    syncContext c
+    removeTrackedObj c img
+    syncContext c
+
+    -- creating a new XML structure to store the mol graph and
+    -- adding it to the context object
+    let xmlContent :=
+      #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
+    addCustomXMLParts c xmlContent
+    putStrLn "exportImage succcesfull"
+
+
+exportImageToWord : (svg,molFile : String) -> JSIO ()
+exportImageToWord svg mol =
+  liftIO $ runProg (putStrLn . ("Error: " ++) . dispErr) (exportImage svg mol)
 
 
 fromClipboard : Cmd DrawEvent
 fromClipboard =
-  C $ \h => primIO $ prim__importImageFromWord checkValidXmlObjects $ \s,w =>
+  C $ \h => primIO $ prim__importImageFromWord checkValidXmlObjects' $ \s,w =>
     case extractAndParseMetadata s of
       Left e  => toPrim (runJS $ h (Msg $ ReadErr e)) w
       Right m => toPrim (runJS $ h (SetTempl m)) w
@@ -215,5 +234,5 @@ fromClipboard =
 ||| Parses a word event and forms a DrawEvent command.
 export
 dispWordExt : DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
-dispWordExt ExportSVG s = cmd_ $ exportImageToWord' (exportSVG s) (toMolStr s)
+dispWordExt ExportSVG s = cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
 dispWordExt ImportSVG s = fromClipboard

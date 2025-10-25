@@ -1,0 +1,161 @@
+module CyBy.Draw.Extensions.PromiseMonad
+
+import Web.Dom
+import Web.MVC
+import Web.Html
+
+%default total
+
+--------------------------------------------------------------------------------
+-- FFI
+--------------------------------------------------------------------------------
+
+-- primitive (FFI)
+%foreign "javascript:lambda:(a,b,p,succ,err,w) => p.then((x) => succ(x)(w),(x) => err(x)(w))"
+prim__then :
+     Promise a
+  -> (a -> PrimIO b)
+  -> (JSErr -> PrimIO b)
+  -> PrimIO (Promise b)
+
+-- primitive (FFI)
+%foreign "javascript:lambda:(a,b,p,succ,err,w) => p.then((x) => succ(x)(w),(x) => err(x)(w))"
+prim__thenp :
+     Promise a
+  -> (a -> PrimIO (Promise b))
+  -> (JSErr -> PrimIO (Promise b))
+  -> PrimIO (Promise b)
+
+-- primitive (FFI)
+%foreign "javascript:lambda:(a,val,w) => new Promise((f) => f(val(w)))"
+prim__pure : PrimIO a -> PrimIO (Promise a)
+
+-- primitive (FFI)
+%foreign "javascript:lambda:(a,ms,val,w) => new Promise((f) => setTimeout(() => f(val(w)), Number(ms)))"
+prim__delayed : Nat -> PrimIO a -> PrimIO (Promise a)
+
+--------------------------------------------------------------------------------
+-- Prog Monad
+--------------------------------------------------------------------------------
+
+-- not a primitive
+prim__veryPure : a -> PrimIO (Promise a)
+prim__veryPure = prim__pure . MkIORes
+
+public export
+record Prog (a : Type) where
+  constructor P
+  run : IO (Promise (Either JSErr a))
+
+-- primitve
+liftIOEither : IO (Either JSErr a) -> Prog a
+liftIOEither io = P (fromPrim $ prim__pure (toPrim io))
+
+liftEither : Either JSErr a -> Prog a
+liftEither = liftIOEither . pure
+
+pureProg : a -> Prog a
+pureProg = liftEither . Right
+
+failProg : JSErr -> Prog a
+failProg = liftEither . Left
+
+-- primitve
+bindProg : Prog a -> (a -> Prog b) -> Prog b
+bindProg (P run) f = P $ do
+  prom <- run
+  fromPrim $
+    prim__thenp
+      prom
+      (either (prim__veryPure . Left) (\va => toPrim $ (f va).run))
+      (prim__veryPure . Left)
+
+-- primitve
+withError : Prog a -> Prog (Either JSErr a)
+withError (P run) = P $ do
+  prom <- run
+  fromPrim $
+    prim__thenp
+      prom
+      (prim__veryPure . Right . either Left Right)
+      (prim__veryPure . Right . Left)
+
+export
+Functor Prog where
+  map f p = bindProg p (pureProg . f) 
+
+export
+Applicative Prog where
+  pure = pureProg
+  ff <*> fa = bindProg ff (<$> fa)
+
+export
+Monad Prog where
+  (>>=) = bindProg
+
+export
+HasIO Prog where
+  liftIO = liftIOEither . map Right
+
+export
+handle : (JSErr -> Prog a) -> Prog a -> Prog a
+handle f x =
+  withError x >>= \case
+    Right v  => pure v
+    Left err => f err
+
+export
+liftPromise : Promise a -> Prog a
+liftPromise p =
+  P $ fromPrim $ prim__then p
+      (\a,w => MkIORes (Right a) w)
+      (\e,w => MkIORes (Left e) w)
+
+fromMaybe : Maybe Bool -> IO $ Promise (Either JSErr Bool)
+fromMaybe (Just True)  = fromPrim $ prim__pure (toPrim (pure (Right True)))
+fromMaybe (Just False) = fromPrim $ prim__pure (toPrim (pure (Right False)))
+fromMaybe Nothing      = fromPrim $ prim__pure (toPrim (pure (Left (Caught "Neither 'true' or 'false' as expected!"))))
+
+export
+fromBool : IO Boolean -> Prog Bool
+fromBool io = do
+  let ioM := map (fromFFI {a=Bool}) io
+  P $ ioM >>= fromMaybe
+
+export
+liftPrimPromise : PrimIO (Promise a) -> Prog a
+liftPrimPromise p = primIO p >>= liftPromise
+
+-- primitive
+run' : (JSErr -> IO ()) -> Prog () -> IO (Promise ())
+run' handle (P run) = do
+  prom <- run
+  fromPrim $ prim__then prom
+    (either (\x => toPrim $ handle x) MkIORes)
+    (\x => toPrim $ handle x)
+
+export
+runProg : (JSErr -> IO ()) -> Prog () -> IO ()
+runProg f = ignore . run' f
+
+--------------------------------------------------------------------------------
+-- Examples
+--------------------------------------------------------------------------------
+
+export
+delayed : Nat -> Prog ()
+delayed n = P $ fromPrim (prim__delayed n (MkIORes (Right ())))
+
+prog : Prog ()
+prog = do
+  handle (putStrLn . ("Oops: " ++) . dispErr) $ do
+    delayed 200
+    putStrLn "hello world"
+    delayed 200
+    putStrLn "Goodbye"
+  delayed 200
+  delayed 200
+  putStrLn "Tschüss"
+
+main : IO ()
+main = runProg (putStrLn . dispErr) prog

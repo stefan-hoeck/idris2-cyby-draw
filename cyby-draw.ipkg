@@ -30,6 +30,7 @@ modules = CyBy.Draw
         , CyBy.Draw.Extensions.Word
         , CyBy.Draw.Extensions.Util
         , CyBy.Draw.Extensions.DomBindings
+        , CyBy.Draw.Extensions.PromiseMonad
 
         , CyBy.Draw.Draw
         , CyBy.Draw.Event
