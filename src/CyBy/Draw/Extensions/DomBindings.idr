@@ -162,14 +162,6 @@ prim__addCustomXMLParts : Context -> String -> PrimIO ()
 prim__delCustomXmlPart : CustomXmlPart -> PrimIO ()
 
 
-
-%foreign "browser:lambda:(cxpc,w)=> {console.log(cxpc); console.log(cxpc.items);}"
-prim__printXmlCollection : CustomXmlPartCollection -> PrimIO ()
-
-export
-printXmlCollection : CustomXmlPartCollection -> Prog ()
-printXmlCollection cxpc = liftIO $ fromPrim (prim__printXmlCollection cxpc)
-
 -------------------------------------------------------------------------------
 -- Functions
 -------------------------------------------------------------------------------

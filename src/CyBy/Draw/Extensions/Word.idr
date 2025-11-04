@@ -22,13 +22,9 @@ import CyBy.Draw.Extensions.PromiseMonad
 
 -- keeping only the valid id's
 selectIDs : Indexed.Array String -> Indexed.Array String
-selectIDs xs =
+selectIDs =
   foldMap
-    (\x => if isPrefixOf "cyby_draw_img_" x
-             then A _ (array [x])
-             else A _ empty
-    )
-    xs
+    (\x => if isPrefixOf "cyby_draw_img_" x then A _ (array [x]) else A _ empty)
 
 -- keeping the Xml objects in the array that are not linked to an
 -- image in word
@@ -64,8 +60,6 @@ checkValidXmlObjects = do
     -- and delete the whole xml object of that id's
     allCustomXmlParts <- customXmlParts c
     load c allCustomXmlParts "items"
-    -- debugging
-    printXmlCollection allCustomXmlParts
     parts <- itemsCustomXmlParts c allCustomXmlParts
 
     -- keep the ids of the deleted images in an array and
@@ -75,11 +69,9 @@ checkValidXmlObjects = do
     syncContext c
     allCustomXmlParts <- customXmlParts c
     load c allCustomXmlParts "items"
-    -- debugging
-    printXmlCollection allCustomXmlParts
 
 exportImage : (svg,mol : String) -> Prog ()
-exportImage svg mol = do
+exportImage svg mol =
   wordRun $ \c => do
 
     -- encode, insert and add the image to the tracked objects
@@ -122,9 +114,8 @@ findIDGraph c id acc cxp = do
     xml <- getXml cxp
     getGraphById xml id
 
--- MOL-File string
 importImageFromWord : (String -> PrimIO ()) -> Prog ()
-importImageFromWord f = do
+importImageFromWord f =
   wordRun $ \c => do
     -- clean up unused XML objects
     checkValidXmlObjects
@@ -145,8 +136,6 @@ importImageFromWord f = do
     let Just id := find (isPrefixOf "cyby_draw_img_") as
       | _ => putStrLn "Error: No image ID was found" >> return f ""
 
-    putStrLn id
-
     -- extract the mol file data (of the selected image) by id
     -- from the stored XML objects
     allCustomXmlPartCollection <- customXmlParts c
@@ -158,22 +147,20 @@ importImageFromWord f = do
     -- clean up unused XML objects
     checkValidXmlObjects
 
-    putStrLn graph
     return f graph
 
 exportImageToWord : (svg,molFile : String) -> JSIO ()
 exportImageToWord svg mol =
   liftIO $ runProg (putStrLn . ("Error: " ++) . dispErr) (exportImage svg mol)
 
-
-fromClipboard : Cmd DrawEvent
-fromClipboard =
+fromWord : Cmd DrawEvent
+fromWord =
   C (\h =>
       liftIO $ runProg
         (
         putStrLn . ("Error: " ++) . dispErr)
         (importImageFromWord (\s,w =>
-          case extractAndParseMetadata s of
+          case readMolfileE s of
             Left e  => toPrim (runJS $ h (Msg $ ReadErr e)) w
             Right m => toPrim (runJS $ h (SetTempl m)) w
         )
@@ -185,4 +172,4 @@ fromClipboard =
 export
 dispWordExt : DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
 dispWordExt ExportSVG s = cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
-dispWordExt ImportSVG s = fromClipboard
+dispWordExt ImportSVG s = fromWord
