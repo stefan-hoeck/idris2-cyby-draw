@@ -2,6 +2,9 @@
 module CyBy.Draw.Extensions.Word
 
 import Web.MVC
+import Web.Internal.DomTypes
+import Data.String
+import Data.Vect
 
 import Data.Graph.Indexed
 import CyBy.Draw.Event
@@ -17,206 +20,146 @@ import CyBy.Draw.Extensions.PromiseMonad
 %default total
 
 
--- TODO: This will be replaced with Idris funcitons
--- helper function for removing unused XML objects of deleted images
-checkValidXmlObjects' : String
-checkValidXmlObjects' =
-  """
-    Word.run(async (context) => {
-      // check first if some images were deleted
-      // get the whole doc as XML
-      xmlDocRaw = context.document.body.getOoxml();
-      await context.sync();
-      const psr = new DOMParser();
-      const xmlDoc = psr.parseFromString(xmlDocRaw.value,'text/xml');
+-- keeping only the valid id's
+selectIDs : Indexed.Array String -> Indexed.Array String
+selectIDs xs =
+  foldMap
+    (\x => if isPrefixOf "cyby_draw_img_" x
+             then A _ (array [x])
+             else A _ empty
+    )
+    xs
 
-      // search for the shapes and inlinePictures and collect
-      // the id's
-      const docPrElems = xmlDoc.getElementsByTagName("wp:docPr");
-      const ids = [];
-      if (docPrElems.length > 0) {
-        for (let i = 0; i < docPrElems.length; i++) {
-          const descr = docPrElems[i].getAttribute('descr');
-          if (descr && descr.startsWith('cyby_draw_img_')) {
-            ids.push(descr);
-          }
-        }
-      }
+-- keeping the Xml objects in the array that are not linked to an
+-- image in word
+xmlToDelete :
+     Context
+  -> (ids : Indexed.Array String)
+  -> CustomXmlPart
+  -> Prog $ Indexed.Array CustomXmlPart
+xmlToDelete c ids cxp = do
+  query <- query cxp "//graphInfo/id" c
+  case query of
+    (A Z arr)     => pure empty
+    (A (S n) arr) => do
+      matchingS <-  extractId (atNat arr Z) "<id>(.*?)</id>"
+      if elem matchingS ids then pure empty else pure $ A _ (array [cxp])
 
-      // load custom XML objects and search for `graphInfo` parts
-      const allCustomXmlParts = context.document.customXmlParts;
-      allCustomXmlParts.load("items");
-      await context.sync();
-
-      for (const elem of allCustomXmlParts.items) {
-        const queryRes = elem.query("//graphInfo/id",{});
-        await context.sync();
-        if (queryRes.value[0] === undefined) {
-          continue;
-        }
-        // delete the XML object if the id was not found earlier,
-        // meaning the image was deleted
-        const val = queryRes.value[0];
-        const match = val.match(new RegExp("<id>(.*?)</id>"));
-        if (queryRes.value.length > 0) {
-          if (!ids.includes(match[1])) {
-            elem.delete();
-          }
-        }
-      }
-    });
-  """
-
-
--- TODO: This will be replaced with Idris funcitons
--- uses the Word-API for exporting an svg string to a word document
--- image (inlinePicture)
--- to preserve the graph, the image is labeled with an unique id
--- in the alternative text, referencing the mol file inside the newly
--- created XML object
---
--- async / await is needed for promises, see
--- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises
--- for further informations
-%foreign
-  """
-  browser:lambda:(s,g,removeUnusedXmlObjects,w) => {
-    Word.run(async (context) => {
-      // clean up unused XML objects
-      eval(removeUnusedXmlObjects);
-
-      // add the picture and create a corresponding XML object for it
-      // encoding the picture
-      const b64 = btoa(s);
-      // get the selection range
-      const selection = context.document.getSelection();
-      // add the picture to the selection and store it in a variable
-      const image = selection.insertInlinePictureFromBase64(b64, Word.InsertLocation.end);
-      context.trackedObjects.add(image);
-      // reload the selected image
-      image.load();
-
-      // generating a unique index for the picture
-      const id = 'cyby_draw_img_' + Date.now() + Math.floor(Math.random() * 10000);
-
-      // add the alt text to the image and end tracking of the object
-      image.altTextDescription = id;
-      context.sync();
-      context.trackedObjects.remove(image);
-      context.sync();
-
-      // creating and adding an XML object with the associated id
-      const xmlContent = `<graphInfo><id>${id}</id><graph>${g}</graph></graphInfo>`;
-      context.document.customXmlParts.add(xmlContent);
-      context.sync();
-    });
-  }
-  """
-prim__exportImageToWord : (svg,molFile,helperF : String) -> PrimIO ()
-
--- TODO: This will be replaced with Idris funcitons
--- extracting the mol file from a molecular structure image (created by CyBy-Draw)
--- for editing it in the CyBy-Draw editor
--- async / await is needed for promises, see
--- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises
--- for further informations
-%foreign
-  """
-  browser:lambda:(removeUnusedXmlObjects,f,w) => {
-    Word.run(async context => {
-      // clean up unused XML objects
-      eval(removeUnusedXmlObjects);
-
-      // retrieve the mol file of the selected picture
-      // load the selected parts of the word file
-      const selection = context.document.getSelection();
-
-      // return an empty string if nothing is selected
-      selection.load('isEmpty');
-      await context.sync();
-      if (selection.isEmpty) {
-        console.log('No images selected!');
-        return f('')(w);
-      }
-
-      let id = null;
-
-      // to find a selected shape ID, the word document has to be
-      // searched in the XML form as `selection.shapes` is not
-      // integrated in the current Word API
-      const ooxml = selection.getOoxml();
-      await context.sync();
-
-      const parser = new DOMParser();
-      const xmlSel = parser.parseFromString(ooxml.value,'text/xml');
+-- checking for deleted images and removing their linked xml
+-- object
+checkValidXmlObjects : Prog ()
+checkValidXmlObjects = do
+  wordRun $ \c => do
+    -- load the whole doc as xml
+    ooxml <- getOoxml c
+    prs <- domParser
+    xmlS <- parseFromStringXml prs ooxml
+    -- search for the shapes and inlinePictures and collect
+    -- the id's
+    imgElems <- getElementsByTagName xmlS "wp:docPr"
+    as <- traverse (getAttribute "descr") imgElems 
+    ids <- pure $ selectIDs as
     
-      // search for the shapes and inlinePictures labeled with a cyby id
-      const selPrElems = xmlSel.getElementsByTagName("wp:docPr");
-      if (selPrElems.length > 0) {
-        for (let i = 0; i < selPrElems.length; i++) {
-          const descr = selPrElems[i].getAttribute('descr');
-          if (descr && descr.startsWith('cyby_draw_img_')) {
-            id = descr;
-            break;
-          }
-        }
-      }
+    -- search for id's not linked to an image in the word file
+    -- and delete the whole xml object of that id's
+    allCustomXmlParts <- customXmlParts c
+    load c allCustomXmlParts "items"
+    -- debugging
+    printXmlCollection allCustomXmlParts
+    parts <- itemsCustomXmlParts c allCustomXmlParts
 
-      // extract the mol file data (of the selected image) by id
-      // from the stored XML objects
-      const customXmlParts = context.document.customXmlParts;
-      customXmlParts.load('items');
-      await context.sync();
-
-      for (const part of customXmlParts.items) {
-        const partID = part.query(`//graphInfo[id='${id}']/graph`, {});
-        await context.sync();
-
-        if (partID.value[0] === undefined) {
-          continue;
-        } else {
-          return f(partID.value[0])(w);
-        }
-      }
-
-      // if no ID matches, return an empty string
-      // this can happen if the alternative text for the
-      // selected image, which represents the ID, was altered
-      console.log('No value found for this image(ID)! This can happen if the alternative text for the image was manually changed!');
-      return f('')(w);
-    });
-  }
-  """
-prim__importImageFromWord : (helperF : String) -> (String -> PrimIO ()) -> PrimIO ()
-
+    -- keep the ids of the deleted images in an array and
+    -- delete their xml object afterwards
+    toDelCXPs <- map join $ traverse (xmlToDelete c ids) parts
+    ignore $ traverse {f = Prog} delCustomXmlPart toDelCXPs
+    syncContext c
+    allCustomXmlParts <- customXmlParts c
+    load c allCustomXmlParts "items"
+    -- debugging
+    printXmlCollection allCustomXmlParts
 
 exportImage : (svg,mol : String) -> Prog ()
 exportImage svg mol = do
   wordRun $ \c => do
-    -- TODO: cleanup the XML structure with `checkValidXmlObjects`
-    -- encrypting the SVG and adding it to the word file at the end
-    -- of the selection
+
+    -- encode, insert and add the image to the tracked objects
     b64 <- bToA svg
     s <- selection c
-    img <- inlinePictureFromB64 s b64
+    img <- insertInlinePictureFromB64 s b64
     addTrackedObj c img
-    load img ""
+    load c img ""
 
-    -- creating an id and adding it to the image's alt description
-    -- for reference
+    -- creating an id and adding it to the image's alt
+    -- description for reference
     id <- uniqueId
     addAltTextDescr img id
     syncContext c
     removeTrackedObj c img
     syncContext c
 
-    -- creating a new XML structure to store the mol graph and
-    -- adding it to the context object
+    -- creating a new XML structure to store the MOL graph and
+    -- adding it to the context object as a `customXmlPart`
     let xmlContent :=
       #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
     addCustomXMLParts c xmlContent
+
+    -- clean up unused XML objects
+    checkValidXmlObjects
     putStrLn "exportImage succcesfull"
 
+
+-- extracting the xml of the CustomXmlPart and getting the MOL-Graph
+-- if the ids match
+findIDGraph :
+     Context
+  -> (id : String)
+  -> (acc : Prog String)
+  -> CustomXmlPart
+  -> Prog String 
+findIDGraph c id acc cxp = do
+  mol <- acc
+  if mol /= "" then pure mol else do
+    xml <- getXml cxp
+    getGraphById xml id
+
+-- MOL-File string
+importImageFromWord : (String -> PrimIO ()) -> Prog ()
+importImageFromWord f = do
+  wordRun $ \c => do
+    -- clean up unused XML objects
+    checkValidXmlObjects
+    
+    -- return an empty string if the selection is empty
+    s <- selection c
+    load c s "isEmpty"
+    syncContext c
+    False <- isEmpty s | True => return f ""
+
+    -- load the whole doc as xml
+    ooxml <- getSelectionOoxml c s
+    prs <- domParser
+    xmlS <- parseFromStringXml prs ooxml
+    -- extract the image elements
+    imgElems <- getElementsByTagName xmlS "wp:docPr"
+    as <- map toList $ traverse (getAttribute "descr") imgElems 
+    let Just id := find (isPrefixOf "cyby_draw_img_") as
+      | _ => putStrLn "Error: No image ID was found" >> return f ""
+
+    putStrLn id
+
+    -- extract the mol file data (of the selected image) by id
+    -- from the stored XML objects
+    allCustomXmlPartCollection <- customXmlParts c
+    load c allCustomXmlPartCollection "items"
+    parts <- itemsCustomXmlParts c allCustomXmlPartCollection
+    syncContext c
+    graph <- foldl (findIDGraph c id) (pure "") parts
+
+    -- clean up unused XML objects
+    checkValidXmlObjects
+
+    putStrLn graph
+    return f graph
 
 exportImageToWord : (svg,molFile : String) -> JSIO ()
 exportImageToWord svg mol =
@@ -225,10 +168,17 @@ exportImageToWord svg mol =
 
 fromClipboard : Cmd DrawEvent
 fromClipboard =
-  C $ \h => primIO $ prim__importImageFromWord checkValidXmlObjects' $ \s,w =>
-    case extractAndParseMetadata s of
-      Left e  => toPrim (runJS $ h (Msg $ ReadErr e)) w
-      Right m => toPrim (runJS $ h (SetTempl m)) w
+  C (\h =>
+      liftIO $ runProg
+        (
+        putStrLn . ("Error: " ++) . dispErr)
+        (importImageFromWord (\s,w =>
+          case extractAndParseMetadata s of
+            Left e  => toPrim (runJS $ h (Msg $ ReadErr e)) w
+            Right m => toPrim (runJS $ h (SetTempl m)) w
+        )
+        )
+    )
 
 
 ||| Parses a word event and forms a DrawEvent command.

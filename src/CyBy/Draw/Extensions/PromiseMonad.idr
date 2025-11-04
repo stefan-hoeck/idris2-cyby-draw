@@ -111,16 +111,14 @@ liftPromise p =
       (\a,w => MkIORes (Right a) w)
       (\e,w => MkIORes (Left e) w)
 
-fromMaybe : Maybe Bool -> IO $ Promise (Either JSErr Bool)
-fromMaybe (Just True)  = fromPrim $ prim__pure (toPrim (pure (Right True)))
-fromMaybe (Just False) = fromPrim $ prim__pure (toPrim (pure (Right False)))
-fromMaybe Nothing      = fromPrim $ prim__pure (toPrim (pure (Left (Caught "Neither 'true' or 'false' as expected!"))))
-
 export
 fromBool : IO Boolean -> Prog Bool
 fromBool io = do
-  let ioM := map (fromFFI {a=Bool}) io
-  P $ ioM >>= fromMaybe
+  b <- liftIO io
+  case fromFFI {a=Bool} b of
+    Nothing    => failProg $ Caught "Neither 'true' or 'false' as expected!"
+    Just False => pure False
+    Just True  => pure True
 
 export
 liftPrimPromise : PrimIO (Promise a) -> Prog a
