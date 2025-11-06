@@ -1,3 +1,4 @@
+-- TODO: This should be added to the word addin
 module CyBy.Draw.Extensions.DomBindings
 
 import JS
@@ -39,6 +40,7 @@ data InlinePicture : Type where [external]
 export
 data DOMParser : Type where [external]
 
+-- TODO: This should be a wrapped string
 -- Ooxml
 -- Is a ooxml object in form of a string
 export
@@ -84,13 +86,12 @@ prim__ooxmlToString : Ooxml -> PrimIO String
 %foreign "browser:lambda:(s,b64,w)=> s.insertInlinePictureFromBase64(b64, Word.InsertLocation.end)"
 prim__insertInlinePictureFromB64 : Selection -> String -> PrimIO InlinePicture
 
-%foreign "browser:lambda:(a,o,w)=> o.isEmpty"
-prim__isEmpty : a -> PrimIO Boolean
+%foreign "browser:lambda:(a,o,w)=> o.isEmpty?1:0"
+prim__isEmpty : a -> PrimIO Bool
 
 %foreign "browser:lambda:(s,w)=> btoa(s)"
 prim__btoa : String -> PrimIO String
 
--- TODO: Do this directly in Idris!
 %foreign "browser:lambda:(w)=> { return 'cyby_draw_img_' + Date.now() + Math.floor(Math.random() * 10000);}"
 prim__uniqueID : PrimIO String
 
@@ -98,10 +99,10 @@ prim__uniqueID : PrimIO String
 prim__DOMParser : PrimIO DOMParser
 
 %foreign "browser:lambda:(p,ooxml,w)=> p.parseFromString(ooxml,'text/xml')"
-prim__parseFromStringXml : DOMParser -> Ooxml -> PrimIO Document
+prim__parseFromStringXml : DOMParser -> Ooxml -> PrimIO XMLDocument
 
 %foreign "browser:lambda:(ooxmls,str,w)=> Array.from(ooxmls.getElementsByTagName(str))"
-prim__getElementsByTagName : Document -> String -> PrimIO AnyPtr
+prim__getElementsByTagName : XMLDocument -> String -> PrimIO AnyPtr
 
 %foreign "browser:lambda:(elem,str,w)=> elem.getAttribute(str) ? elem.getAttribute(str) : '' "
 prim__getAttribute : Element -> String -> PrimIO  String
@@ -175,6 +176,7 @@ prim__delCustomXmlPart : CustomXmlPart -> PrimIO ()
 -- Functions
 -------------------------------------------------------------------------------
 
+-- TODO: Use `HasIO` interface wherever possible
 -- Mutator functions
 
 export
@@ -190,8 +192,8 @@ load c o props = do
   syncContext c
 
 export
-addTrackedObj : Context -> (object : a) -> Prog ()
-addTrackedObj c o = liftIO $ fromPrim (prim__addTrackedObj c o)
+addTrackedObj : HasIO io => Context -> (object : a) -> io ()
+addTrackedObj c o = primIO (prim__addTrackedObj c o)
 
 export
 removeTrackedObj : Context -> (object : a) -> Prog ()
@@ -255,7 +257,7 @@ insertInlinePictureFromB64 s b = liftIO $ fromPrim (prim__insertInlinePictureFro
 
 export
 isEmpty : a -> Prog Bool
-isEmpty o = fromBool $ fromPrim (prim__isEmpty o)
+isEmpty o = primIO (prim__isEmpty o)
 
 export
 bToA : String -> Prog String
@@ -270,8 +272,8 @@ domParser : Prog DOMParser
 domParser = liftIO $ fromPrim prim__DOMParser
 
 export
-parseFromStringXml : DOMParser -> Ooxml -> Prog Document
-parseFromStringXml p xml = liftIO $ fromPrim (prim__parseFromStringXml p xml)
+parseFromStringXml : DOMParser -> Ooxml -> Prog XMLDocument
+parseFromStringXml p xml = primIO (prim__parseFromStringXml p xml)
 
 export
 getAttribute : String -> Element -> Prog String
@@ -318,7 +320,7 @@ getAltText img = liftIO {io=Prog} $ fromPrim (prim__getAltTextDescr img)
 -- Array functions
 
 export
-getElementsByTagName : Document -> String -> Prog $ Indexed.Array Element
+getElementsByTagName : XMLDocument -> String -> Prog $ Indexed.Array Element
 getElementsByTagName d str = do
   ptr <- liftIO $ fromPrim (prim__getElementsByTagName d str)
   unsafeJSArrayOf Element ptr
@@ -389,11 +391,13 @@ export
 replaceOoxml : Selection -> String -> Prog ()
 replaceOoxml s str = liftIO $ fromPrim (prim__replaceOoxml s str)
 
+-- TODO: If possible, drop this and use string.replace instead
 %foreign "browser:lambda:(d,w)=> {const serializer = new XMLSerializer(); return serializer.serializeToString(d);}"
-prim__docToOoxml : Document -> PrimIO String
+prim__docToOoxml : XMLDocument -> PrimIO String
 
+-- TODO: If possible, drop this and use string.replace instead
 export
-docToOoxml : Document -> Prog String
+docToOoxml : XMLDocument -> Prog String
 docToOoxml d = liftIO $ fromPrim (prim__docToOoxml d)
 
 %foreign 

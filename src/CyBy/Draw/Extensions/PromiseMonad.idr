@@ -1,5 +1,7 @@
+-- TODO: This should be moved to the word addin
 module CyBy.Draw.Extensions.PromiseMonad
 
+-- TODO: cleanup imports
 import Web.Dom
 import Web.MVC
 import Web.Html
@@ -112,15 +114,6 @@ liftPromise p =
       (\e,w => MkIORes (Left e) w)
 
 export
-fromBool : IO Boolean -> Prog Bool
-fromBool io = do
-  b <- liftIO io
-  case fromFFI {a=Bool} b of
-    Nothing    => failProg $ Caught "Neither 'true' or 'false' as expected!"
-    Just False => pure False
-    Just True  => pure True
-
-export
 liftPrimPromise : PrimIO (Promise a) -> Prog a
 liftPrimPromise p = primIO p >>= liftPromise
 
@@ -144,6 +137,7 @@ export
 delayed : Nat -> Prog ()
 delayed n = P $ fromPrim (prim__delayed n (MkIORes (Right ())))
 
+-- TODO: Remove this eventually
 prog : Prog ()
 prog = do
   handle (putStrLn . ("Oops: " ++) . dispErr) $ do

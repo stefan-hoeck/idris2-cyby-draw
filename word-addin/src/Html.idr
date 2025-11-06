@@ -21,7 +21,7 @@ clearMsg : DrawEvent -> Cmd DrawEvent
 clearMsg (KeyUp str) = neutral
 clearMsg _           = children messages []
 
-logAndDisplay : DrawSettings => DrawEvent -> DrawState -> Cmd DrawEvent
+logAndDisplay : DrawSettings => {default lvlInfo lvl : LogLevel} -> DrawEvent -> DrawState -> Cmd DrawEvent
 logAndDisplay (Msg m) s = child messages $ Text (printMsg m)
 logAndDisplay e       s = clearMsg e <+> displaySketcher "app" e s
 
@@ -31,7 +31,7 @@ app =
   let se := {usedExtension := Word} $ defaultSettings abbreviations
    in runMVC
         update
-        (logAndDisplay @{se})
+        (logAndDisplay @{se} {lvl = lvlDebug})
         (putStrLn . dispErr)
         (KeyDown "Escape")
         (init @{se} (SD 400 266) Init "")

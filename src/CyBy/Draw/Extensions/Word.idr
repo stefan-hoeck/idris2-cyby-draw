@@ -7,6 +7,7 @@ import Data.String
 import Data.Vect
 
 import Data.Graph.Indexed
+import Derive.Prelude
 import CyBy.Draw.Event
 import CyBy.Draw.MoleculeCanvas
 import CyBy.Draw.Internal.Settings
@@ -18,6 +19,57 @@ import CyBy.Draw.Extensions.DomBindings
 import CyBy.Draw.Extensions.PromiseMonad
 
 %default total
+%language ElabReflection
+
+--------------------------------------------------------------------------------
+-- Debugging
+--------------------------------------------------------------------------------
+
+data Level = Trace | Debug | Info | Silence
+
+%runElab derive "Level" [Show,Eq,Ord]
+
+export
+record LogLevel where
+  [noHints]
+  constructor L
+  lvl : Level
+
+failing "Can't find an implementation for LogLevel"
+  testLogLevel : LogLevel
+  testLogLevel = %search
+
+export
+lvlDebug : LogLevel 
+lvlDebug = L Debug
+
+export
+lvlTrace : LogLevel 
+lvlTrace = L Trace
+
+export
+lvlInfo : LogLevel 
+lvlInfo = L Info
+
+export
+lvlSilence : LogLevel 
+lvlSilence = L Silence
+
+export
+log : HasIO io => (d : LogLevel) => Level -> Lazy String -> io ()
+log lvl msg = when (lvl >= d.lvl) (putStrLn msg)
+
+export
+trace : HasIO io => (d : LogLevel) => Lazy String -> io ()
+trace = log Trace
+
+export
+debug : HasIO io => (d : LogLevel) => Lazy String -> io ()
+debug = log Debug
+
+export
+info : HasIO io => (d : LogLevel) => Lazy String -> io ()
+info = log Info
 
 --------------------------------------------------------------------------------
 -- Util
@@ -102,11 +154,11 @@ exportImgEmptSel c s svg mol = do
     #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
   addCustomXMLParts c xmlContent
 
-exportImage : (svg,mol : String) -> Prog ()
+exportImage : LogLevel => (svg,mol : String) -> Prog ()
 exportImage svg mol =
   wordRun $ \c => do
     --debug
-    putStrLn "Begin of exportImage"
+    debug "Begin of exportImage"
     -- return an empty string if the selection is empty
     s <- getSelection c
     False <- isEmpty s | True => exportImgEmptSel c s svg mol
@@ -130,7 +182,7 @@ exportImage svg mol =
       | _ => exportImgEmptSel c s svg mol
 
     -- debug
-    putStrLn $ "an id was found " ++ id
+    debug $ "an id was found " ++ id
 --  
 --    -- 1. Find the xml of the id
 --    -- 2. replace the MOL-file with in the customXmlPart with the new one
@@ -138,12 +190,12 @@ exportImage svg mol =
 
     -- testing
     ooxmlS <- getSelectionString c s
-    putStrLn $ "Old selection:\n" ++ ooxmlS
-    putStrLn $ "New svg:\n" ++ svg
+    trace $ "Old selection:\n" ++ ooxmlS
+    trace $ "New svg:\n" ++ svg
     ooxmlS' <- replaceRegEx ooxmlS svg
     replaceOoxml s ooxmlS'
     ooxmlSnew <- getSelectionString c s
-    putStrLn $ "New selection:\n" ++ ooxmlSnew
+    trace $ "New selection:\n" ++ ooxmlSnew
 
     ----
 --    -- encode, insert and add the image to the tracked objects
@@ -168,7 +220,7 @@ exportImage svg mol =
   
     -- clean up unused XML objects
     checkValidXmlObjects
-    putStrLn "exportImage succcesfull"
+    debug "exportImage succcesfull"
 
 -- extracting the xml of the CustomXmlPart and getting the MOL-Graph
 -- if the ids match
@@ -184,7 +236,7 @@ findIDGraph c id acc cxp = do
     xml <- getXml cxp
     getGraphById xml id
 
-importImageFromWord : (String -> PrimIO ()) -> Prog ()
+importImageFromWord : LogLevel => (String -> PrimIO ()) -> Prog ()
 importImageFromWord f =
   wordRun $ \c => do
     -- clean up unused XML objects
@@ -203,15 +255,15 @@ importImageFromWord f =
 
 
 --    -- testing
---    putStrLn "elem"
+--    debug "elem"
 --    elem <- getFirstElemByTagName xmlS "svg"
---    putStrLn "replaceElem"
+--    debug "replaceElem"
 --    replaceElemNodeBy elem "<svg>test</svg>"
 --    syncContext c
---    putStrLn "docToOoxml"
+--    debug "docToOoxml"
 --    newOoxml <- docToOoxml xmlS
---    putStrLn newOoxml
---    putStrLn "replaceOoxml"
+--    debug newOoxml
+--    debug "replaceOoxml"
 --    replaceOoxml s newOoxml
 --    syncContext c
 --    printSelection c s
@@ -222,7 +274,7 @@ importImageFromWord f =
     imgElems <- getElementsByTagName xmlS "wp:docPr"
     as <- map toList $ traverse (getAttribute "descr") imgElems 
     let Just id := find (isPrefixOf "cyby_draw_img_") as
-      | _ => putStrLn "Error: No image ID was found" >> return f ""
+      | _ => debug "Error: No image ID was found" >> return f ""
 
     -- extract the mol file data (of the selected image) by id
     -- from the stored XML objects
@@ -234,11 +286,11 @@ importImageFromWord f =
 
     return f graph
 
-exportImageToWord : (svg,molFile : String) -> JSIO ()
+exportImageToWord : LogLevel => (svg,molFile : String) -> JSIO ()
 exportImageToWord svg mol =
   liftIO $ runProg (putStrLn . ("Error: " ++) . dispErr) (exportImage svg mol)
 
-fromWord : Cmd DrawEvent
+fromWord : LogLevel => Cmd DrawEvent
 fromWord =
   C (\h =>
       liftIO $ runProg
@@ -255,6 +307,6 @@ fromWord =
 
 ||| Parses a word event and forms a DrawEvent command.
 export
-dispWordExt : DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
+dispWordExt : LogLevel => DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
 dispWordExt ExportSVG s = cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
 dispWordExt ImportSVG s = fromWord
