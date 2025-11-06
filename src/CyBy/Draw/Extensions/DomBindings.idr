@@ -75,6 +75,9 @@ prim__getOoxml : Context -> PrimIO (ClientResult Ooxml)
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
 prim__getSelectionOoxml : Selection -> PrimIO (ClientResult Ooxml)
 
+%foreign "browser:lambda:(s,w)=> s.getOoxml()"
+prim__getSelectionString : Selection -> PrimIO (ClientResult String)
+
 %foreign "browser:lambda:(o,w)=> o"
 prim__ooxmlToString : Ooxml -> PrimIO String
 
@@ -98,7 +101,7 @@ prim__DOMParser : PrimIO DOMParser
 prim__parseFromStringXml : DOMParser -> Ooxml -> PrimIO Document
 
 %foreign "browser:lambda:(ooxmls,str,w)=> Array.from(ooxmls.getElementsByTagName(str))"
-prim__getElementsByTagName : Document -> String -> PrimIO AnyPtr --$ Array Element
+prim__getElementsByTagName : Document -> String -> PrimIO AnyPtr
 
 %foreign "browser:lambda:(elem,str,w)=> elem.getAttribute(str) ? elem.getAttribute(str) : '' "
 prim__getAttribute : Element -> String -> PrimIO  String
@@ -136,6 +139,12 @@ prim__getXml : CustomXmlPart -> PrimIO String
   }
   """
 prim__getGraphById : String -> String -> PrimIO String
+
+%foreign "browser:lambda:(o,w)=> o.xml"
+prim__getInlinePicutes : Selection -> PrimIO AnyPtr
+
+%foreign "browser:lambda:(img,w)=> img.altTextDescription"
+prim__getAltTextDescr : InlinePicture -> PrimIO String
 
 
 -- Mutator functions
@@ -231,6 +240,12 @@ getSelectionOoxml c s = do
   syncContext c
   valueClientResult crOoxml
 
+export
+getSelectionString : Context -> Selection -> Prog String
+getSelectionString c s = do
+  crString <- liftIO $ fromPrim (prim__getSelectionString s)
+  syncContext c
+  valueClientResult crString
 
 -- TODO: Maybe add the ability to change the `InsertLocation`, now the img
 -- is added at the end of the selection.
@@ -286,6 +301,19 @@ export
 getGraphById : (xml,id : String) -> Prog String
 getGraphById xml id = liftIO {io=Prog} $ fromPrim (prim__getGraphById xml id)
 
+export
+getInlinePictures :  Selection -> Context -> Prog $ Indexed.Array InlinePicture
+getInlinePictures s c = do
+  ptr <- liftIO {io=Prog} $ fromPrim (prim__getInlinePicutes s)
+  inlPics <- unsafeJSArrayOf InlinePicture ptr
+  load c inlPics ""
+  pure inlPics
+
+export
+getAltText : InlinePicture -> Prog String
+getAltText img = liftIO {io=Prog} $ fromPrim (prim__getAltTextDescr img)
+  
+
 
 -- Array functions
 
@@ -314,3 +342,70 @@ items : Ooxml -> Prog $ Indexed.Array Ooxml
 items o = do
   ptr <- liftIO $ fromPrim (prim__items o)
   unsafeJSArrayOf Ooxml ptr
+
+--------------------------------------------------------------------------------
+-- Testing
+--------------------------------------------------------------------------------
+
+%foreign "browser:lambda:(cxp,w)=> console.log(cxp.xml)"
+prim__printXmlPart : CustomXmlPart -> PrimIO ()
+
+export
+printXmlPart : CustomXmlPart -> Prog ()
+printXmlPart cxp = liftIO $ fromPrim (prim__printXmlPart cxp)
+
+%foreign "browser:lambda:(s,w)=> s.getOoxml()"
+prim__printSelection : Selection -> PrimIO $ ClientResult String
+
+export
+printSelection : Context -> Selection -> Prog ()
+printSelection c s = do
+  crPrintSel <- liftIO $ fromPrim (prim__printSelection s)
+  syncContext c
+  printSel <- valueClientResult crPrintSel
+  consoleLog printSel
+
+  
+
+%foreign "browser:lambda:(ooxmls,str,w)=> Array.from(ooxmls.getElementsByTagName(str))[0]"
+prim__getFirstElemByTagName : Document -> String -> PrimIO Element
+
+export
+getFirstElemByTagName : Document -> String -> Prog Element
+getFirstElemByTagName d str = liftIO $ fromPrim (prim__getFirstElemByTagName d str)
+
+
+%foreign "browser:lambda:(ooxmls,str,w)=> Array.from(ooxmls.getElementsByTagName(str))"
+prim__replaceElemNodeBy : Element -> String -> PrimIO ()
+
+export
+replaceElemNodeBy : Element -> String -> Prog ()
+replaceElemNodeBy e str = liftIO $ fromPrim (prim__replaceElemNodeBy e str)
+
+%foreign "browser:lambda:(s,ooxmls,w)=> {s.insertOoxml(ooxmls,Word.InsertLocation.replace); console.log('Done');}"
+prim__replaceOoxml : Selection -> String -> PrimIO ()
+
+export
+replaceOoxml : Selection -> String -> Prog ()
+replaceOoxml s str = liftIO $ fromPrim (prim__replaceOoxml s str)
+
+%foreign "browser:lambda:(d,w)=> {const serializer = new XMLSerializer(); return serializer.serializeToString(d);}"
+prim__docToOoxml : Document -> PrimIO String
+
+export
+docToOoxml : Document -> Prog String
+docToOoxml d = liftIO $ fromPrim (prim__docToOoxml d)
+
+%foreign 
+  """
+  browser:lambda:(s,svg,w)=> {
+    const regEx = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
+    const newString = s.replace(regEx, svg);
+    return newString;
+  }
+  """
+prim__replaceRegEx : (elem,svg : String) -> PrimIO String
+
+export
+replaceRegEx : (elem,svg : String) -> Prog String
+replaceRegEx e svg = liftIO $ fromPrim (prim__replaceRegEx e svg)

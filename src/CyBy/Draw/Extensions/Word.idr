@@ -19,6 +19,16 @@ import CyBy.Draw.Extensions.PromiseMonad
 
 %default total
 
+--------------------------------------------------------------------------------
+-- Util
+--------------------------------------------------------------------------------
+
+getSelection : Context -> Prog Selection
+getSelection c = do
+  s <- selection c
+  load c s "isEmpty"
+  syncContext c
+  pure s
 
 -- keeping only the valid id's
 selectIDs : Indexed.Array String -> Indexed.Array String
@@ -70,35 +80,95 @@ checkValidXmlObjects = do
     allCustomXmlParts <- customXmlParts c
     load c allCustomXmlParts "items"
 
+exportImgEmptSel : Context -> Selection -> (svg,mol : String) -> Prog ()
+exportImgEmptSel c s svg mol = do
+  -- encode, insert and add the image to the tracked objects
+  b64 <- bToA svg
+  img <- insertInlinePictureFromB64 s b64
+  addTrackedObj c img
+  load c img ""
+
+  -- creating an id and adding it to the image's alt
+  -- description for reference
+  id <- uniqueId
+  addAltTextDescr img id
+  syncContext c
+  removeTrackedObj c img
+  syncContext c
+
+  -- creating a new XML structure to store the MOL graph and
+  -- adding it to the context object as a `customXmlPart`
+  let xmlContent :=
+    #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
+  addCustomXMLParts c xmlContent
+
 exportImage : (svg,mol : String) -> Prog ()
 exportImage svg mol =
   wordRun $ \c => do
+    --debug
+    putStrLn "Begin of exportImage"
+    -- return an empty string if the selection is empty
+    s <- getSelection c
+    False <- isEmpty s | True => exportImgEmptSel c s svg mol
 
-    -- encode, insert and add the image to the tracked objects
-    b64 <- bToA svg
-    s <- selection c
-    img <- insertInlinePictureFromB64 s b64
-    addTrackedObj c img
-    load c img ""
+    -- load the whole selection as xml
+    ooxml <- getSelectionOoxml c s
 
-    -- creating an id and adding it to the image's alt
-    -- description for reference
-    id <- uniqueId
-    addAltTextDescr img id
-    syncContext c
-    removeTrackedObj c img
-    syncContext c
+    -- use the DOM-Parser to search for the id of the structure
+    prs <- domParser
+    xmlS <- parseFromStringXml prs ooxml
 
-    -- creating a new XML structure to store the MOL graph and
-    -- adding it to the context object as a `customXmlPart`
-    let xmlContent :=
-      #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
-    addCustomXMLParts c xmlContent
+    -- extract the image elements
+    imgElems <- getElementsByTagName xmlS "wp:docPr"
+    as <- map toList $ traverse (getAttribute "descr") imgElems 
+    -- if a selected image with a cyby-draw id is found,
+    -- replace the image and the corresponding customXml
+    -- with the modified version
+    let Just id := find (isPrefixOf "cyby_draw_img_") as
+      -- if no cyby-draw image is present in the current selection,
+      -- insert the image after the selection as a new image
+      | _ => exportImgEmptSel c s svg mol
 
+    -- debug
+    putStrLn $ "an id was found " ++ id
+--  
+--    -- 1. Find the xml of the id
+--    -- 2. replace the MOL-file with in the customXmlPart with the new one
+--
+
+    -- testing
+    ooxmlS <- getSelectionString c s
+    putStrLn $ "Old selection:\n" ++ ooxmlS
+    putStrLn $ "New svg:\n" ++ svg
+    ooxmlS' <- replaceRegEx ooxmlS svg
+    replaceOoxml s ooxmlS'
+    ooxmlSnew <- getSelectionString c s
+    putStrLn $ "New selection:\n" ++ ooxmlSnew
+
+    ----
+--    -- encode, insert and add the image to the tracked objects
+--    b64 <- bToA svg
+--    img <- insertInlinePictureFromB64 s b64
+--    addTrackedObj c img
+--    load c img ""
+--  
+--    -- creating an id and adding it to the image's alt
+--    -- description for reference
+--    id <- uniqueId
+--    addAltTextDescr img id
+--    syncContext c
+--    removeTrackedObj c img
+--    syncContext c
+--  
+--    -- creating a new XML structure to store the MOL graph and
+--    -- adding it to the context object as a `customXmlPart`
+--    let xmlContent :=
+--      #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
+--    addCustomXMLParts c xmlContent
+  
     -- clean up unused XML objects
     checkValidXmlObjects
     putStrLn "exportImage succcesfull"
-
 
 -- extracting the xml of the CustomXmlPart and getting the MOL-Graph
 -- if the ids match
@@ -121,15 +191,33 @@ importImageFromWord f =
     checkValidXmlObjects
     
     -- return an empty string if the selection is empty
-    s <- selection c
-    load c s "isEmpty"
-    syncContext c
+    s <- getSelection c
     False <- isEmpty s | True => return f ""
 
-    -- load the whole doc as xml
+    -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
+
+    -- use the DOM-Parser to search for the id of the structure
     prs <- domParser
     xmlS <- parseFromStringXml prs ooxml
+
+
+--    -- testing
+--    putStrLn "elem"
+--    elem <- getFirstElemByTagName xmlS "svg"
+--    putStrLn "replaceElem"
+--    replaceElemNodeBy elem "<svg>test</svg>"
+--    syncContext c
+--    putStrLn "docToOoxml"
+--    newOoxml <- docToOoxml xmlS
+--    putStrLn newOoxml
+--    putStrLn "replaceOoxml"
+--    replaceOoxml s newOoxml
+--    syncContext c
+--    printSelection c s
+--    ----
+
+
     -- extract the image elements
     imgElems <- getElementsByTagName xmlS "wp:docPr"
     as <- map toList $ traverse (getAttribute "descr") imgElems 
@@ -143,9 +231,6 @@ importImageFromWord f =
     parts <- itemsCustomXmlParts c allCustomXmlPartCollection
     syncContext c
     graph <- foldl (findIDGraph c id) (pure "") parts
-
-    -- clean up unused XML objects
-    checkValidXmlObjects
 
     return f graph
 
