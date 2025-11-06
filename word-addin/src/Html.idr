@@ -31,7 +31,7 @@ app =
   let se := {usedExtension := Word} $ defaultSettings abbreviations
    in runMVC
         update
-        (logAndDisplay @{se} {lvl = lvlDebug})
+        (logAndDisplay @{se} {lvl = lvlTrace})
         (putStrLn . dispErr)
         (KeyDown "Escape")
         (init @{se} (SD 400 266) Init "")

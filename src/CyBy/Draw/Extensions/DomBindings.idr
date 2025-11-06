@@ -125,6 +125,16 @@ prim__valueClientResult: ClientResult a -> PrimIO a
 %foreign "browser:lambda:(cxp,exp,w)=> cxp.match(new RegExp(exp))[1]"
 prim__extractId: Ooxml -> String -> PrimIO String
 
+%foreign
+  """
+  browser:lambda:(ooxml,w)=> {
+    const regEx = new RegExp(`<metadata>(.*?)<\/metadata>`,'s');
+    const match = ooxml.match(regEx);
+    return match ? match[1] : '';
+  }
+  """
+prim__extractMetadata: Ooxml -> PrimIO String
+
 %foreign "browser:lambda:(f,s,w)=> {return f(s)(w);}"
 prim__return : (String -> PrimIO ()) -> String -> PrimIO ()
 
@@ -134,7 +144,7 @@ prim__getXml : CustomXmlPart -> PrimIO String
 %foreign 
   """
   browser:lambda:(xml,id,w)=> {
-    const regEx = new RegExp(`<id>${id}<\/id><graph>(.*)<\/graph>`,'s');
+    const regEx = new RegExp(`<id>${id}<\/id><graph>(.*?)<\/graph>`,'s');
     const match = xml.match(regEx);
     return match ? match[1].replace(/\\r/g,'') : '';
   }
@@ -146,6 +156,26 @@ prim__getInlinePicutes : Selection -> PrimIO AnyPtr
 
 %foreign "browser:lambda:(img,w)=> img.altTextDescription"
 prim__getAltTextDescr : InlinePicture -> PrimIO String
+
+%foreign 
+  """
+  browser:lambda:(ooxml,svg,w)=> {
+    const regEx = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
+    const newString = ooxml.replace(regEx, svg);
+    return newString;
+  }
+  """
+prim__replaceRegEx : Ooxml -> (svg : String) -> PrimIO String
+
+%foreign 
+  """
+  browser:lambda:(ooxml,w)=> {
+    const regEx = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
+    const match = regEx.test(ooxml);
+    return match?1:0;
+  }
+  """
+prim__hasSvg : Ooxml -> PrimIO Bool
 
 
 -- Mutator functions
@@ -170,6 +200,9 @@ prim__addCustomXMLParts : Context -> String -> PrimIO ()
 
 %foreign "browser:lambda:(cxp,w)=> cxp.delete()"
 prim__delCustomXmlPart : CustomXmlPart -> PrimIO ()
+
+%foreign "browser:lambda:(s,ooxmls,w)=> s.insertOoxml(ooxmls,Word.InsertLocation.replace)"
+prim__replaceOoxml : Selection -> String -> PrimIO ()
 
 
 -------------------------------------------------------------------------------
@@ -213,6 +246,10 @@ export
 delCustomXmlPart : CustomXmlPart -> Prog ()
 delCustomXmlPart cxp = liftIO {io=Prog} $ fromPrim (prim__delCustomXmlPart cxp)
 
+export
+replaceOoxml : Selection -> String -> Prog ()
+replaceOoxml s str = liftIO $ fromPrim (prim__replaceOoxml s str)
+
 
 -- Accessor functions
 
@@ -224,9 +261,17 @@ export
 valueClientResult : ClientResult a -> Prog a
 valueClientResult a = liftIO $ fromPrim (prim__valueClientResult a)
 
-export
 selection : Context -> Prog Selection
 selection c = liftIO $ fromPrim (prim__selection c)
+
+-- loaded and synced selection
+export
+getSelection : Context -> Prog Selection
+getSelection c = do
+  s <- selection c
+  load c s "isEmpty"
+  syncContext c
+  pure s
 
 export
 getOoxml : Context -> Prog Ooxml
@@ -248,6 +293,8 @@ getSelectionString c s = do
   crString <- liftIO $ fromPrim (prim__getSelectionString s)
   syncContext c
   valueClientResult crString
+
+
 
 -- TODO: Maybe add the ability to change the `InsertLocation`, now the img
 -- is added at the end of the selection.
@@ -288,6 +335,10 @@ extractId : Ooxml -> (regEx : String) -> Prog String
 extractId cxp regEx = liftIO $ fromPrim (prim__extractId cxp regEx)
 
 export
+extractMetadata : HasIO io => Ooxml -> io String
+extractMetadata cxp = primIO (prim__extractMetadata cxp)
+
+export
 return : (String -> PrimIO ()) -> String -> Prog ()
 return f s = liftIO {io=Prog} $ fromPrim (prim__return f s)
 
@@ -314,6 +365,14 @@ getInlinePictures s c = do
 export
 getAltText : InlinePicture -> Prog String
 getAltText img = liftIO {io=Prog} $ fromPrim (prim__getAltTextDescr img)
+
+export
+replaceRegEx : HasIO io => Ooxml -> (svg : String) -> io String
+replaceRegEx ooxml svg = primIO $ prim__replaceRegEx ooxml svg
+
+export
+hasSvg : HasIO io => Ooxml -> io Bool
+hasSvg ooxml = primIO $ prim__hasSvg ooxml
   
 
 
@@ -346,15 +405,8 @@ items o = do
   unsafeJSArrayOf Ooxml ptr
 
 --------------------------------------------------------------------------------
--- Testing
+-- Debugging
 --------------------------------------------------------------------------------
-
-%foreign "browser:lambda:(cxp,w)=> console.log(cxp.xml)"
-prim__printXmlPart : CustomXmlPart -> PrimIO ()
-
-export
-printXmlPart : CustomXmlPart -> Prog ()
-printXmlPart cxp = liftIO $ fromPrim (prim__printXmlPart cxp)
 
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
 prim__printSelection : Selection -> PrimIO $ ClientResult String
@@ -366,50 +418,3 @@ printSelection c s = do
   syncContext c
   printSel <- valueClientResult crPrintSel
   consoleLog printSel
-
-  
-
-%foreign "browser:lambda:(ooxmls,str,w)=> Array.from(ooxmls.getElementsByTagName(str))[0]"
-prim__getFirstElemByTagName : Document -> String -> PrimIO Element
-
-export
-getFirstElemByTagName : Document -> String -> Prog Element
-getFirstElemByTagName d str = liftIO $ fromPrim (prim__getFirstElemByTagName d str)
-
-
-%foreign "browser:lambda:(ooxmls,str,w)=> Array.from(ooxmls.getElementsByTagName(str))"
-prim__replaceElemNodeBy : Element -> String -> PrimIO ()
-
-export
-replaceElemNodeBy : Element -> String -> Prog ()
-replaceElemNodeBy e str = liftIO $ fromPrim (prim__replaceElemNodeBy e str)
-
-%foreign "browser:lambda:(s,ooxmls,w)=> {s.insertOoxml(ooxmls,Word.InsertLocation.replace); console.log('Done');}"
-prim__replaceOoxml : Selection -> String -> PrimIO ()
-
-export
-replaceOoxml : Selection -> String -> Prog ()
-replaceOoxml s str = liftIO $ fromPrim (prim__replaceOoxml s str)
-
--- TODO: If possible, drop this and use string.replace instead
-%foreign "browser:lambda:(d,w)=> {const serializer = new XMLSerializer(); return serializer.serializeToString(d);}"
-prim__docToOoxml : XMLDocument -> PrimIO String
-
--- TODO: If possible, drop this and use string.replace instead
-export
-docToOoxml : XMLDocument -> Prog String
-docToOoxml d = liftIO $ fromPrim (prim__docToOoxml d)
-
-%foreign 
-  """
-  browser:lambda:(s,svg,w)=> {
-    const regEx = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
-    const newString = s.replace(regEx, svg);
-    return newString;
-  }
-  """
-prim__replaceRegEx : (elem,svg : String) -> PrimIO String
-
-export
-replaceRegEx : (elem,svg : String) -> Prog String
-replaceRegEx e svg = liftIO $ fromPrim (prim__replaceRegEx e svg)

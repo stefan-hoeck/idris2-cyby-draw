@@ -72,223 +72,71 @@ info : HasIO io => (d : LogLevel) => Lazy String -> io ()
 info = log Info
 
 --------------------------------------------------------------------------------
--- Util
+-- Export / Import Structures
 --------------------------------------------------------------------------------
 
-getSelection : Context -> Prog Selection
-getSelection c = do
-  s <- selection c
-  load c s "isEmpty"
-  syncContext c
-  pure s
-
--- keeping only the valid id's
-selectIDs : Indexed.Array String -> Indexed.Array String
-selectIDs =
-  foldMap
-    (\x => if isPrefixOf "cyby_draw_img_" x then A _ (array [x]) else A _ empty)
-
--- keeping the Xml objects in the array that are not linked to an
--- image in word
-xmlToDelete :
-     Context
-  -> (ids : Indexed.Array String)
-  -> CustomXmlPart
-  -> Prog $ Indexed.Array CustomXmlPart
-xmlToDelete c ids cxp = do
-  query <- query cxp "//graphInfo/id" c
-  case query of
-    (A Z arr)     => pure empty
-    (A (S n) arr) => do
-      matchingS <-  extractId (atNat arr Z) "<id>(.*?)</id>"
-      if elem matchingS ids then pure empty else pure $ A _ (array [cxp])
-
--- checking for deleted images and removing their linked xml
--- object
-checkValidXmlObjects : Prog ()
-checkValidXmlObjects = do
-  wordRun $ \c => do
-    -- load the whole doc as xml
-    ooxml <- getOoxml c
-    prs <- domParser
-    xmlS <- parseFromStringXml prs ooxml
-    -- search for the shapes and inlinePictures and collect
-    -- the id's
-    imgElems <- getElementsByTagName xmlS "wp:docPr"
-    as <- traverse (getAttribute "descr") imgElems 
-    ids <- pure $ selectIDs as
-    
-    -- search for id's not linked to an image in the word file
-    -- and delete the whole xml object of that id's
-    allCustomXmlParts <- customXmlParts c
-    load c allCustomXmlParts "items"
-    parts <- itemsCustomXmlParts c allCustomXmlParts
-
-    -- keep the ids of the deleted images in an array and
-    -- delete their xml object afterwards
-    toDelCXPs <- map join $ traverse (xmlToDelete c ids) parts
-    ignore $ traverse {f = Prog} delCustomXmlPart toDelCXPs
-    syncContext c
-    allCustomXmlParts <- customXmlParts c
-    load c allCustomXmlParts "items"
-
-exportImgEmptSel : Context -> Selection -> (svg,mol : String) -> Prog ()
-exportImgEmptSel c s svg mol = do
-  -- encode, insert and add the image to the tracked objects
+exportImgEmptSel : LogLevel => Selection -> (svg,mol : String) -> Prog ()
+exportImgEmptSel s svg mol = do
+  debug "Selection is empty or no svg is present for replacing the structure"
+  -- encode and insert the image to Word
+  -- the JS API creates an xml entry, where the graph is stored
+  -- in the svg reference for later use
   b64 <- bToA svg
-  img <- insertInlinePictureFromB64 s b64
-  addTrackedObj c img
-  load c img ""
-
-  -- creating an id and adding it to the image's alt
-  -- description for reference
-  id <- uniqueId
-  addAltTextDescr img id
-  syncContext c
-  removeTrackedObj c img
-  syncContext c
-
-  -- creating a new XML structure to store the MOL graph and
-  -- adding it to the context object as a `customXmlPart`
-  let xmlContent :=
-    #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
-  addCustomXMLParts c xmlContent
+  ignore $ insertInlinePictureFromB64 s b64
+  debug "exportImage succcesfull"
 
 exportImage : LogLevel => (svg,mol : String) -> Prog ()
 exportImage svg mol =
   wordRun $ \c => do
-    --debug
-    debug "Begin of exportImage"
-    -- return an empty string if the selection is empty
+    debug "Begin of function `exportImage`"
+    -- replace the selected svg (or the first in the selection)
+    -- with the updated structure if an svg is selected
+    -- if the selection is empty or does not include an svg,
+    -- insert the new structure after the selection / cursor
     s <- getSelection c
-    False <- isEmpty s | True => exportImgEmptSel c s svg mol
+    False <- isEmpty s | True => exportImgEmptSel s svg mol
 
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
 
-    -- use the DOM-Parser to search for the id of the structure
-    prs <- domParser
-    xmlS <- parseFromStringXml prs ooxml
+    hasSvg <- hasSvg ooxml
+    if not hasSvg
+      then exportImgEmptSel s svg mol
+      else do
+        -- TODO: Adjust the size of the image
+        -- replace the first occurring svg with the updated one
+        -- non- selective is it is actually a chemical structure
+        -- or just a normal svg
+        ooxmlS <- replaceRegEx ooxml svg
+        replaceOoxml s ooxmlS
 
-    -- extract the image elements
-    imgElems <- getElementsByTagName xmlS "wp:docPr"
-    as <- map toList $ traverse (getAttribute "descr") imgElems 
-    -- if a selected image with a cyby-draw id is found,
-    -- replace the image and the corresponding customXml
-    -- with the modified version
-    let Just id := find (isPrefixOf "cyby_draw_img_") as
-      -- if no cyby-draw image is present in the current selection,
-      -- insert the image after the selection as a new image
-      | _ => exportImgEmptSel c s svg mol
-
-    -- debug
-    debug $ "an id was found " ++ id
---  
---    -- 1. Find the xml of the id
---    -- 2. replace the MOL-file with in the customXmlPart with the new one
---
-
-    -- testing
-    ooxmlS <- getSelectionString c s
-    trace $ "Old selection:\n" ++ ooxmlS
-    trace $ "New svg:\n" ++ svg
-    ooxmlS' <- replaceRegEx ooxmlS svg
-    replaceOoxml s ooxmlS'
-    ooxmlSnew <- getSelectionString c s
-    trace $ "New selection:\n" ++ ooxmlSnew
-
-    ----
---    -- encode, insert and add the image to the tracked objects
---    b64 <- bToA svg
---    img <- insertInlinePictureFromB64 s b64
---    addTrackedObj c img
---    load c img ""
---  
---    -- creating an id and adding it to the image's alt
---    -- description for reference
---    id <- uniqueId
---    addAltTextDescr img id
---    syncContext c
---    removeTrackedObj c img
---    syncContext c
---  
---    -- creating a new XML structure to store the MOL graph and
---    -- adding it to the context object as a `customXmlPart`
---    let xmlContent :=
---      #"<graphInfo><id>\#{id}</id><graph>\#{mol}</graph></graphInfo>"#
---    addCustomXMLParts c xmlContent
-  
-    -- clean up unused XML objects
-    checkValidXmlObjects
-    debug "exportImage succcesfull"
-
--- extracting the xml of the CustomXmlPart and getting the MOL-Graph
--- if the ids match
-findIDGraph :
-     Context
-  -> (id : String)
-  -> (acc : Prog String)
-  -> CustomXmlPart
-  -> Prog String 
-findIDGraph c id acc cxp = do
-  mol <- acc
-  if mol /= "" then pure mol else do
-    xml <- getXml cxp
-    getGraphById xml id
-
-importImageFromWord : LogLevel => (String -> PrimIO ()) -> Prog ()
-importImageFromWord f =
-  wordRun $ \c => do
-    -- clean up unused XML objects
-    checkValidXmlObjects
-    
-    -- return an empty string if the selection is empty
-    s <- getSelection c
-    False <- isEmpty s | True => return f ""
-
-    -- load the whole selection as xml
-    ooxml <- getSelectionOoxml c s
-
-    -- use the DOM-Parser to search for the id of the structure
-    prs <- domParser
-    xmlS <- parseFromStringXml prs ooxml
-
-
---    -- testing
---    debug "elem"
---    elem <- getFirstElemByTagName xmlS "svg"
---    debug "replaceElem"
---    replaceElemNodeBy elem "<svg>test</svg>"
---    syncContext c
---    debug "docToOoxml"
---    newOoxml <- docToOoxml xmlS
---    debug newOoxml
---    debug "replaceOoxml"
---    replaceOoxml s newOoxml
---    syncContext c
---    printSelection c s
---    ----
-
-
-    -- extract the image elements
-    imgElems <- getElementsByTagName xmlS "wp:docPr"
-    as <- map toList $ traverse (getAttribute "descr") imgElems 
-    let Just id := find (isPrefixOf "cyby_draw_img_") as
-      | _ => debug "Error: No image ID was found" >> return f ""
-
-    -- extract the mol file data (of the selected image) by id
-    -- from the stored XML objects
-    allCustomXmlPartCollection <- customXmlParts c
-    load c allCustomXmlPartCollection "items"
-    parts <- itemsCustomXmlParts c allCustomXmlPartCollection
-    syncContext c
-    graph <- foldl (findIDGraph c id) (pure "") parts
-
-    return f graph
+        debug "Function `exportImage` succcesfull"
 
 exportImageToWord : LogLevel => (svg,molFile : String) -> JSIO ()
 exportImageToWord svg mol =
   liftIO $ runProg (putStrLn . ("Error: " ++) . dispErr) (exportImage svg mol)
+
+
+importImageFromWord : LogLevel => (String -> PrimIO ()) -> Prog ()
+importImageFromWord f =
+  wordRun $ \c => do
+    debug "Begin of function `importImageFromWord`"
+    -- return an empty string if the selection is empty
+    s <- getSelection c
+    False <- isEmpty s | True => debug "Selection is empty" >> return f ""
+
+    -- load the whole selection as xml
+    ooxml <- getSelectionOoxml c s
+
+    -- extracting the MOL file directly from the xml structure
+    -- of the current selection
+    -- if there are several cyby-draw generated structures, the
+    -- first in the selection is imported
+    graph <- extractMetadata ooxml
+
+    if graph == ""
+      then debug "No MOL-File found"
+      else debug "Function `exportImage` succcesfull" >> return f graph 
 
 fromWord : LogLevel => Cmd DrawEvent
 fromWord =
