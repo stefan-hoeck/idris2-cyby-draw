@@ -75,6 +75,27 @@ info = log Info
 -- Export / Import Structures
 --------------------------------------------------------------------------------
 
+||| A quick note to the mechanism used in this module:
+||| As Word is based on the XML-Structure, its JS API allows
+||| the extraction of it in form of a string. Therefore, the
+||| information of the structure is saved inside certain XML
+||| nodes.
+||| For exporting a new structure from CyBy-Draw to
+||| Word, the JS API offers a simple image insert function
+||| which generates the needed nodes. To retrieve the structure
+||| at a later time, the MOL-Graph is stored inside a metadata
+||| node inside the svg. However, in case a structure (generated
+||| with the CyBy-Draw Add-In) should only be modified, the
+||| whole svg node has to be replaced with help of the JS
+||| string function `replace`. TODO: Size modification!
+||| To get a structure from Word, the cursor selection XML-String
+||| can be searched for the first occurrence of the svg node
+||| and its first attribute `xmlns`. For Word always adds a
+||| `viewBox` attribute and places it as the first attribute
+||| of an svg node, only CyBy-Draw generated svg's current
+||| selection are searched for. As the RegEx is non-greedy,
+||| only the first svg occurrence is relevant.
+
 exportImgEmptSel : LogLevel => Selection -> (svg,mol : String) -> Prog ()
 exportImgEmptSel s svg mol = do
   debug "Selection is empty or no svg is present for replacing the structure"
