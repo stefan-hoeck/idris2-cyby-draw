@@ -182,7 +182,7 @@ prim__createTempSvg : String -> PrimIO String
     const regExId = new RegExp(`<Relationship Id="([^"]+)"[^>]*Target="media\\/${imageNo}\\.svg"`,'s');
     const matchId = str.match(regExId);
     const idNo = matchId ? matchId[1] : ''
-    return matchId
+    return idNo
   }
   """
 prim__extractImageIdWordSel : Ooxml -> PrimIO String
@@ -211,13 +211,23 @@ prim__getAltTextDescr : InlinePicture -> PrimIO String
 
 %foreign 
   """
-  browser:lambda:(ooxml,svg,w)=> {
-    const regEx = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
-    const newString = ooxml.replace(regEx, svg);
-    return newString;
+  browser:lambda:(ooxml,svg,idSel,cx,cy,w)=> {
+    // first, replace the old svg with the new one
+    const regExSvg = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
+    const newSvg = ooxml.replace(regExSvg, svg);
+    // second, search for the `cx` and `cy` properties (there are two
+    // occurrences for each of them) and replace their values with
+    // the new sizes
+    const regExSize = new RegExp(`<w:drawing>(?:(?!<\\/w:drawing>).)*?<wp:extent cx="[^"]+?" cy="[^"]+?"(?:(?!<\\/w:drawing>).)*?:embed="` + idSel + `(?:(?!<\\/w:drawing>).)*?:ext cx="[^"]+?" cy="[^"]+?"`,'s');
+    const newSizeAndSvg = newSvg.replace(regExSize, (match) => {
+      return match
+        .replace(/cx="[^"]+?"/g, `cx="${cx}"`)
+        .replace(/cy="[^"]+?"/g, `cy="${cy}"`);
+      });
+    return newSizeAndSvg;
   }
   """
-prim__replaceRegEx : Ooxml -> (svg : String) -> PrimIO String
+prim__replaceSvgAndSize : Ooxml -> (svg,idSel : String) -> (cx,cy : String) -> PrimIO String
 
 %foreign 
   """
@@ -255,6 +265,9 @@ prim__delCustomXmlPart : CustomXmlPart -> PrimIO ()
 
 %foreign "browser:lambda:(s,ooxmls,w)=> s.insertOoxml(ooxmls,Word.InsertLocation.replace)"
 prim__replaceOoxml : Selection -> String -> PrimIO ()
+
+%foreign "browser:lambda:(inlPic,w)=> inlPic.delete()"
+prim__deleteInlinePicture : InlinePicture -> PrimIO ()
 
 
 -------------------------------------------------------------------------------
@@ -302,6 +315,10 @@ export
 replaceOoxml : Selection -> String -> Prog ()
 replaceOoxml s str = liftIO $ fromPrim (prim__replaceOoxml s str)
 
+export
+deleteInlinePicture : HasIO io => InlinePicture -> io ()
+deleteInlinePicture inlPic = primIO (prim__deleteInlinePicture inlPic)
+
 
 -- Accessor functions
 
@@ -346,10 +363,6 @@ getSelectionString c s = do
   syncContext c
   valueClientResult crString
 
-
-
--- TODO: Maybe add the ability to change the `InsertLocation`, now the img
--- is added at the end of the selection.
 export
 insertInlinePictureFromB64 : Selection -> String -> Prog InlinePicture
 insertInlinePictureFromB64 s b = liftIO $ fromPrim (prim__insertInlinePictureFromB64 s b)
@@ -437,8 +450,13 @@ getAltText : InlinePicture -> Prog String
 getAltText img = liftIO {io=Prog} $ fromPrim (prim__getAltTextDescr img)
 
 export
-replaceRegEx : HasIO io => Ooxml -> (svg : String) -> io String
-replaceRegEx ooxml svg = primIO $ prim__replaceRegEx ooxml svg
+replaceSvgAndSize :
+     {auto _ : HasIO io}
+  -> Ooxml
+  -> (svg,idSel : String)
+  -> (String,String)
+  -> io String
+replaceSvgAndSize ooxml svg idSel (cx,cy) = primIO $ prim__replaceSvgAndSize ooxml svg idSel cx cy
 
 export
 hasCyBySvg : HasIO io => Ooxml -> io Bool
