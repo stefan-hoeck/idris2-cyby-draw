@@ -120,16 +120,36 @@ exportImage svg mol =
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
 
-    hasSvg <- hasSvg ooxml
-    if not hasSvg
+    hasStructure <- hasCyBySvg ooxml
+    if not hasStructure
       then exportImgEmptSel s svg mol
       else do
+
+        -- testing
         -- TODO: Adjust the size of the image
+        svgTemp <- createTempSvg svg >>= bToA
+        -- maybe change to appending the image to the end of the file
+        tempImg <- insertInlinePictureFromB64 s svgTemp
+        load c tempImg ""
+        syncContext c
+
+        tempOoxml <- getOoxml c
+        printOoxml tempOoxml >>= putStrLn
+
+        ooxmlString <- printOoxml {io=Prog} tempOoxml
+
+        tempId <- extractTempImageId tempOoxml
+        trace $ "Id of the temp image: " ++ tempId
+
+        size <- extractTempSvgSize tempOoxml tempId
+        trace $ "Size of the temp image: " ++ size
+        -- testing
+
         -- replace the first occurring svg with the updated one
-        -- non- selective is it is actually a chemical structure
+        -- non-selective if it is actually a chemical structure
         -- or just a normal svg
-        ooxmlS <- replaceRegEx ooxml svg
-        replaceOoxml s ooxmlS
+--        ooxmlS <- replaceRegEx ooxml svg
+--        replaceOoxml s ooxmlS
 
         debug "Function `exportImage` succcesfull"
 

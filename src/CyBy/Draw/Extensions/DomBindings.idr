@@ -135,6 +135,58 @@ prim__extractId: Ooxml -> String -> PrimIO String
   """
 prim__extractMetadata: Ooxml -> PrimIO String
 
+%foreign
+  """
+  browser:lambda:(ooxml,id,w)=> {
+    const regEx = new RegExp(`<w:drawing>(?:(?!<\\/w:drawing>).)*?<wp:extent cx="([^"]+?)" cy="([^"]+?)"(?:(?!<\\/w:drawing>).)*?:embed="` + id,'s');
+    const match = ooxml.match(regEx);
+    return match ? `${match[1]} ${match[2]}` : '';
+  }
+  """
+prim__extractTempSvgSize : Ooxml -> String -> PrimIO String
+
+-- getting the id from the temporary image
+%foreign
+  """
+  browser:lambda:(str,w)=> {
+    // search for the image number
+    const regExImg = /<pkg:part\\s+pkg:name="\\/word\\/media\\/([^"]+?)\\.svg"[^>]*>(?:(?!<pkg:part)[\\s\\S])*?<temp/s;
+    const matchImg = str.match(regExImg);
+    const imageNo = matchImg ? matchImg[1] : ''
+    // search the id with the corresponding image number
+    const regExId = new RegExp(`<Relationship Id="([^"]+)"[^>]*Target="media\\/${imageNo}\\.svg"`,'s');
+    const matchId = str.match(regExId);
+    const idNo = matchId ? matchId[1] : ''
+    return idNo
+  }
+  """
+prim__extractTempImageId : Ooxml -> PrimIO String
+
+%foreign
+  """
+  browser:lambda:(svg,w)=> {
+    const regEx = new RegExp(`<\/metadata><\/svg>`,'s');
+    return svg.replace(regEx,`</metadata><temp></temp></svg>`);
+  }
+  """
+prim__createTempSvg : String -> PrimIO String
+
+%foreign
+  """
+  browser:lambda:(str,w)=> {
+    // search for the image number
+    const regExImg = /<pkg:part\\s+pkg:name="\\/word\\/media\\/([^"]+?)\\.svg"[^>]*>(?:(?!<pkg:part)[\\s\\S])*?created by\\s/s;
+    const matchImg = str.match(regExImg);
+    const imageNo = matchImg ? matchImg[1] : ''
+    // search the id with the corresponding image number
+    const regExId = new RegExp(`<Relationship Id="([^"]+)"[^>]*Target="media\\/${imageNo}\\.svg"`,'s');
+    const matchId = str.match(regExId);
+    const idNo = matchId ? matchId[1] : ''
+    return matchId
+  }
+  """
+prim__extractImageIdWordSel : Ooxml -> PrimIO String
+
 %foreign "browser:lambda:(f,s,w)=> {return f(s)(w);}"
 prim__return : (String -> PrimIO ()) -> String -> PrimIO ()
 
@@ -175,7 +227,7 @@ prim__replaceRegEx : Ooxml -> (svg : String) -> PrimIO String
     return match?1:0;
   }
   """
-prim__hasSvg : Ooxml -> PrimIO Bool
+prim__hasCyBySvg : Ooxml -> PrimIO Bool
 
 
 -- Mutator functions
@@ -339,6 +391,24 @@ extractMetadata : HasIO io => Ooxml -> io String
 extractMetadata cxp = primIO (prim__extractMetadata cxp)
 
 export
+extractTempSvgSize : HasIO io => Ooxml -> (id : String) -> io String
+extractTempSvgSize ooxml id = primIO (prim__extractTempSvgSize ooxml id)
+
+export
+createTempSvg : HasIO io => String -> io String
+createTempSvg svg = primIO (prim__createTempSvg svg)
+
+export
+extractImageIdWordSel : HasIO io => Ooxml -> io String
+extractImageIdWordSel s = primIO (prim__extractImageIdWordSel s)
+
+||| does nearly the same as `getImageIdWordSel` but searches the whole
+||| document for the temporary image's id
+export
+extractTempImageId : HasIO io => Ooxml -> io String
+extractTempImageId s = primIO (prim__extractTempImageId s)
+
+export
 return : (String -> PrimIO ()) -> String -> Prog ()
 return f s = liftIO {io=Prog} $ fromPrim (prim__return f s)
 
@@ -371,8 +441,8 @@ replaceRegEx : HasIO io => Ooxml -> (svg : String) -> io String
 replaceRegEx ooxml svg = primIO $ prim__replaceRegEx ooxml svg
 
 export
-hasSvg : HasIO io => Ooxml -> io Bool
-hasSvg ooxml = primIO $ prim__hasSvg ooxml
+hasCyBySvg : HasIO io => Ooxml -> io Bool
+hasCyBySvg ooxml = primIO $ prim__hasCyBySvg ooxml
   
 
 
@@ -407,6 +477,13 @@ items o = do
 --------------------------------------------------------------------------------
 -- Debugging
 --------------------------------------------------------------------------------
+
+%foreign "browser:lambda:(o,w)=> o"
+prim__printOoxml : Ooxml -> PrimIO $ String
+
+export
+printOoxml : HasIO io => Ooxml -> io String
+printOoxml ooxml = primIO $ prim__printOoxml ooxml
 
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
 prim__printSelection : Selection -> PrimIO $ ClientResult String
