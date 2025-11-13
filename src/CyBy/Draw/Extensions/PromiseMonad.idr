@@ -15,7 +15,8 @@ import Web.Html
 -- primitive (FFI)
 %foreign "javascript:lambda:(a,b,p,succ,err,w) => p.then((x) => succ(x)(w),(x) => err(x)(w))"
 prim__then :
-     Promise a
+     {0 a,b : _}
+  -> Promise a
   -> (a -> PrimIO b)
   -> (JSErr -> PrimIO b)
   -> PrimIO (Promise b)
@@ -23,25 +24,26 @@ prim__then :
 -- primitive (FFI)
 %foreign "javascript:lambda:(a,b,p,succ,err,w) => p.then((x) => succ(x)(w),(x) => err(x)(w))"
 prim__thenp :
-     Promise a
+     {0 a,b : _}
+  -> Promise a
   -> (a -> PrimIO (Promise b))
   -> (JSErr -> PrimIO (Promise b))
   -> PrimIO (Promise b)
 
 -- primitive (FFI)
 %foreign "javascript:lambda:(a,val,w) => new Promise((f) => f(val(w)))"
-prim__pure : PrimIO a -> PrimIO (Promise a)
+prim__pure : {0 a : _} -> PrimIO a -> PrimIO (Promise a)
 
 -- primitive (FFI)
 %foreign "javascript:lambda:(a,ms,val,w) => new Promise((f) => setTimeout(() => f(val(w)), Number(ms)))"
-prim__delayed : Nat -> PrimIO a -> PrimIO (Promise a)
+prim__delayed : {0 a : _} -> Nat -> PrimIO a -> PrimIO (Promise a)
 
 --------------------------------------------------------------------------------
 -- Prog Monad
 --------------------------------------------------------------------------------
 
 -- not a primitive
-prim__veryPure : a -> PrimIO (Promise a)
+prim__veryPure : {0 a : _} -> a -> PrimIO (Promise a)
 prim__veryPure = prim__pure . MkIORes
 
 public export
@@ -50,20 +52,20 @@ record Prog (a : Type) where
   run : IO (Promise (Either JSErr a))
 
 -- primitve
-liftIOEither : IO (Either JSErr a) -> Prog a
+liftIOEither : {0 a : _} -> IO (Either JSErr a) -> Prog a
 liftIOEither io = P (fromPrim $ prim__pure (toPrim io))
 
-liftEither : Either JSErr a -> Prog a
+liftEither : {0 a : _} ->  Either JSErr a -> Prog a
 liftEither = liftIOEither . pure
 
-pureProg : a -> Prog a
+pureProg : {0 a : _} -> a -> Prog a
 pureProg = liftEither . Right
 
-failProg : JSErr -> Prog a
+failProg : {0 a : _} -> JSErr -> Prog a
 failProg = liftEither . Left
 
 -- primitve
-bindProg : Prog a -> (a -> Prog b) -> Prog b
+bindProg : {0 a,b : _} -> Prog a -> (a -> Prog b) -> Prog b
 bindProg (P run) f = P $ do
   prom <- run
   fromPrim $
@@ -73,7 +75,7 @@ bindProg (P run) f = P $ do
       (prim__veryPure . Left)
 
 -- primitve
-withError : Prog a -> Prog (Either JSErr a)
+withError : {0 a : _} -> Prog a -> Prog (Either JSErr a)
 withError (P run) = P $ do
   prom <- run
   fromPrim $
@@ -100,21 +102,21 @@ HasIO Prog where
   liftIO = liftIOEither . map Right
 
 export
-handle : (JSErr -> Prog a) -> Prog a -> Prog a
+handle : {0 a : _} -> (JSErr -> Prog a) -> Prog a -> Prog a
 handle f x =
   withError x >>= \case
     Right v  => pure v
     Left err => f err
 
 export
-liftPromise : Promise a -> Prog a
+liftPromise : {0 a : _} -> Promise a -> Prog a
 liftPromise p =
   P $ fromPrim $ prim__then p
       (\a,w => MkIORes (Right a) w)
       (\e,w => MkIORes (Left e) w)
 
 export
-liftPrimPromise : PrimIO (Promise a) -> Prog a
+liftPrimPromise : {0 a : _} -> PrimIO (Promise a) -> Prog a
 liftPrimPromise p = primIO p >>= liftPromise
 
 -- primitive
