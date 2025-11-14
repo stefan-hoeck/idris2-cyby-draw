@@ -123,42 +123,39 @@ exportImage svg mol =
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
 
-    if not (hasCyBySvg ooxml)
-      then exportImgEmptSel s svg mol
-      else do
+    let True    := hasCyBySvg ooxml | False => exportImgEmptSel s svg mol
+        idSel   := extractImageIdWordSel ooxml
+        svgTemp := btoa (createTempSvg svg)
 
-            -- extract id of the selected image
-        let idSel := extractImageIdWordSel ooxml
+    -- TODO: This is a hack and should be removed.
+    -- creating a new InlinePicture for extracting the
+    -- word generated size, for that all image sizes are equally (generated)
+    -- (Word slightly adjusts sizes based on their position in the file,
+    -- therefore not all structures have the same length!)
+    -- maybe change to appending the image to the end of the file
+    tempImg <- insertInlinePictureFromB64 s svgTemp
+    load c tempImg "" -- TODO: what does this do?
+    syncContext c
 
-            -- creating a new InlinePicture for extracting the
-            -- word generated size, for that all image sizes are equally (generated)
-            -- (Word slightly adjusts sizes based on their position in the file,
-            -- therefore not all structures have the same length!)
-            svgTemp := btoa (createTempSvg svg)
-        -- maybe change to appending the image to the end of the file
-        tempImg <- insertInlinePictureFromB64 s svgTemp
-        load c tempImg "" -- TODO: what does this do?
-        syncContext c
+    tempOoxml <- getOoxml c
 
-        tempOoxml <- getOoxml c
+    let tempId   := extractTempImageId tempOoxml
 
-        let tempId   := extractTempImageId tempOoxml
+    -- deleting the temp image, as the sizes are captured
+    deleteInlinePicture tempImg
 
-        -- deleting the temp image, as the sizes are captured
-        deleteInlinePicture tempImg
+    case extractTempSvgSize tempOoxml tempId of
+      Nothing => do
+        debug "Failed to extract the size of the temporary image."
+        debug "Abort updating structure and cleanup."
+      Just p => do
+        trace "Id of the temp image: \{tempId}"
+        trace "Size of the temp image: \{show p}"
 
-        case extractTempSvgSize tempOoxml tempId of
-          Nothing => do
-            debug "Failed to extract the size of the temporary image."
-            debug "Abort updating structure and cleanup."
-          Just p => do
-            trace "Id of the temp image: \{tempId}"
-            trace "Size of the temp image: \{show p}"
-
-            -- replace the first occurring svg with the updated one
-            -- and replace the new sizes
-            replaceOoxml s (replaceSvgAndSize ooxml svg idSel p)
-            debug "Function `exportImage` successful"
+        -- replace the first occurring svg with the updated one
+        -- and replace the new sizes
+        replaceOoxml s (replaceSvgAndSize ooxml svg idSel p)
+        debug "Function `exportImage` successful"
 
 exportImageToWord : LogLevel => (svg,molFile : String) -> JSIO ()
 exportImageToWord svg mol = runDeflt $ exportImage svg mol
