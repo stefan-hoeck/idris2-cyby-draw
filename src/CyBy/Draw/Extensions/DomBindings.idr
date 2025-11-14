@@ -2,13 +2,11 @@
 module CyBy.Draw.Extensions.DomBindings
 
 import CyBy.Draw.Extensions.PromiseMonad
-import Data.Array.Indexed
-import Derive.Prelude
+import Data.String
 import JS
 import Web.Internal.DomTypes
 
 %default total
-%language ElabReflection
 
 public export
 record Ooxml where
@@ -39,8 +37,6 @@ data ClientResult : Type -> Type where [external]
 -- Prim Functions
 -------------------------------------------------------------------------------
 
--- Accessor functions
-
 %foreign "browser:lambda:(a,fun,w) => Word.run((c) => fun(c)(w))"
 prim__wordRun : (Context -> PrimIO (Promise a)) -> PrimIO (Promise a)
 
@@ -63,14 +59,8 @@ export
 %foreign "browser:lambda:(s)=> btoa(s)"
 btoa : String -> String
 
-%foreign "browser:lambda:(w)=> { return 'cyby_draw_img_' + Date.now() + Math.floor(Math.random() * 10000);}"
-prim__uniqueID : PrimIO String
-
 %foreign "browser:lambda:(a,o,w)=> o.value"
 prim__valueClientResult: ClientResult a -> PrimIO a
-
-%foreign "browser:lambda:(cxp,exp)=> cxp.match(new RegExp(exp))[1]"
-prim__extractId: String -> String -> String
 
 %foreign
   """
@@ -134,22 +124,6 @@ createTempSvg : String -> String
   """
 prim__extractImageIdWordSel : String -> String
 
-export %foreign 
-  """
-  browser:lambda:(xml,id,w)=> {
-    const regEx = new RegExp(`<id>${id}<\/id><graph>(.*?)<\/graph>`,'s');
-    const match = xml.match(regEx);
-    return match ? match[1].replace(/\\r/g,'') : '';
-  }
-  """
-getGraphById : String -> String -> PrimIO String
-
-%foreign "browser:lambda:(o,w)=> o.xml"
-prim__getInlinePicutes : Selection -> PrimIO AnyPtr
-
-%foreign "browser:lambda:(img,w)=> img.altTextDescription"
-prim__getAltTextDescr : InlinePicture -> PrimIO String
-
 %foreign 
   """
   browser:lambda:(ooxml,svg,idSel,cx,cy,w)=> {
@@ -187,9 +161,6 @@ prim__syncContext : Context -> PrimIO (Promise ())
 %foreign "browser:lambda:(a,o,s,w)=> o.load(s || undefined)"
 prim__load : a -> String -> PrimIO ()
 
-%foreign "browser:lambda:(a,c,o,w)=> c.trackedObjects.add(o)"
-prim__addTrackedObj : Context -> a -> PrimIO ()
-
 %foreign "browser:lambda:(s,ooxmls,w)=> s.insertOoxml(ooxmls,Word.InsertLocation.replace)"
 prim__replaceOoxml : Selection -> String -> PrimIO ()
 
@@ -218,8 +189,6 @@ replaceOoxml s x = primIO (prim__replaceOoxml s x.value)
 export
 deleteInlinePicture : HasIO io => InlinePicture -> io ()
 deleteInlinePicture inlPic = primIO (prim__deleteInlinePicture inlPic)
-
--- Accessor functions
 
 export
 wordRun : (Context -> Prog a) -> Prog a
@@ -261,14 +230,6 @@ insertInlinePictureFromB64 s b = primIO (prim__insertInlinePictureFromB64 s b)
 export
 isEmpty : HasIO io => a -> io Bool
 isEmpty o = primIO (prim__isEmpty o)
-
-export
-uniqueId : HasIO io => io String
-uniqueId = primIO prim__uniqueID
-
-export %inline
-extractId : Ooxml -> (regEx : String) -> String
-extractId cxp regEx = prim__extractId cxp.value regEx
 
 export %inline
 extractMetadata : Ooxml -> String
