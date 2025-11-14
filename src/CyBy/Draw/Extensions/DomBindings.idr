@@ -157,7 +157,6 @@ prim__hasCyBySvg : String -> Bool
 %foreign "browser:lambda:(c,w)=> c.sync()"
 prim__syncContext : Context -> PrimIO (Promise ())
 
--- TODO: What does this do?
 %foreign "browser:lambda:(a,o,s,w)=> o.load(s || undefined)"
 prim__load : a -> String -> PrimIO ()
 
@@ -178,6 +177,8 @@ syncContext c = liftPrimPromise (prim__syncContext c)
 
 ||| Takes an JS object and a comma-delimited string of properties for loading
 ||| this properties for later use.
+|||
+||| TODO: What does this mean? What kind of properties are these?
 export
 load : Context -> a -> (properties : String) -> Prog ()
 load c o props = primIO (prim__load o props) >> syncContext c
@@ -192,7 +193,7 @@ deleteInlinePicture inlPic = primIO (prim__deleteInlinePicture inlPic)
 
 export
 wordRun : (Context -> Prog a) -> Prog a
-wordRun f = P $ fromPrim (prim__wordRun (\c,w => (toPrim (f c).run w)))
+wordRun f = P $ fromPrim (prim__wordRun (\c => (toPrim (f c).run)))
 
 export
 valueClientResult : HasIO io => ClientResult a -> io a
