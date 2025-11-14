@@ -120,16 +120,20 @@ liftPrimPromise : {0 a : _} -> PrimIO (Promise a) -> Prog a
 liftPrimPromise p = primIO p >>= liftPromise
 
 -- primitive
-run' : (JSErr -> IO ()) -> Prog () -> IO (Promise ())
+run' : HasIO io => (JSErr -> IO ()) -> Prog () -> io (Promise ())
 run' handle (P run) = do
-  prom <- run
-  fromPrim $ prim__then prom
+  prom <- liftIO run
+  primIO $ prim__then prom
     (either (\x => toPrim $ handle x) MkIORes)
     (\x => toPrim $ handle x)
 
 export
-runProg : (JSErr -> IO ()) -> Prog () -> IO ()
+runProg : HasIO io => (JSErr -> IO ()) -> Prog () -> io ()
 runProg f = ignore . run' f
+
+export
+runDeflt : HasIO io => Prog () -> io ()
+runDeflt = runProg (\x => putStrLn "Error: \{dispErr x}")
 
 --------------------------------------------------------------------------------
 -- Examples
