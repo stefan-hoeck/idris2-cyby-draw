@@ -345,6 +345,7 @@ molCanvasCls : String
 molCanvasCls = "cyby-draw-molecule-canvas"
 
 parameters {auto ds : DrawSettings}
+           {auto db : LogLevel}
            (pre : String)
 
   canvasCls : List String -> Cmd e
