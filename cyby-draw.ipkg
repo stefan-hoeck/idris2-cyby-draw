@@ -28,11 +28,6 @@ modules = CyBy.Draw
         , CyBy.Draw.Internal.Wedge
         , CyBy.Draw.Internal.Navigation
 
-        , CyBy.Draw.Extensions.Word
-        , CyBy.Draw.Extensions.Util
-        , CyBy.Draw.Extensions.DomBindings
-        , CyBy.Draw.Extensions.PromiseMonad
-
         , CyBy.Draw.Draw
         , CyBy.Draw.Event
         , CyBy.Draw.MoleculeCanvas
