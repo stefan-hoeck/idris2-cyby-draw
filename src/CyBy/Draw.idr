@@ -23,10 +23,12 @@ import public CyBy.Draw.Internal.Settings
 import public CyBy.Draw.MoleculeCanvas
 import public CyBy.Draw.PeriodicTableCanvas
 import public Text.Molfile
-import public CyBy.Draw.Extensions.Word
-import public CyBy.Draw.Extensions.Util
 
 %default total
+
+--------------------------------------------------------------------------------
+-- Primitives
+--------------------------------------------------------------------------------
 
 %foreign "browser:lambda:(s,w) => navigator.clipboard.writeText(s)"
 prim__writeToClipboard : String -> PrimIO ()
@@ -48,6 +50,19 @@ fromClipboard =
     case readMolfileE s of
       Left s  => toPrim (runJS $ h (Msg $ ReadErr s)) w
       Right g => toPrim (runJS $ h (SetTempl g)) w
+
+--------------------------------------------------------------------------------
+-- Extensions
+--------------------------------------------------------------------------------
+
+||| Extension interface, currently used for the word plugin.
+public export
+record Extension where
+  [noHints]
+  constructor E
+  doExport     : DrawSettings => DrawState -> Cmd DrawEvent
+  doImport     : DrawSettings => DrawState -> Cmd DrawEvent
+  importButton : Bool
 
 --------------------------------------------------------------------------------
 --          Events
@@ -214,7 +229,12 @@ minZoom (AT tf _) = tf.scale <= s.minZoom
 maxZoom : (s : DrawSettings) => AffineTransformation -> Bool
 maxZoom (AT tf _) = tf.scale >= s.maxZoom
 
-topBar : (ds : DrawSettings) => (pre : String) -> DrawState -> Node DrawEvent
+topBar :
+     {auto ds : DrawSettings}
+  -> {auto ex : Extension}
+  -> (pre     : String)
+  -> DrawState
+  -> Node DrawEvent
 topBar {ds} pre s =
   div
     [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ]
@@ -233,9 +253,7 @@ topBar {ds} pre s =
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
     , icon "svg" SVG "svg"
-    , nodeIf
-        (ds.usedExtension == Word)
-        (icon "svg-imp" SVGimp "import selected molecule")
+    , nodeIf ex.importButton (icon "svg-imp" SVGimp "import selected molecule")
     ]
 
 template : (cls : String) -> CDGraph -> String -> DrawState -> Node DrawEvent
@@ -301,7 +319,12 @@ px : Double -> String
 px v = show (cast {to = Bits32} v) ++ "px"
 
 export
-sketcher : DrawSettings => (pre : String) -> DrawState -> Node DrawEvent
+sketcher :
+     {auto ds : DrawSettings}
+  -> {auto ex : Extension}
+  -> (pre     : String)
+  -> DrawState
+  -> Node DrawEvent
 sketcher pre s =
   div
     [ class "cyby-draw-main-content"
@@ -345,7 +368,7 @@ molCanvasCls : String
 molCanvasCls = "cyby-draw-molecule-canvas"
 
 parameters {auto ds : DrawSettings}
-           {auto db : LogLevel}
+           {auto ex : Extension}
            (pre : String)
 
   canvasCls : List String -> Cmd e
@@ -417,10 +440,6 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = neutral
 
-  chooseExt : Extension -> ExtensionEvent -> DrawState -> Cmd DrawEvent
-  chooseExt Word we s = dispWordExt we s
-  chooseExt None _  s = cmd_ (toClipboard $ exportSVG s)
-
   displayEv : DrawEvent -> DrawState -> Cmd DrawEvent
   displayEv Focus            s = focusCurrentApp
   displayEv Blur             s = blur (moleculeCanvas pre)
@@ -443,8 +462,8 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVG              s = chooseExt ds.usedExtension ExportSVG s
-  displayEv SVGimp           s = chooseExt ds.usedExtension ImportSVG s
+  displayEv SVG              s = ex.doExport s
+  displayEv SVGimp           s = ex.doImport s
   displayEv _                s = neutral
 
   export
@@ -466,3 +485,13 @@ displayMol sd g m =
   let cdg    := initGraph g
       G o mg := maybe cdg (\ns => highlight ns cdg) m
    in Raw . curSVG $ initMol sd Fill False $ G o mg
+
+||| The default `Extension`
+export %hint
+NoExt : Extension
+NoExt =
+  E
+    { doImport     = \s => noAction
+    , doExport     = \s => cmd_ (toClipboard $ exportSVG s)
+    , importButton = False
+    }

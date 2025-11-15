@@ -1,22 +1,12 @@
 ||| This module takes care of all events used for the word add-in (extension)
-module CyBy.Draw.Extensions.Word
+module CyBy.Draw.Word
 
 import Web.MVC
-import Web.Internal.DomTypes
 import Data.String
-import Data.Vect
-
-import Data.Graph.Indexed
 import Derive.Prelude
-import CyBy.Draw.Event
-import CyBy.Draw.MoleculeCanvas
-import CyBy.Draw.Internal.Settings
-import CyBy.Draw.Internal.Graph
-import CyBy.Draw.Internal.Atom
-import CyBy.Draw.Extensions.Util
-
-import CyBy.Draw.Extensions.DomBindings
-import CyBy.Draw.Extensions.PromiseMonad
+import CyBy.Draw
+import CyBy.Draw.Word.DomBindings
+import CyBy.Draw.Word.PromiseMonad
 
 %default total
 %language ElabReflection
@@ -187,8 +177,11 @@ fromWord =
         Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
         Right m => toPrim (runJS $ h (SetTempl m))
 
-||| Parses a word event and forms a DrawEvent command.
 export
-dispWordExt : LogLevel => DrawSettings => ExtensionEvent -> DrawState -> Cmd DrawEvent
-dispWordExt ExportSVG s = cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
-dispWordExt ImportSVG s = fromWord
+WordExt : (lvl : LogLevel) -> Extension
+WordExt lvl =
+  E
+    { doExport     = \s => cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
+    , doImport     = \s => fromWord
+    , importButton = True
+    }

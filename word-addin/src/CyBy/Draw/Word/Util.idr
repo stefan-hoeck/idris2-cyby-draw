@@ -1,5 +1,4 @@
--- TODO: Delete this and move stuff elsewhere
-module CyBy.Draw.Extensions.Util
+module CyBy.Draw.Word.Util
 
 %default total
 
