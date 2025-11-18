@@ -1,6 +1,7 @@
 module Html
 
 import CyBy.Draw
+import CyBy.Draw.Word
 import Data.List
 import Text.Molfile
 import Text.CSS.Color
@@ -21,17 +22,23 @@ clearMsg : DrawEvent -> Cmd DrawEvent
 clearMsg (KeyUp str) = neutral
 clearMsg _           = children messages []
 
-logAndDisplay : DrawSettings => {default lvlInfo lvl : LogLevel} -> DrawEvent -> DrawState -> Cmd DrawEvent
+logAndDisplay :
+     {auto ex : Extension}
+  -> {auto ds : DrawSettings}
+  -> DrawEvent
+  -> DrawState
+  -> Cmd DrawEvent
 logAndDisplay (Msg m) s = child messages $ Text (printMsg m)
-logAndDisplay e       s = clearMsg e <+> displaySketcher "app" e s
+logAndDisplay e       s = clearMsg e <+> displaySketcher {ds} {ex} "app" e s
 
 covering export
 app : IO ()
 app =
-  let se := {usedExtension := Word} $ defaultSettings abbreviations
+  let se := defaultSettings abbreviations
+      ex := WordExt lvlDebug
    in runMVC
         update
-        (logAndDisplay @{se} {lvl = lvlTrace})
+        (logAndDisplay @{ex} @{se})
         (putStrLn . dispErr)
         (KeyDown "Escape")
         (init @{se} (SD 400 266) Init "")

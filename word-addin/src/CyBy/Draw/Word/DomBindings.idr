@@ -1,7 +1,6 @@
--- TODO: This should be added to the word addin
-module CyBy.Draw.Extensions.DomBindings
+module CyBy.Draw.Word.DomBindings
 
-import CyBy.Draw.Extensions.PromiseMonad
+import CyBy.Draw.Word.PromiseMonad
 import Data.String
 import JS
 import Web.Internal.DomTypes

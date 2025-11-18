@@ -11,13 +11,6 @@ import Geom
 %default total
 %language ElabReflection
 
-
-||| A data type for the different extensions supported at the moment.
-public export
-data Extension = None | Word
-
-%runElab derive "Extension" [Show, Eq]
-
 --------------------------------------------------------------------------------
 --          Settings
 --------------------------------------------------------------------------------
@@ -44,7 +37,6 @@ record DrawSettings where
   minZoom           : Scale
   pseFontSize       : Nat
   resizeCornerRad   : Double
-  usedExtension     : Extension
 
 export
 defaultSettings : List Abbreviation -> DrawSettings
@@ -68,7 +60,6 @@ defaultSettings as =
    , minZoom           = 0.1
    , pseFontSize       = 11
    , resizeCornerRad   = 20.0
-   , usedExtension     = None
    }
 
 export %inline %hint
