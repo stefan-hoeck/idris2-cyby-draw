@@ -81,6 +81,16 @@ prim__extractMetadata: String -> String
   """
 prim__extractTempSvgSize : String -> String -> String
 
+%foreign
+  """
+  browser:lambda:(ooxml,w)=> {
+    const regEx = /viewBox="0 0 ([^\\s]+) ([^"]+)/s;
+    const match = ooxml.match(regEx);
+    return match ? `${match[1]} ${match[2]}` : '';
+  }
+  """
+prim__extractSvgSize : String -> String
+
 -- getting the id from the temporary image
 %foreign
   """
@@ -239,6 +249,13 @@ export
 extractTempSvgSize : Ooxml -> (id : String) -> Maybe (String,String)
 extractTempSvgSize ooxml id =
   case words $ prim__extractTempSvgSize ooxml.value id of
+    [x,y] => Just (x,y)
+    _     => Nothing
+
+export
+extractSvgSize : (svg : String) -> Maybe (String,String)
+extractSvgSize svg =
+  case words $ prim__extractSvgSize svg of
     [x,y] => Just (x,y)
     _     => Nothing
 
