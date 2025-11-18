@@ -96,34 +96,45 @@ info = log Info
 -- 1 Inch = 914400 EMU
 -- 1 Inch = 96 px (as Microsoft uses 96 ppi as standard)
 -- EMU = (914400 / 96) * px = 9525 * px
--- As EMU should be an Integer , underneath the Nat type is used
--- here. The difference of the floor rounding is (I think)
+-- As EMU should be an Integer the Nat type is used here.
+-- The difference of the floor rounding is (I think)
 -- negligible.
 record EMU where
   constructor E
   value : Nat
 
--- TODO: Test this
 pxToEMU : (px : Double) -> EMU
 pxToEMU = E . cast . (* 9525)
 
--- TODO: Test this
 emuAsStr : EMU -> String
 emuAsStr = cast . value
 
-exportImgEmptSel : HasIO io => LogLevel => Selection -> (svg,mol : String) -> io ()
-exportImgEmptSel s svg mol = do
+exportImgEmptSel :
+     {auto _ : LogLevel}
+  -> Context
+  -> Selection
+  -> (svg : String)
+  -> (width,height : String)
+  -> Prog ()
+exportImgEmptSel c s svg w h = do
   debug "Selection is empty or no svg is present for replacing the structure"
-  -- TODO: Adjust the size of the image to have consisten size
-  -- values (not Word generated)
   -- encode and insert the image to Word
   -- the JS API creates an xml entry, where the graph is stored
   -- in the svg reference for later use
   ignore $ insertInlinePictureFromB64 s (btoa svg)
+
+  selOoxml <- getSelectionOoxml c s
+  let idSel := extractImageIdWordSel selOoxml
+
+  debug "New width: \{w}, new height: \{h}"
+
+  -- replace the size of the Word generated values with the
+  -- newly calculated values
+  replaceOoxml s (replaceSvgAndSize selOoxml svg idSel (w,h))
   debug "exportImage succcesfull"
 
-exportImage : LogLevel => (svg,mol : String) -> Prog ()
-exportImage svg mol =
+exportImage : LogLevel => (svg : String) -> Prog ()
+exportImage svg =
   wordRun $ \c => do
     debug "Begin of function `exportImage`"
     -- replace the selected svg (or the first in the selection)
@@ -132,10 +143,6 @@ exportImage svg mol =
     -- if the selection is empty or does not include an svg,
     -- insert the new structure after the selection / cursor
     s <- getSelection c
-    False <- isEmpty s | True => exportImgEmptSel s svg mol
-
-    -- load the whole selection as xml
-    ooxml <- getSelectionOoxml c s
 
     -- extract the image sizes from the svg in pixels (in a
     -- string representation)
@@ -145,19 +152,25 @@ exportImage svg mol =
         debug "Abort inserting structure."
       Just (width,height) => do
             -- convert the pixel values into EMU's
-        let widthEMU  := emuAsStr $ pxToEMU $ cast width
-            heightEMU := emuAsStr $ pxToEMU $ cast height
-            -- check if a cyby structure is present in the selection
-            True      := hasCyBySvg ooxml | False => exportImgEmptSel s svg mol
-            idSel     := extractImageIdWordSel ooxml
+        let wEMU := emuAsStr $ pxToEMU $ cast width
+            hEMU := emuAsStr $ pxToEMU $ cast height
 
+        -- if the selection is empty, insert the svg as a new image
+        False <- isEmpty s | True => exportImgEmptSel c s svg wEMU hEMU
+
+        -- load the selection as xml
+        ooxml <- getSelectionOoxml c s
+        -- check if a cyby structure is present in the selection
+        let True  := hasCyBySvg ooxml
+              | False => exportImgEmptSel c s svg wEMU hEMU
+            idSel := extractImageIdWordSel ooxml
         -- replace the first occurring svg with the updated one
         -- and replace the new sizes
-        replaceOoxml s (replaceSvgAndSize ooxml svg idSel (widthEMU,heightEMU))
+        replaceOoxml s (replaceSvgAndSize ooxml svg idSel (wEMU,hEMU))
         debug "Function `exportImage` successful"
 
-exportImageToWord : LogLevel => (svg,molFile : String) -> JSIO ()
-exportImageToWord svg mol = runDeflt $ exportImage svg mol
+exportImageToWord : LogLevel => (svg : String) -> JSIO ()
+exportImageToWord svg = runDeflt $ exportImage svg
 
 importImageFromWord : LogLevel => (String -> PrimIO ()) -> Prog ()
 importImageFromWord f =
@@ -190,7 +203,7 @@ export
 WordExt : (lvl : LogLevel) -> Extension
 WordExt lvl =
   E
-    { doExport     = \s => cmd_ $ exportImageToWord (exportSVG s) (toMolStr s)
+    { doExport     = \s => cmd_ $ exportImageToWord (exportSVG s)
     , doImport     = \s => fromWord
     , importButton = True
     }
