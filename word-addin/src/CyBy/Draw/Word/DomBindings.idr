@@ -174,10 +174,10 @@ export
 syncContext : Context -> Prog ()
 syncContext c = liftPrimPromise (prim__syncContext c)
 
-||| Takes an JS object and a comma-delimited string of properties for loading
-||| this properties for later use.
-|||
-||| TODO: What does this mean? What kind of properties are these?
+|||  Queuing a request to fetch data for a proxy object, which initially
+|||  contains no real values. `load("")` requests all properties.
+|||  `context.sync()` is required afterward to retrieve the data and make it
+|||  accessible!
 export
 load : Context -> a -> (properties : String) -> Prog ()
 load c o props = primIO (prim__load o props) >> syncContext c
@@ -203,8 +203,8 @@ export
 getSelection : Context -> Prog Selection
 getSelection c = do
   s <- primIO (prim__selection c)
-  load c s "isEmpty" -- TODO: what does this do?
-  syncContext c      -- TODO: why do we need to sync the context before returning?
+  load c s "isEmpty"
+  syncContext c
   pure s
 
 export
