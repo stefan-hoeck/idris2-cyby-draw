@@ -124,8 +124,6 @@ exportImage svg mol =
     -- therefore not all structures have the same length!)
     -- maybe change to appending the image to the end of the file
     tempImg <- insertInlinePictureFromB64 s svgTemp
-    load c tempImg "" -- TODO: what does this do?
-    syncContext c
 
     tempOoxml <- getOoxml c
 
