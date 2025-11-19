@@ -44,10 +44,6 @@ data Context : Type where [external]
 export
 data Selection : Type where [external]
 
--- InlinePicture
-export
-data InlinePicture : Type where [external]
-
 -- ClientResult a
 export
 data ClientResult : Type -> Type where [external]
@@ -68,15 +64,11 @@ prim__getOoxml : Context -> PrimIO (ClientResult String)
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
 prim__getSelectionOoxml : Selection -> PrimIO (ClientResult String)
 
-%foreign "browser:lambda:(s,b64,w)=> s.insertInlinePictureFromBase64(b64, Word.InsertLocation.end)"
-prim__insertInlinePictureFromB64 : Selection -> String -> PrimIO InlinePicture
+%foreign "browser:lambda:(s,p,w)=> { s.insertInlinePictureFromBase64(btoa(p), Word.InsertLocation.end);}"
+prim__insertInlinePicture : Selection -> String -> PrimIO ()
 
 %foreign "browser:lambda:(a,o,w)=> o.isEmpty?1:0"
 prim__isEmpty : a -> PrimIO Bool
-
-export
-%foreign "browser:lambda:(s)=> btoa(s)"
-btoa : String -> String
 
 %foreign "browser:lambda:(a,o,w)=> o.value"
 prim__valueClientResult: ClientResult a -> PrimIO a
@@ -201,8 +193,8 @@ getSelectionOoxml c s = do
   pure (O s)
 
 export
-insertInlinePictureFromB64 : HasIO io => Selection -> String -> io InlinePicture
-insertInlinePictureFromB64 s b = primIO (prim__insertInlinePictureFromB64 s b)
+insertInlinePicture : HasIO io => Selection -> String -> io ()
+insertInlinePicture s b = primIO (prim__insertInlinePicture s b)
 
 export
 isEmpty : HasIO io => a -> io Bool

@@ -103,7 +103,7 @@ exportImgEmptSel c s svg w h = do
   -- encode and insert the image to Word
   -- the JS API creates an xml entry, where the graph is stored
   -- in the svg reference for later use
-  ignore $ insertInlinePictureFromB64 s (btoa svg)
+  insertInlinePicture s svg
 
   selOoxml <- getSelectionOoxml c s
   let idSel := extractImageIdWordSel selOoxml
