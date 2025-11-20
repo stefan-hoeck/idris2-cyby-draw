@@ -7,6 +7,10 @@ import Derive.Prelude
 import CyBy.Draw
 import CyBy.Draw.Word.DomBindings
 import CyBy.Draw.Word.PromiseMonad
+import Geom
+import Geom.Point
+
+import Debug.Trace
 
 %default total
 %language ElabReflection
@@ -141,10 +145,8 @@ exportImage svg w h =
 
 exportImageToWord : LogLevel => DrawSettings => DrawState -> JSIO ()
 exportImageToWord s =
- let svg := exportSVG s
-     w   := cast $ s.dims.swidth
-     h   := cast $ s.dims.sheight
-  in runDeflt $ exportImage svg w h
+ let (SD w h, svg) := exportSVGPair s
+  in runDeflt $ exportImage svg (cast w) (cast h)
 
 importImageFromWord : LogLevel => (String -> PrimIO ()) -> Prog ()
 importImageFromWord f =
