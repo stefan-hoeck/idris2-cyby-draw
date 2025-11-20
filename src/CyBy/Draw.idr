@@ -450,6 +450,7 @@ parameters {auto ds : DrawSettings}
   displayEv  EnableAbbr      s = adjustBars s
   displayEv (SetBond _)      s = adjustBars s
   displayEv (SetTempl _)     s = adjustBars s
+  displayEv (Load _)         s = adjustBars s
   displayEv SelectMode       s = adjustBars s
   displayEv EraseMode        s = adjustBars s
   displayEv (ChgElem _)      s = adjustRightBar s
