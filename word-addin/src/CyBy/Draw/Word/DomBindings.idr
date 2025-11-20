@@ -216,6 +216,10 @@ imageID rel = first findCyByID . manyBetween "<pkg:part" "</pkg:part>"
       name  <- between MediaPrefix Quote bs
       (name,) <$> lookup name rel
 
+-- drops `<svg` start and end tag and converts to byte vector
+dropTags : String -> ByteString
+dropTags = drop 4 . dropEnd 6 . fromString
+
 export %inline
 replaceSvgAndSize : Ooxml -> (svg : String) -> (cx,cy : EMU) -> Ooxml
 replaceSvgAndSize o svg cx cy  =
@@ -227,7 +231,7 @@ replaceSvgAndSize o svg cx cy  =
     replaceSVG : ByteString -> ByteString -> ByteString
     replaceSVG name =
       modBetween (MediaPrefix <+> name) "</pkg:part>" $
-        modBetween "<svg" "</svg>" (const $ drop 4 $ dropEnd 6 $ fromString svg)
+        modBetween "<svg" "</svg>" (const $ dropTags svg)
 
     replaceCoords : ByteString -> ByteString -> ByteString
     replaceCoords id =
