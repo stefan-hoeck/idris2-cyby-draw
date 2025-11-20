@@ -3,6 +3,7 @@ module CyBy.Draw.Word.DomBindings
 import CyBy.Draw.Word.PromiseMonad
 import Data.SortedMap as SM
 import JS
+import Debug.Trace
 
 import public Data.Buffer
 import public Data.ByteString
@@ -165,6 +166,9 @@ Created = "created by cyby-draw"
 EndTag : ByteString
 EndTag = "/>"
 
+MediaPrefix : ByteString
+MediaPrefix = #"pkg:name="/word/media/"#
+
 embed : ByteString -> ByteString
 embed id = "r:embed=\"" <+> id <+> Quote
 
@@ -203,31 +207,34 @@ first f (x :: xs) =
     m       => m
 
 -- Extracts the image ID of the first image in the selection.
-imageID : Relationships -> ByteString -> Maybe ByteString
+imageID : Relationships -> ByteString -> Maybe (ByteString, ByteString)
 imageID rel = first findCyByID . manyBetween "<pkg:part" "</pkg:part>"
   where
-    findCyByID : ByteString -> Maybe ByteString
+    findCyByID : ByteString -> Maybe (ByteString, ByteString)
     findCyByID bs = do
       guard (Created `isInfixOf` bs)
-      name  <- between #"pkg:name="/word/media/"# Quote bs
-      lookup name rel
+      name  <- between MediaPrefix Quote bs
+      (name,) <$> lookup name rel
 
 export %inline
 replaceSvgAndSize : Ooxml -> (svg : String) -> (cx,cy : EMU) -> Ooxml
 replaceSvgAndSize o svg cx cy  =
   case imageID (relationships o.value) o.value of
-    Nothing => o
-    Just id => O $ doReplace id o.value
+    Nothing      => o
+    Just (nm,id) => O . replaceSVG nm . replaceCoords id $ o.value
 
   where
-    doReplace : ByteString -> ByteString -> ByteString
-    doReplace id =
+    replaceSVG : ByteString -> ByteString -> ByteString
+    replaceSVG name =
+      modBetween (MediaPrefix <+> name) "</pkg:part>" $
+        modBetween "<svg" "</svg>" (const $ drop 4 $ dropEnd 6 $ fromString svg)
+
+    replaceCoords : ByteString -> ByteString -> ByteString
+    replaceCoords id =
       modBetweenAll "<w:drawing" "</w:drawing>" $ \t =>
         case embed id `isInfixOf` t of
           False => t
-          True  =>
-           let t2 := modBetween "<svg" "</svg>" (const $ fromString svg) t
-            in modBetweenAll " cx=\"" EndTag (const $ coords cx cy) t2
+          True  => modBetweenAll " cx=\"" EndTag (const $ coords cx cy) t
 
 export %inline
 hasCyBySvg : Ooxml -> Bool
