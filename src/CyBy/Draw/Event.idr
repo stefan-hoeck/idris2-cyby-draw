@@ -61,6 +61,7 @@ data DrawEvent : Type where
   MiddleDown       : DrawEvent
   MiddleUp         : DrawEvent
   SetTempl         : CDGraph -> DrawEvent
+  Load             : CDGraph -> DrawEvent
   SelectMode       : DrawEvent
   KeyDown          : String -> DrawEvent
   KeyUp            : String -> DrawEvent

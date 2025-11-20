@@ -168,7 +168,7 @@ fromWord =
     runDeflt $ importImageFromWord $ \bs =>
       case readMolfileE (toString bs) of
         Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
-        Right m => toPrim (runJS $ h (SetTempl m))
+        Right m => toPrim (runJS $ h (Load m))
 
 export
 WordExt : (lvl : LogLevel) -> Extension
