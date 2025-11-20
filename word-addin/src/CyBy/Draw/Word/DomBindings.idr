@@ -162,12 +162,6 @@ Quote = #"""#
 Created : ByteString
 Created = "created by cyby-draw"
 
-MetaS : ByteString
-MetaS = "<metadata>"
-
-MetaE : ByteString
-MetaE = "</metadata>"
-
 EndTag : ByteString
 EndTag = "/>"
 
@@ -179,7 +173,7 @@ coords x y = fromString "\{x}\" cy=\"\{y}\""
 
 export %inline
 extractMol : Ooxml -> Maybe ByteString
-extractMol = between MetaS MetaE . value
+extractMol = between "<metadata>" "</metadata>" . value
 
 0 Relationships : Type
 Relationships = SortedMap ByteString ByteString
@@ -232,7 +226,7 @@ replaceSvgAndSize o svg cx cy  =
         case embed id `isInfixOf` t of
           False => t
           True  =>
-           let t2 := modBetween MetaS MetaE (const $ fromString svg) t
+           let t2 := modBetween "<svg" "</svg>" (const $ fromString svg) t
             in modBetweenAll " cx=\"" EndTag (const $ coords cx cy) t2
 
 export %inline
