@@ -12,6 +12,26 @@ record Ooxml where
   constructor O
   value : String
 
+||| As word uses EMU's (English Metric Units) as image sizes,
+||| a conversion from pixels to EUM's had to be done.
+||| 1 Inch = 914400 EMU
+||| 1 Inch = 96 px (as Microsoft uses 96 ppi as standard)
+||| EMU = (914400 / 96) * px = 9525 * px
+||| As EMU should be an Integer the Nat type is used here.
+||| The difference of the floor rounding is (I think)
+||| negligible.
+public export
+record EMU where
+  constructor E
+  value : Nat
+
+export %inline
+Cast Double EMU where
+  cast = E . cast . (* 9525)
+
+export %inline
+Interpolation EMU where interpolate = cast . value
+
 -------------------------------------------------------------------------------
 -- Word API Types
 -------------------------------------------------------------------------------
@@ -23,10 +43,6 @@ data Context : Type where [external]
 -- Selection
 export
 data Selection : Type where [external]
-
--- InlinePicture
-export
-data InlinePicture : Type where [external]
 
 -- ClientResult a
 export
@@ -48,15 +64,11 @@ prim__getOoxml : Context -> PrimIO (ClientResult String)
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
 prim__getSelectionOoxml : Selection -> PrimIO (ClientResult String)
 
-%foreign "browser:lambda:(s,b64,w)=> s.insertInlinePictureFromBase64(b64, Word.InsertLocation.end)"
-prim__insertInlinePictureFromB64 : Selection -> String -> PrimIO InlinePicture
+%foreign "browser:lambda:(s,p,w)=> { s.insertInlinePictureFromBase64(btoa(p), Word.InsertLocation.end);}"
+prim__insertInlinePicture : Selection -> String -> PrimIO ()
 
 %foreign "browser:lambda:(a,o,w)=> o.isEmpty?1:0"
 prim__isEmpty : a -> PrimIO Bool
-
-export
-%foreign "browser:lambda:(s)=> btoa(s)"
-btoa : String -> String
 
 %foreign "browser:lambda:(a,o,w)=> o.value"
 prim__valueClientResult: ClientResult a -> PrimIO a
@@ -70,42 +82,6 @@ prim__valueClientResult: ClientResult a -> PrimIO a
   }
   """
 prim__extractMetadata: String -> String
-
-%foreign
-  """
-  browser:lambda:(ooxml,id,w)=> {
-    const regEx = new RegExp(`<w:drawing>(?:(?!<\\/w:drawing>).)*?<wp:extent cx="([^"]+?)" cy="([^"]+?)"(?:(?!<\\/w:drawing>).)*?:embed="` + id,'s');
-    const match = ooxml.match(regEx);
-    return match ? `${match[1]} ${match[2]}` : '';
-  }
-  """
-prim__extractTempSvgSize : String -> String -> String
-
--- getting the id from the temporary image
-%foreign
-  """
-  browser:lambda:(str,w)=> {
-    // search for the image number
-    const regExImg = /<pkg:part\\s+pkg:name="\\/word\\/media\\/([^"]+?)\\.svg"[^>]*>(?:(?!<pkg:part)[\\s\\S])*?<temp/s;
-    const matchImg = str.match(regExImg);
-    const imageNo = matchImg ? matchImg[1] : ''
-    // search the id with the corresponding image number
-    const regExId = new RegExp(`<Relationship Id="([^"]+)"[^>]*Target="media\\/${imageNo}\\.svg"`,'s');
-    const matchId = str.match(regExId);
-    const idNo = matchId ? matchId[1] : ''
-    return idNo
-  }
-  """
-prim__extractTempImageId : String -> String
-
-export %foreign
-  """
-  browser:lambda:(svg,w)=> {
-    const regEx = new RegExp(`<\/metadata><\/svg>`,'s');
-    return svg.replace(regEx,`</metadata><temp></temp></svg>`);
-  }
-  """
-createTempSvg : String -> String
 
 %foreign
   """
@@ -162,9 +138,6 @@ prim__load : a -> String -> PrimIO ()
 %foreign "browser:lambda:(s,ooxmls,w)=> s.insertOoxml(ooxmls,Word.InsertLocation.replace)"
 prim__replaceOoxml : Selection -> String -> PrimIO ()
 
-%foreign "browser:lambda:(inlPic,w)=> inlPic.delete()"
-prim__deleteInlinePicture : InlinePicture -> PrimIO ()
-
 
 -------------------------------------------------------------------------------
 -- Functions
@@ -185,10 +158,6 @@ load c o props = primIO (prim__load o props) >> syncContext c
 export
 replaceOoxml : HasIO io => Selection -> Ooxml -> io ()
 replaceOoxml s x = primIO (prim__replaceOoxml s x.value)
-
-export
-deleteInlinePicture : HasIO io => InlinePicture -> io ()
-deleteInlinePicture inlPic = primIO (prim__deleteInlinePicture inlPic)
 
 export
 wordRun : (Context -> Prog a) -> Prog a
@@ -224,8 +193,8 @@ getSelectionOoxml c s = do
   pure (O s)
 
 export
-insertInlinePictureFromB64 : HasIO io => Selection -> String -> io InlinePicture
-insertInlinePictureFromB64 s b = primIO (prim__insertInlinePictureFromB64 s b)
+insertInlinePicture : HasIO io => Selection -> String -> io ()
+insertInlinePicture s b = primIO (prim__insertInlinePicture s b)
 
 export
 isEmpty : HasIO io => a -> io Bool
@@ -235,31 +204,18 @@ export %inline
 extractMetadata : Ooxml -> String
 extractMetadata cxp = prim__extractMetadata cxp.value
 
-export
-extractTempSvgSize : Ooxml -> (id : String) -> Maybe (String,String)
-extractTempSvgSize ooxml id =
-  case words $ prim__extractTempSvgSize ooxml.value id of
-    [x,y] => Just (x,y)
-    _     => Nothing
-
 export %inline
 extractImageIdWordSel : Ooxml -> String
 extractImageIdWordSel s = prim__extractImageIdWordSel s.value
-
-||| does nearly the same as `getImageIdWordSel` but searches the whole
-||| document for the temporary image's id
-export %inline
-extractTempImageId : Ooxml -> String
-extractTempImageId s = prim__extractTempImageId s.value
 
 export %inline
 replaceSvgAndSize :
      Ooxml
   -> (svg,idSel : String)
-  -> (String,String)
+  -> (cx,cy : EMU)
   -> Ooxml
-replaceSvgAndSize ooxml svg idSel (cx,cy) =
-  O $ prim__replaceSvgAndSize ooxml.value svg idSel cx cy
+replaceSvgAndSize ooxml svg idSel  cx cy  =
+  O $ prim__replaceSvgAndSize ooxml.value svg idSel "\{cx}" "\{cy}"
 
 export
 hasCyBySvg : Ooxml -> Bool

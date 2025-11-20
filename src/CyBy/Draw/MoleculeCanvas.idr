@@ -737,13 +737,19 @@ parameters {auto ds : DrawSettings}
   fromMol : SceneDims -> ScaleMode -> MolGraphAT -> DrawState
   fromMol sd sm = initMol sd sm False . initGraph
 
+  ||| TODO
+  export
+  exportSVGPair : DrawState -> (SceneDims, String)
+  exportSVGPair s =
+    let Just (p1,p2) := corners $ bounds s.mol | Nothing => (SD 0 0, "")
+        (SZ _ _ r1 r2) := selectZones (convert p1) (convert p2)
+        sd             := SD (r2-r1).x (r2-r1).y
+     in (sd, curSVG $ initMol sd Init True s.mol)
+
   ||| Generates an SVG string out of the current DrawState. The
   ||| graph is included as MOL file string inside the metadata tag.
   ||| The border margin depends on the `CoreDims`s `selectBufferSize`
   ||| field value.
   export
   exportSVG : DrawState -> String
-  exportSVG s =
-    let Just (p1,p2) := corners $ bounds s.mol | Nothing => ""
-        (SZ _ _ r1 r2) := selectZones (convert p1) (convert p2)
-     in curSVG $ initMol (SD (r2-r1).x (r2-r1).y) Init True s.mol
+  exportSVG = snd . exportSVGPair
