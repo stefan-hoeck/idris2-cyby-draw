@@ -2,17 +2,13 @@
 module CyBy.Draw.Word
 
 import Web.MVC
-import Data.String
 import Derive.Prelude
 import CyBy.Draw
 import CyBy.Draw.Word.DomBindings
 import CyBy.Draw.Word.PromiseMonad
-import Geom
-import Geom.Point
-
-import Debug.Trace
 
 %default total
+%hide JS.ByteString.ByteString
 %language ElabReflection
 
 --------------------------------------------------------------------------------
@@ -110,13 +106,12 @@ exportImgEmptSel c s svg w h = do
   insertInlinePicture s svg
 
   selOoxml <- getSelectionOoxml c s
-  let idSel := extractImageIdWordSel selOoxml
 
   debug "New width: \{w}, new height: \{h}"
 
   -- replace the size of the Word generated values with the
   -- newly calculated values
-  replaceOoxml s (replaceSvgAndSize selOoxml svg idSel w h)
+  replaceOoxml s (replaceSvgAndSize selOoxml svg w h)
   debug "exportImage succcesfull"
 
 exportImage : LogLevel => (svg : String) -> (w,h : EMU) -> Prog ()
@@ -137,10 +132,10 @@ exportImage svg w h =
     ooxml <- getSelectionOoxml c s
     -- check if a cyby structure is present in the selection
     let True  := hasCyBySvg ooxml | False => exportImgEmptSel c s svg w h
-        idSel := extractImageIdWordSel ooxml
+
     -- replace the first occurring svg with the updated one
     -- and replace the new sizes
-    replaceOoxml s (replaceSvgAndSize ooxml svg idSel w h)
+    replaceOoxml s (replaceSvgAndSize ooxml svg w h)
     debug "Function `exportImage` successful"
 
 exportImageToWord : LogLevel => DrawSettings => DrawState -> JSIO ()
@@ -148,7 +143,7 @@ exportImageToWord s =
  let (SD w h, svg) := exportSVGPair s
   in runDeflt $ exportImage svg (cast w) (cast h)
 
-importImageFromWord : LogLevel => (String -> PrimIO ()) -> Prog ()
+importImageFromWord : LogLevel => (ByteString -> PrimIO ()) -> Prog ()
 importImageFromWord f =
   wordRun $ \c => do
     debug "Begin of function `importImageFromWord`"
@@ -163,15 +158,15 @@ importImageFromWord f =
     -- of the current selection
     -- if there are several cyby-draw generated structures, the
     -- first in the selection is imported
-    case extractMetadata ooxml of
-      "" => debug "No MOL-File found"
-      g  => debug "Function `importImageFromWord` succcesfull" >> primIO (f g)
+    case extractMol ooxml of
+      Nothing => debug "No MOL-File found"
+      Just g  => debug "Function `importImageFromWord` succcesfull" >> primIO (f g)
 
 fromWord : LogLevel => Cmd DrawEvent
 fromWord =
   C $ \h =>
-    runDeflt $ importImageFromWord $ \s =>
-      case readMolfileE s of
+    runDeflt $ importImageFromWord $ \bs =>
+      case readMolfileE (toString bs) of
         Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
         Right m => toPrim (runJS $ h (SetTempl m))
 
