@@ -1,16 +1,25 @@
 module CyBy.Draw.Word.DomBindings
 
 import CyBy.Draw.Word.PromiseMonad
-import Data.String
+import Data.SortedMap as SM
 import JS
-import Web.Internal.DomTypes
 
+import public Data.Buffer
+import public Data.ByteString
+
+%hide JS.ByteString.ByteString
 %default total
 
-public export
+export
 record Ooxml where
   constructor O
-  value : String
+  value : ByteString
+
+export %inline
+Cast Ooxml String where cast = toString . value
+
+export %inline
+Cast String Ooxml where cast = O . fromString
 
 ||| As word uses EMU's (English Metric Units) as image sizes,
 ||| a conversion from pixels to EUM's had to be done.
@@ -73,62 +82,6 @@ prim__isEmpty : a -> PrimIO Bool
 %foreign "browser:lambda:(a,o,w)=> o.value"
 prim__valueClientResult: ClientResult a -> PrimIO a
 
-%foreign
-  """
-  browser:lambda:(ooxml,w)=> {
-    const regEx = new RegExp(`<metadata>(.*?)<\/metadata>`,'s');
-    const match = ooxml.match(regEx);
-    return match ? match[1] : '';
-  }
-  """
-prim__extractMetadata: String -> String
-
-%foreign
-  """
-  browser:lambda:(str,w)=> {
-    // search for the image number
-    const regExImg = /<pkg:part\\s+pkg:name="\\/word\\/media\\/([^"]+?)\\.svg"[^>]*>(?:(?!<pkg:part)[\\s\\S])*?created by\\s/s;
-    const matchImg = str.match(regExImg);
-    const imageNo = matchImg ? matchImg[1] : ''
-    // search the id with the corresponding image number
-    const regExId = new RegExp(`<Relationship Id="([^"]+)"[^>]*Target="media\\/${imageNo}\\.svg"`,'s');
-    const matchId = str.match(regExId);
-    const idNo = matchId ? matchId[1] : ''
-    return idNo
-  }
-  """
-prim__extractImageIdWordSel : String -> String
-
-%foreign 
-  """
-  browser:lambda:(ooxml,svg,idSel,cx,cy,w)=> {
-    // first, replace the old svg with the new one
-    const regExSvg = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
-    const newSvg = ooxml.replace(regExSvg, svg);
-    // second, search for the `cx` and `cy` properties (there are two
-    // occurrences for each of them) and replace their values with
-    // the new sizes
-    const regExSize = new RegExp(`<w:drawing>(?:(?!<\\/w:drawing>).)*?<wp:extent cx="[^"]+?" cy="[^"]+?"(?:(?!<\\/w:drawing>).)*?:embed="` + idSel + `(?:(?!<\\/w:drawing>).)*?:ext cx="[^"]+?" cy="[^"]+?"`,'s');
-    const newSizeAndSvg = newSvg.replace(regExSize, (match) => {
-      return match
-        .replace(/cx="[^"]+?"/g, `cx="${cx}"`)
-        .replace(/cy="[^"]+?"/g, `cy="${cy}"`);
-      });
-    return newSizeAndSvg;
-  }
-  """
-prim__replaceSvgAndSize : String -> (svg,idSel : String) -> (cx,cy : String) -> String
-
-%foreign 
-  """
-  browser:lambda:(ooxml,w)=> {
-    const regEx = new RegExp(/<svg xmlns[\\s\\S]*?svg>/,'s');
-    const match = regEx.test(ooxml);
-    return match?1:0;
-  }
-  """
-prim__hasCyBySvg : String -> Bool
-
 %foreign "browser:lambda:(c,w)=> c.sync()"
 prim__syncContext : Context -> PrimIO (Promise ())
 
@@ -137,7 +90,6 @@ prim__load : a -> String -> PrimIO ()
 
 %foreign "browser:lambda:(s,ooxmls,w)=> s.insertOoxml(ooxmls,Word.InsertLocation.replace)"
 prim__replaceOoxml : Selection -> String -> PrimIO ()
-
 
 -------------------------------------------------------------------------------
 -- Functions
@@ -157,7 +109,7 @@ load c o props = primIO (prim__load o props) >> syncContext c
 
 export
 replaceOoxml : HasIO io => Selection -> Ooxml -> io ()
-replaceOoxml s x = primIO (prim__replaceOoxml s x.value)
+replaceOoxml s x = primIO (prim__replaceOoxml s $ cast x)
 
 export
 wordRun : (Context -> Prog a) -> Prog a
@@ -182,7 +134,7 @@ getOoxml c = do
   crOoxml <- primIO (prim__getOoxml c)
   syncContext c
   s <- valueClientResult crOoxml
-  pure (O s)
+  pure (cast s)
 
 export
 getSelectionOoxml : Context -> Selection -> Prog Ooxml
@@ -190,7 +142,7 @@ getSelectionOoxml c s = do
   crOoxml <- primIO (prim__getSelectionOoxml s)
   syncContext c
   s <- valueClientResult crOoxml
-  pure (O s)
+  pure (cast s)
 
 export
 insertInlinePicture : HasIO io => Selection -> String -> io ()
@@ -200,23 +152,89 @@ export
 isEmpty : HasIO io => a -> io Bool
 isEmpty o = primIO (prim__isEmpty o)
 
-export %inline
-extractMetadata : Ooxml -> String
-extractMetadata cxp = prim__extractMetadata cxp.value
+--------------------------------------------------------------------------------
+-- Image Extraction
+--------------------------------------------------------------------------------
+
+Quote : ByteString
+Quote = #"""#
+
+Created : ByteString
+Created = "created by cyby-draw"
+
+MetaS : ByteString
+MetaS = "<metadata>"
+
+MetaE : ByteString
+MetaE = "</metadata>"
+
+EndTag : ByteString
+EndTag = "/>"
+
+embed : ByteString -> ByteString
+embed id = "r:embed=\"" <+> id <+> Quote
+
+coords : (x,y : EMU) -> ByteString
+coords x y = fromString "\{x}\" cy=\"\{y}\""
 
 export %inline
-extractImageIdWordSel : Ooxml -> String
-extractImageIdWordSel s = prim__extractImageIdWordSel s.value
+extractMol : Ooxml -> Maybe ByteString
+extractMol = between MetaS MetaE . value
+
+0 Relationships : Type
+Relationships = SortedMap ByteString ByteString
+
+-- Extract `Id` and `Target` from all `<Relationship` entries found
+-- in the given XML document and puts them in a dictionary from
+-- `Target` to `Id`.
+-- 
+-- Entries, where either `Id` or `Target` is undefined or empty, will
+-- be silently dropped.
+relationships : ByteString -> Relationships
+relationships =
+  SM.fromList . mapMaybe getPair . manyBetween "<Relationship " EndTag
+  where
+    getPair : ByteString -> Maybe (ByteString,ByteString)
+    getPair x =
+      [| MkPair
+           (betweenNonEmpty #"Target="media/"# Quote x)
+           (betweenNonEmpty #"Id=""# Quote x)
+      |]
+
+first : (a -> Maybe b) -> List a -> Maybe b
+first f []        = Nothing
+first f (x :: xs) =
+  case f x of
+    Nothing => first f xs
+    m       => m
+
+-- Extracts the image ID of the first image in the selection.
+imageID : Relationships -> ByteString -> Maybe ByteString
+imageID rel = first findCyByID . manyBetween "<pkg:part" "</pkg:part>"
+  where
+    findCyByID : ByteString -> Maybe ByteString
+    findCyByID bs = do
+      guard (Created `isInfixOf` bs)
+      name  <- between #"pkg:name="/word/media/"# Quote bs
+      lookup name rel
 
 export %inline
-replaceSvgAndSize :
-     Ooxml
-  -> (svg,idSel : String)
-  -> (cx,cy : EMU)
-  -> Ooxml
-replaceSvgAndSize ooxml svg idSel  cx cy  =
-  O $ prim__replaceSvgAndSize ooxml.value svg idSel "\{cx}" "\{cy}"
+replaceSvgAndSize : Ooxml -> (svg : String) -> (cx,cy : EMU) -> Ooxml
+replaceSvgAndSize o svg cx cy  =
+  case imageID (relationships o.value) o.value of
+    Nothing => o
+    Just id => O $ doReplace id o.value
 
-export
+  where
+    doReplace : ByteString -> ByteString -> ByteString
+    doReplace id =
+      modBetweenAll "<w:drawing" "</w:drawing>" $ \t =>
+        case embed id `isInfixOf` t of
+          False => t
+          True  =>
+           let t2 := modBetween MetaS MetaE (const $ fromString svg) t
+            in modBetweenAll " cx=\"" EndTag (const $ coords cx cy) t2
+
+export %inline
 hasCyBySvg : Ooxml -> Bool
-hasCyBySvg ooxml = prim__hasCyBySvg ooxml.value
+hasCyBySvg = isInfixOf Created . value
