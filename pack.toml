@@ -25,26 +25,14 @@ url    = "https://github.com/stefan-hoeck/idris2-chem"
 commit = "latest:main"
 ipkg   = "chem-generators/chem-generators.ipkg"
 
-[custom.all.ref1]
+[custom.all.css]
 type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-ref1"
+url    = "https://github.com/stefan-hoeck/idris2-css"
 commit = "latest:main"
-ipkg   = "ref1.ipkg"
+ipkg   = "css.ipkg"
 
-[custom.all.array]
+[custom.all.dom-mvc]
 type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-array"
+url    = "https://github.com/stefan-hoeck/idris2-dom-mvc"
 commit = "latest:main"
-ipkg   = "array.ipkg"
-
-[custom.all.bytestring]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-bytestring"
-commit = "latest:main"
-ipkg   = "bytestring.ipkg"
-
-[custom.all.indexed-graph]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-indexed-graph"
-commit = "latest:main"
-ipkg   = "indexed-graph.ipkg"
+ipkg   = "dom-mvc.ipkg"

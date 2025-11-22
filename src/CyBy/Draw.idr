@@ -3,6 +3,7 @@ module CyBy.Draw
 import Data.Finite
 import Data.List
 import Geom
+import Text.CSS.Class
 import Text.HTML.Select
 import Text.SVG
 import Web.Html
@@ -166,12 +167,12 @@ massNrs a =
 hidden : {0 t : _} -> Attribute t e
 hidden = class "hidden"
 
-icon : (cls : String) -> DrawEvent -> (title : String) -> Node DrawEvent
+icon : (cls : Class) -> DrawEvent -> (title : String) -> Node DrawEvent
 icon cls ev ttl =
   button [classes ["cyby-draw-icon", cls], onClick ev, title ttl] []
 
 radioIcon :
-     (cls : String)
+     (cls : Class)
   -> DrawEvent
   -> (title : String)
   -> Bool
@@ -186,7 +187,7 @@ radioIcon cls ev ttl b =
     ]
     []
 
-abbrCls : DrawState -> List String
+abbrCls : DrawState -> Classes
 abbrCls s =
   case s.mode of
     SetAbbr _ => ["cyby-draw-select","active"]
@@ -214,7 +215,7 @@ drawing b s =
 setting : Elem -> DrawState -> Bool
 setting el s = s.mode == SetAtom (cast el)
 
-bondIcon : String -> MolBond -> String -> DrawState -> Node DrawEvent
+bondIcon : Class -> MolBond -> String -> DrawState -> Node DrawEvent
 bondIcon c b title = radioIcon c (SetBond b) title . drawing b
 
 %inline fromStereo : BondStereo -> MolBond
@@ -256,7 +257,7 @@ topBar {ds} pre s =
     , nodeIf ex.importButton (icon "svg-imp" SVGimp "import selected molecule")
     ]
 
-template : (cls : String) -> CDGraph -> String -> DrawState -> Node DrawEvent
+template : (cls : Class) -> CDGraph -> String -> DrawState -> Node DrawEvent
 template cls g nm s =
   radioIcon cls (SetTempl g) "Template \{nm}" (s.mode == SetTempl g)
 
@@ -364,14 +365,14 @@ sketcher pre s =
 --          Controller
 --------------------------------------------------------------------------------
 
-molCanvasCls : String
+molCanvasCls : Class
 molCanvasCls = "cyby-draw-molecule-canvas"
 
 parameters {auto ds : DrawSettings}
            {auto ex : Extension}
            (pre : String)
 
-  canvasCls : List String -> Cmd e
+  canvasCls : Classes -> Cmd e
   canvasCls = attr (moleculeCanvas pre) . classes . (molCanvasCls ::)
 
   rotating : Cmd e
