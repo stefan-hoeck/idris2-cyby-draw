@@ -176,6 +176,6 @@ WordExt lvl =
   E
     { doExport     = \s => cmd_ $ exportImageToWord s
     , doImport     = \s => fromWord
-    , exportButton = Just ("to-word", "inserting structure in Word")
+    , exportButton = ("to-word", "inserting structure in Word")
     , importButton = Just ("from-word", "getting selected structure from Word")
     }

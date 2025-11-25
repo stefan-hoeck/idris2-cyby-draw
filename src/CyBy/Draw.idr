@@ -68,7 +68,7 @@ record Extension where
   constructor E
   doExport     : DrawSettings => DrawState -> Cmd DrawEvent
   doImport     : DrawSettings => DrawState -> Cmd DrawEvent
-  exportButton : Maybe (String,String)
+  exportButton : (String,String)
   importButton : Maybe (String,String)
 
 --------------------------------------------------------------------------------
@@ -259,12 +259,8 @@ topBar {ds} pre s =
     , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
-    , case ex.exportButton of
-        Nothing         => icon "svg" SVG "svg"
-        Just (cls,title) => icon (C cls) SVG title
-    , case ex.importButton of
-        Nothing         => Empty
-        Just (cls,title) => icon (C cls) SVGimp title
+    , icon (C $ fst ex.exportButton) SVG (snd ex.exportButton)
+    , maybe Empty (\x => icon (C (fst x)) SVGimp (snd x)) ex.importButton
     ]
 
 template : (cls : Class) -> CDGraph -> String -> DrawState -> Node DrawEvent
@@ -505,6 +501,6 @@ NoExt =
   E
     { doImport     = \s => noAction
     , doExport     = \s => cmd_ (toClipboard $ exportSVG s)
-    , exportButton = Nothing
+    , exportButton = ("svg", "svg")
     , importButton = Nothing
     }
