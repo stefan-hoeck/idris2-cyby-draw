@@ -57,13 +57,19 @@ fromClipboard =
 --------------------------------------------------------------------------------
 
 ||| Extension interface, currently used for the word plugin.
+||| If the import button should be used, a tuple with the
+||| class and title has to be specified. If no import button
+||| is used, this is indicated by a `Nothing`.
+||| If the export button should be modified, it also had to
+||| be specified.
 public export
 record Extension where
   [noHints]
   constructor E
   doExport     : DrawSettings => DrawState -> Cmd DrawEvent
   doImport     : DrawSettings => DrawState -> Cmd DrawEvent
-  importButton : Bool
+  exportButton : Maybe (String,String)
+  importButton : Maybe (String,String)
 
 --------------------------------------------------------------------------------
 --          Events
@@ -253,8 +259,12 @@ topBar {ds} pre s =
     , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
-    , icon "svg" SVG "svg"
-    , nodeIf ex.importButton (icon "svg-imp" SVGimp "import selected molecule")
+    , case ex.exportButton of
+        Nothing         => icon "svg" SVG "svg"
+        Just (cls,title) => icon (C cls) SVG title
+    , case ex.importButton of
+        Nothing         => Empty
+        Just (cls,title) => icon (C cls) SVGimp title
     ]
 
 template : (cls : Class) -> CDGraph -> String -> DrawState -> Node DrawEvent
@@ -495,5 +505,6 @@ NoExt =
   E
     { doImport     = \s => noAction
     , doExport     = \s => cmd_ (toClipboard $ exportSVG s)
-    , importButton = False
+    , exportButton = Nothing
+    , importButton = Nothing
     }
