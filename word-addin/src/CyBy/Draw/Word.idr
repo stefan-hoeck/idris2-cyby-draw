@@ -3,6 +3,7 @@ module CyBy.Draw.Word
 
 import Web.MVC
 import Derive.Prelude
+import Text.CSS.Class
 import CyBy.Draw
 import CyBy.Draw.Word.DomBindings
 import CyBy.Draw.Word.PromiseMonad
@@ -170,12 +171,17 @@ fromWord =
         Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
         Right m => toPrim (runJS $ h (Load m))
 
+wordButtons : List $ Node DrawEvent
+wordButtons =
+  [ icon "from-word" SVGimp "getting selected structure from Word"
+  , icon "to-word" SVG "inserting structure into Word"
+  ]
+
 export
 WordExt : (lvl : LogLevel) -> Extension
 WordExt lvl =
   E
     { doExport     = \s => cmd_ $ exportImageToWord s
     , doImport     = \s => fromWord
-    , exportButton = ("to-word", "inserting structure in Word")
-    , importButton = Just ("from-word", "getting selected structure from Word")
+    , buttons      = wordButtons
     }
