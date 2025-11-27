@@ -57,13 +57,18 @@ fromClipboard =
 --------------------------------------------------------------------------------
 
 ||| Extension interface, currently used for the word plugin.
+||| If the import button should be used, a tuple with the
+||| class and title has to be specified. If no import button
+||| is used, this is indicated by a `Nothing`.
+||| If the export button should be modified, it also had to
+||| be specified.
 public export
 record Extension where
   [noHints]
   constructor E
   doExport     : DrawSettings => DrawState -> Cmd DrawEvent
   doImport     : DrawSettings => DrawState -> Cmd DrawEvent
-  importButton : Bool
+  buttons      : List (Node DrawEvent)
 
 --------------------------------------------------------------------------------
 --          Events
@@ -167,6 +172,7 @@ massNrs a =
 hidden : {0 t : _} -> Attribute t e
 hidden = class "hidden"
 
+export
 icon : (cls : Class) -> DrawEvent -> (title : String) -> Node DrawEvent
 icon cls ev ttl =
   button [classes ["cyby-draw-icon", cls], onClick ev, title ttl] []
@@ -238,7 +244,7 @@ topBar :
   -> Node DrawEvent
 topBar {ds} pre s =
   div
-    [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ]
+    [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ] $
     [ radioIcon "sel" SelectMode "select" (s.mode == Select)
     , radioIcon "erase" EraseMode "erase" (s.mode == Erase)
     , disable (order s.mol == 0) $ icon "clear" Clear "clear"
@@ -253,9 +259,7 @@ topBar {ds} pre s =
     , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
     , bondIcon "double-bond" (cast Dbl) "double bond" s
     , bondIcon "triple-bond" (cast Triple) "triple bond" s
-    , icon "svg" SVG "svg"
-    , nodeIf ex.importButton (icon "svg-imp" SVGimp "import selected molecule")
-    ]
+    ] ++ ex.buttons
 
 template : (cls : Class) -> CDGraph -> String -> DrawState -> Node DrawEvent
 template cls g nm s =
@@ -495,5 +499,5 @@ NoExt =
   E
     { doImport     = \s => noAction
     , doExport     = \s => cmd_ (toClipboard $ exportSVG s)
-    , importButton = False
+    , buttons      = [ icon "svg" SVG "svg" ]
     }

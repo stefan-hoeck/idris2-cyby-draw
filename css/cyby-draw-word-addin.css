@@ -11,12 +11,12 @@
   margin-top: 20px;
 }
 
-/* change the normal svg icon to the export svg icon */
-.cyby-draw-icon.svg {
-  background-image: url("draw_icons/icon_svg_exp.svg");
+/* extra class for the svg export icon */
+.cyby-draw-icon.to-word {
+  background-image: url("draw_icons/icon_svg_exp_word.svg");
 }
 
 /* extra class for the svg import icon */
-.cyby-draw-icon.svg-imp {
-  background-image: url("draw_icons/icon_svg_imp.svg");
+.cyby-draw-icon.from-word {
+  background-image: url("draw_icons/icon_svg_imp_word.svg");
 }
