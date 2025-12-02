@@ -35,7 +35,7 @@ covering export
 app : IO ()
 app =
   let se := defaultSettings abbreviations
-      ex := WordExt lvlDebug
+      ex := WordExt lvlTrace
    in runMVC
         update
         (logAndDisplay @{ex} @{se})

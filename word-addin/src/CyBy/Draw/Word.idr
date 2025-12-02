@@ -130,7 +130,10 @@ exportImage svg w h =
 
     -- load the selection as xml
     ooxml <- getSelectionOoxml c s
+
+    -- TODO
     -- check if a cyby structure is present in the selection
+    -- abort if several cyby structures are present
     let True  := hasCyBySvg ooxml | False => exportImgEmptSel c s svg w h
 
     -- replace the first occurring svg with the updated one
@@ -154,13 +157,19 @@ importImageFromWord f =
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
 
+    -- TODO
+    -- check if a cyby structure is present in the selection
+    -- abort if several cyby structures are present
+    let True  := hasCyBySvg ooxml | _ => debug "None or several structures are selected!"
+
     -- extracting the MOL file directly from the xml structure
     -- of the current selection
     -- if there are several cyby-draw generated structures, the
     -- first in the selection is imported
     case extractMol ooxml of
       Nothing => debug "No MOL-File found"
-      Just g  => debug "Function `importImageFromWord` succcesfull" >> primIO (f g)
+      Just g  =>
+        debug "Function `importImageFromWord` succcesfull" >> primIO (f g)
 
 fromWord : LogLevel => Cmd DrawEvent
 fromWord =
