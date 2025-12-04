@@ -243,3 +243,8 @@ replaceSvgAndSize o svg cx cy  =
 export %inline
 hasCyBySvg : Ooxml -> Bool
 hasCyBySvg = isInfixOf Created . value
+
+export
+checkSingleSelection : Ooxml -> Bool
+checkSingleSelection sel =
+  length (splitAtSubstring "</w:drawing>" sel.value) == 2
