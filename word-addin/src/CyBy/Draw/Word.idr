@@ -124,6 +124,10 @@ exportImage svg w h =
     -- if an svg is selected
     -- if the selection is empty or does not include an svg,
     -- insert the new structure after the selection / cursor
+
+    -- if the new svg string is empty, abort the export
+    let True := not (null svg) | False => debug "No structure to export from CyBy-Draw"
+
     s <- getSelection c
 
     -- if the selection is empty, insert the svg as a new image
