@@ -135,7 +135,7 @@ exportImage svg w h =
     let True  := hasCyBySvg ooxml | False => exportImgEmptSel c s svg w h
     -- check if only one CyBy-Draw generated image is selected
     let True := checkSingleSelection ooxml
-      | _ => debug "None or several images are selected!"
+      | _ => debug "Multiple images are selected!"
 
     -- replace the first occurring svg with the updated one
     -- and replace the new sizes
@@ -158,7 +158,7 @@ importImageFromWord f =
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
 
-    -- check if only one CyBy-Draw generated image is selected
+    -- check if only one image is selected
     let True := checkSingleSelection ooxml
       | _ => debug "None or several images are selected!"
     -- check if a cyby structure is present in the selection
