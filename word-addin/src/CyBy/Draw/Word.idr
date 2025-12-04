@@ -141,7 +141,7 @@ exportImage svg w h =
 
 exportImageToWord : LogLevel => DrawSettings => DrawState -> JSIO ()
 exportImageToWord s =
- let (SD w h, svg) := exportSVGPair s
+ let (SD w h, svg) := exportSVGPair True s
   in runDeflt $ exportImage svg (cast w) (cast h)
 
 importImageFromWord : LogLevel => (ByteString -> PrimIO ()) -> Prog ()
