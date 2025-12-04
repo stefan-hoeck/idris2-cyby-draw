@@ -738,14 +738,19 @@ parameters {auto ds : DrawSettings}
   fromMol : SceneDims -> ScaleMode -> MolGraphAT -> DrawState
   fromMol sd sm = initMol sd sm False . initGraph
 
-  ||| TODO
+  ||| Generates a string holding the SVG-encoded molecular structur
+  ||| together with the dimensions of the SVG-scnene.
+  |||
+  ||| The `metadata` flag indicates, whether a `<metadata>` tag
+  ||| containing the molecular structure in `.mol` format should be
+  ||| included in the SVG content.
   export
-  exportSVGPair : DrawState -> (SceneDims, String)
-  exportSVGPair s =
+  exportSVGPair : (metadata : Bool) -> DrawState -> (SceneDims, String)
+  exportSVGPair b s =
     let Just (p1,p2) := corners $ bounds s.mol | Nothing => (SD 0 0, "")
         (SZ _ _ r1 r2) := selectZones (convert p1) (convert p2)
         sd             := SD (r2-r1).x (r2-r1).y
-     in (sd, curSVG $ initMol sd Init True s.mol)
+     in (sd, curSVG $ initMol sd Init b s.mol)
 
   ||| Generates an SVG string out of the current DrawState. The
   ||| graph is included as MOL file string inside the metadata tag.
@@ -753,4 +758,4 @@ parameters {auto ds : DrawSettings}
   ||| field value.
   export
   exportSVG : DrawState -> String
-  exportSVG = snd . exportSVGPair
+  exportSVG = snd . exportSVGPair False
