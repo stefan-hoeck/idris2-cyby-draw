@@ -49,8 +49,13 @@ liftEither = liftIOEither . pure
 pureProg : a -> Prog a
 pureProg = liftEither . Right
 
+export
 failProg : JSErr -> Prog a
 failProg = liftEither . Left
+
+export
+failProgC : String -> Prog a
+failProgC = liftEither . Left . Caught
 
 bindProg : Prog a -> (a -> Prog b) -> Prog b
 bindProg (P run) f = P $ do

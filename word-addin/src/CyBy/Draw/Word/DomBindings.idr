@@ -240,11 +240,10 @@ replaceSvgAndSize o svg cx cy  =
           False => t
           True  => modBetweenAll " cx=\"" EndTag (const $ coords cx cy) t
 
-export %inline
-hasCyBySvg : Ooxml -> Bool
-hasCyBySvg = isInfixOf Created . value
-
 export
-checkSingleSelection : Ooxml -> Bool
-checkSingleSelection sel =
-  length (splitAtSubstring "</w:drawing>" sel.value) == 2
+checkSingleSelection : Ooxml -> Prog ()
+checkSingleSelection sel = do
+  when (length (splitAtSubstring "</w:drawing>" sel.value) /= 2)
+       (failProgC "None or multiple images selected!")
+  when (not $ isInfixOf Created $ sel.value)
+       (failProgC "No CyBy-Draw image selected!")

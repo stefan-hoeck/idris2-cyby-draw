@@ -107,7 +107,7 @@ exportImgEmptSel c s svg w h = do
 
   selOoxml <- getSelectionOoxml c s
 
-  trace "New width: \{w}, new height: \{h}"
+  debug "New width: \{w}, new height: \{h}"
 
   -- replace the size of the Word generated values with the
   -- newly calculated values
@@ -131,11 +131,8 @@ exportImage svg w h =
     -- load the selection as xml
     ooxml <- getSelectionOoxml c s
 
-    -- check if a cyby structure is present in the selection
-    let True  := hasCyBySvg ooxml | False => exportImgEmptSel c s svg w h
     -- check if only one CyBy-Draw generated image is selected
-    let True := checkSingleSelection ooxml
-      | _ => debug "Multiple images are selected!"
+    checkSingleSelection ooxml
 
     -- replace the first occurring svg with the updated one
     -- and replace the new sizes
@@ -158,11 +155,8 @@ importImageFromWord f =
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
 
-    -- check if only one image is selected
-    let True := checkSingleSelection ooxml
-      | _ => debug "None or several images are selected!"
-    -- check if a cyby structure is present in the selection
-    let True := hasCyBySvg ooxml | _ => debug "No CyBy-Draw generated image selected"
+    -- check if only one CyBy-Draw generated image is selected
+    checkSingleSelection ooxml
 
     -- extracting the MOL file directly from the xml structure
     -- of the current selection
