@@ -49,7 +49,6 @@ liftEither = liftIOEither . pure
 pureProg : a -> Prog a
 pureProg = liftEither . Right
 
-export
 failProg : JSErr -> Prog a
 failProg = liftEither . Left
 

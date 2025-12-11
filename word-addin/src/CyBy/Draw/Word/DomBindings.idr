@@ -3,7 +3,6 @@ module CyBy.Draw.Word.DomBindings
 import CyBy.Draw.Word.PromiseMonad
 import Data.SortedMap as SM
 import JS
-import Debug.Trace
 
 import public Data.Buffer
 import public Data.ByteString
