@@ -52,6 +52,10 @@ pureProg = liftEither . Right
 failProg : JSErr -> Prog a
 failProg = liftEither . Left
 
+export
+failProgC : String -> Prog a
+failProgC = liftEither . Left . Caught
+
 bindProg : Prog a -> (a -> Prog b) -> Prog b
 bindProg (P run) f = P $ do
   prom <- run
