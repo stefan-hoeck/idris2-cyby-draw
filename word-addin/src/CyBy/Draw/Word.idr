@@ -151,7 +151,8 @@ importImageFromWord f =
     debug "Begin of function `importImageFromWord`"
     -- return an empty string if the selection is empty
     s <- getSelection c
-    False <- isEmpty s | True => debug "Selection is empty" >> primIO (f "")
+    False <- isEmpty s
+      | True => debug "Selection is empty" >> failProgC "Selection is empty"
 
     -- load the whole selection as xml
     ooxml <- getSelectionOoxml c s
@@ -164,17 +165,20 @@ importImageFromWord f =
     -- if there are several cyby-draw generated structures, the
     -- first in the selection is imported
     case extractMol ooxml of
-      Nothing => debug "No MOL-File found"
+      Nothing => debug "No MOL-File found" >> failProgC "No Mol-File found"
       Just g  =>
         debug "Function `importImageFromWord` succcesfull" >> primIO (f g)
 
 fromWord : LogLevel => Cmd DrawEvent
 fromWord =
   C $ \h =>
-    runDeflt $ importImageFromWord $ \bs =>
-      case readMolfileE (toString bs) of
-        Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
-        Right m => toPrim (runJS $ h (Load m))
+    runDeflt $
+      handle (errToProg h) $ importImageFromWord $ \bs =>
+        case readMolfileE (toString bs) of
+          Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
+          Right m => toPrim (runJS $ h (Load m))
+  where errToProg : (DrawEvent -> JSIO ()) -> JSErr -> Prog ()
+        errToProg h jsErr = liftIO (runJS (h (Msg (ReadErr $ dispErr jsErr))))
 
 wordButtons : List $ Node DrawEvent
 wordButtons =

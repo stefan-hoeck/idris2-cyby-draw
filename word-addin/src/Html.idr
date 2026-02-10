@@ -12,7 +12,7 @@ import Text.SVG
 
 export
 messages : Ref Div
-messages = Id "messages"
+messages = Id "log-msg"
 
 printMsg : DrawMsg -> String
 printMsg Copied        = "Structure copied to clipboard"
