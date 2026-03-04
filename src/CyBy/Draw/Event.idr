@@ -70,9 +70,7 @@ data DrawEvent : Type where
   Clear            : DrawEvent
   Expand           : DrawEvent
   Center           : DrawEvent
-  Msg              : DrawMsg -> DrawEvent
-  EndResize        : DrawEvent
-  EndResizeHW      : (h,w : Double) -> DrawEvent
+  Resize           : (h,w : Double) -> DrawEvent
   StartPSE         : DrawEvent
   SVG              : DrawEvent
   SVGimp           : DrawEvent

@@ -4,12 +4,12 @@ import CyBy.Draw
 import Data.List
 import Text.Molfile
 import Text.CSS.Color
-import Web.MVC
+import Web.Async.Util
+import Web.Async.View
 import Text.SVG
 
 %default total
 
-export
 messages : Ref Div
 messages = Id "messages"
 
@@ -17,21 +17,25 @@ printMsg : DrawMsg -> String
 printMsg Copied        = "Structure copied to clipboard"
 printMsg (ReadErr str) = "Error when pasting structure: \{str}"
 
-clearMsg : DrawEvent -> Cmd DrawEvent
-clearMsg (KeyUp str) = neutral
+clearMsg : DrawEvent -> Act ()
+clearMsg (KeyUp str) = pure ()
 clearMsg _           = children messages []
 
-logAndDisplay : DrawSettings => DrawEvent -> DrawState -> Cmd DrawEvent
-logAndDisplay (Msg m) s = child messages $ Text (printMsg m)
-logAndDisplay e       s = clearMsg e <+> displaySketcher "app" e s
+logAndDisplay : DrawSettings => Sink DrawEvent => Sink DrawMsg => DrawEvent -> DrawState -> Act DrawState
+logAndDisplay e s =
+ let s2 := update e s
+  in clearMsg e >> displaySketcher "app" e s2 $> s2
 
-covering export
+ui : DrawSettings => Prog Void ()
+ui = do
+  des <- signal (KeyDown "Escape")
+  dms <- signal Copied
+
+  merge
+    [ discrete dms |> tail |> foreach (child messages . Text . printMsg)
+    , mvcActSignal (init (SD 600 400) Init "") logAndDisplay
+    ]
+
+export covering
 app : IO ()
-app =
-  let se := defaultSettings abbreviations
-   in runMVC
-        update
-        (logAndDisplay @{se})
-        (putStrLn . dispErr)
-        (KeyDown "Escape")
-        (init @{se} (SD 600 400) Init "")
+app = runProg $ ui @{defaultSettings abbreviations}
