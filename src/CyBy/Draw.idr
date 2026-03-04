@@ -40,6 +40,24 @@ fromClipboard =
       Right g => sink (Event.SetTempl g)
 
 --------------------------------------------------------------------------------
+-- Extensions
+--------------------------------------------------------------------------------
+
+||| Extension interface, currently used for the word plugin.
+||| If the import button should be used, a tuple with the
+||| class and title has to be specified. If no import button
+||| is used, this is indicated by a `Nothing`.
+||| If the export button should be modified, it also had to
+||| be specified.
+public export
+record Extension where
+  [noHints]
+  constructor E
+  doExport     : DrawSettings => DrawState -> Act ()
+  doImport     : DrawSettings => DrawState -> Act ()
+  buttons      : Sink DrawEvent => HTMLNodes
+
+--------------------------------------------------------------------------------
 --          Events
 --------------------------------------------------------------------------------
 
@@ -209,10 +227,15 @@ parameters {auto de : Sink DrawEvent}
   bondIcon : Class -> MolBond -> String -> DrawState -> HTMLNode
   bondIcon c b title = radioIcon c (SetBond b) title . drawing b
 
-  topBar : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
+  topBar :
+       {auto ds : DrawSettings}
+    -> {auto ex : Extension}
+    -> (pre     : String)
+    -> DrawState
+    -> HTMLNode
   topBar {ds} pre s =
     div
-      [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ]
+      [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ] $
       [ radioIcon "sel" SelectMode "select" (s.mode == Select)
       , radioIcon "erase" EraseMode "erase" (s.mode == Erase)
       , disable (order s.mol == 0) $ icon "clear" Clear "clear"
@@ -227,11 +250,7 @@ parameters {auto de : Sink DrawEvent}
       , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
       , bondIcon "double-bond" (cast Chem.Types.Dbl) "double bond" s
       , bondIcon "triple-bond" (cast Triple) "triple bond" s
-      , icon "svg" SVG "svg"
-      , nodeIf
-          (ds.usedExtension == Word)
-          (icon "svg-imp" SVGimp "import selected molecule")
-      ]
+      ] ++ ex.buttons
 
   template : (cls : Class) -> CDGraph -> String -> DrawState -> HTMLNode
   template cls g nm s =
@@ -282,7 +301,12 @@ parameters {auto de : Sink DrawEvent}
       ]
 
   export
-  sketcher : DrawSettings => (pre : String) -> DrawState -> HTMLNode
+  sketcher :
+       {auto ds : DrawSettings}
+    -> {auto ex : Extension}
+    -> (pre     : String)
+    -> DrawState
+    -> HTMLNode
   sketcher pre s =
     div
       [ class "cyby-draw-main-content"
@@ -331,6 +355,7 @@ molCanvasCls = "cyby-draw-molecule-canvas"
 parameters {auto ds : DrawSettings}
            {auto se : Sink DrawEvent}
            {auto sm : Sink DrawMsg}
+           {auto ex : Extension}
            (pre : String)
 
   canvasCls : List Class -> Act ()
@@ -392,10 +417,6 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = pure ()
 
-  chooseExt : Extension -> ExtensionEvent -> DrawState -> Act ()
-  chooseExt Word we s = dispWordExt we s
-  chooseExt None _  s = toClipboard (exportSVG s)
-
   displayEv : DrawEvent -> DrawState -> Act ()
   displayEv Focus            s = focusCurrentApp
   displayEv Blur             s = blur (moleculeCanvas pre)
@@ -406,6 +427,7 @@ parameters {auto ds : DrawSettings}
   displayEv  EnableAbbr      s = adjustBars s
   displayEv (SetBond _)      s = adjustBars s
   displayEv (SetTempl _)     s = adjustBars s
+  displayEv (Load _)         s = adjustBars s
   displayEv SelectMode       s = adjustBars s
   displayEv EraseMode        s = adjustBars s
   displayEv (ChgElem _)      s = adjustRightBar s
@@ -418,8 +440,8 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVG              s = chooseExt ds.usedExtension ExportSVG s
-  displayEv SVGimp           s = chooseExt ds.usedExtension ImportSVG s
+  displayEv SVG              s = ex.doExport s
+  displayEv SVGimp           s = ex.doImport s
   displayEv _                s = pure ()
 
   export
@@ -444,7 +466,12 @@ displayMol sd g m =
 
 ||| An editor for molecules.
 export
-molEdit : (DrawMsg -> Act ()) -> Act DrawSettings -> SceneDims -> Editor MolfileAT
+molEdit :
+     {auto ex : Extension}
+  -> (DrawMsg -> Act ())
+  -> Act DrawSettings
+  -> SceneDims
+  -> Editor MolfileAT
 molEdit logmsg getDS sd =
   E $ \m => Prelude.do
    ui   <- map interpolate uniqueID
@@ -471,3 +498,13 @@ molEdit logmsg getDS sd =
        -> DrawEvent
        -> Act DrawState
      doact pre s e = let s2 := update e s in displaySketcher pre e s2 $> s2
+
+||| The default `Extension`
+export %hint
+NoExt : Extension
+NoExt =
+  E
+    { doImport     = \s => pure ()
+    , doExport     = toClipboard . exportSVG
+    , buttons      = [ icon "svg" SVG "svg" ]
+    }

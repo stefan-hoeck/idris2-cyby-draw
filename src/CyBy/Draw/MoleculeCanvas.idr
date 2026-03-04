@@ -334,6 +334,25 @@ maybeResizing @{x} s =
 reset : DrawSettings => DrawState -> DrawState
 reset s = {transform := iniTrans s.dims Reset s.mol, curPos := origin} s
 
+initST : DrawSettings => SceneDims -> ScaleMode -> CDGraph -> DrawState
+initST sd sm g =
+  ST
+    { dims       = sd
+    , curPos     = P (sd.swidth / 2.0) (sd.sheight / 2.0)
+    , transform  = iniTrans sd sm g
+    , mol        = g
+    , undos      = []
+    , redos      = []
+    , mode       = Draw
+    , modifier   = NoMod
+    , bond       = MkBond False Single NoBondStereo
+    , abbr       = initAbbr
+    , hasFocus   = False
+    , ptable     = Nothing
+    , curSVG     = ""
+    , prevSVG    = ""
+    }
+
 undo : DrawState -> DrawState
 undo s = case s.undos of
   []     => s
@@ -628,6 +647,7 @@ upd (ChgElem v)   s = modAtomWhere (is Selected) {elem := cast v, charge := 0} s
 upd (ChgCharge v) s = modAtomWhere (is Selected) {charge := v} s
 upd (ChgMass v)   s = modAtomWhere (is Selected) (setMassNr v) s
 upd (SetTempl e)  s = {mode := SetTempl e, mol $= clear} s
+upd (Load e)      s = initST s.dims Reset e
 upd (SetBond b)   s = {bond := b, mode := Draw, mol $= clear} s
 upd SelectMode    s = {mode := Select} s
 upd (KeyDown x)   s = onKeyDown x s
@@ -694,25 +714,6 @@ update e s =
 --------------------------------------------------------------------------------
 
 parameters {auto ds : DrawSettings}
-
-  initST : SceneDims -> ScaleMode -> CDGraph -> DrawState
-  initST sd sm g =
-    ST
-      { dims       = sd
-      , curPos     = P (sd.swidth / 2.0) (sd.sheight / 2.0)
-      , transform  = iniTrans sd sm g
-      , mol        = g
-      , undos      = []
-      , redos      = []
-      , mode       = Draw
-      , modifier   = NoMod
-      , bond       = MkBond False Single NoBondStereo
-      , abbr       = initAbbr
-      , hasFocus   = False
-      , ptable     = Nothing
-      , curSVG     = ""
-      , prevSVG    = ""
-      }
 
   ||| Initializes the drawing state for the given mol graph.
   |||
