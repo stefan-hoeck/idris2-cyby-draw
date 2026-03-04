@@ -5,8 +5,7 @@ import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Internal.Graph
 import Derive.Prelude
 import Text.Molfile
-import Web.MVC
-import Web.MVC.Canvas
+import Web.Canvas
 
 %default total
 %language ElabReflection
