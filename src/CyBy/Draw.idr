@@ -3,10 +3,11 @@ module CyBy.Draw
 import Data.Finite
 import Data.List
 import Geom
+import Text.CSS
+import Text.HTML.DomID
 import Text.HTML.Select
 import Text.SVG
-import Web.Async.View
-import Web.Async.Util
+import Web.Async
 
 import CyBy.Draw.Internal.Label
 import CyBy.Draw.Extensions.Util
@@ -114,7 +115,7 @@ abbrID pre = Id "\{pre}-abbreviations"
 hidden : {0 t : _} -> Attribute t
 hidden = class "hidden"
 
-abbrCls : DrawState -> List String
+abbrCls : DrawState -> List Class
 abbrCls s =
   case s.mode of
     SetAbbr _ => ["cyby-draw-select","active"]
@@ -178,11 +179,11 @@ parameters {auto de : Sink DrawEvent}
       dispMass Nothing  = "Mix"
       dispMass (Just m) = show m.value
   
-  icon : (cls : String) -> DrawEvent -> (title : String) -> HTMLNode
+  icon : (cls : Class) -> DrawEvent -> (title : String) -> HTMLNode
   icon cls ev ttl =
     button [classes ["cyby-draw-icon", cls], onClick ev, title ttl] []
 
-  radioIcon : (cls : String) -> DrawEvent -> (ttl : String) -> Bool -> HTMLNode
+  radioIcon : (cls : Class) -> DrawEvent -> (ttl : String) -> Bool -> HTMLNode
   radioIcon cls ev ttl b =
     input
       [ name "tool"
@@ -191,7 +192,6 @@ parameters {auto de : Sink DrawEvent}
       , onClick ev, title ttl
       , checked b
       ]
-      []
 
   abbrs : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
   abbrs pre s =
@@ -206,7 +206,7 @@ parameters {auto de : Sink DrawEvent}
       , Event (MouseDown $ \mi => toMaybe (mi.button == 0) EnableAbbr)
       ]
 
-  bondIcon : String -> MolBond -> String -> DrawState -> HTMLNode
+  bondIcon : Class -> MolBond -> String -> DrawState -> HTMLNode
   bondIcon c b title = radioIcon c (SetBond b) title . drawing b
 
   topBar : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
@@ -225,7 +225,7 @@ parameters {auto de : Sink DrawEvent}
       , bondIcon "single-up" (fromStereo Up) "single bond up" s
       , bondIcon "single-down" (fromStereo Down) "single bond down" s
       , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
-      , bondIcon "double-bond" (cast Dbl) "double bond" s
+      , bondIcon "double-bond" (cast Chem.Types.Dbl) "double bond" s
       , bondIcon "triple-bond" (cast Triple) "triple bond" s
       , icon "svg" SVG "svg"
       , nodeIf
@@ -233,7 +233,7 @@ parameters {auto de : Sink DrawEvent}
           (icon "svg-imp" SVGimp "import selected molecule")
       ]
 
-  template : (cls : String) -> CDGraph -> String -> DrawState -> HTMLNode
+  template : (cls : Class) -> CDGraph -> String -> DrawState -> HTMLNode
   template cls g nm s =
     radioIcon cls (SetTempl g) "Template \{nm}" (s.mode == SetTempl g)
 
@@ -309,7 +309,10 @@ parameters {auto de : Sink DrawEvent}
             , onDblClick Expand
             , onResize (\r => Resize r.height r.width)
             , Str "tabindex" "1"
-            , style "width:\{px s.dims.swidth};height:\{px s.dims.sheight}"
+            , style
+                [ width $ px $ cast s.dims.swidth
+                , height $ px $ cast s.dims.sheight
+                ]
             ]
             [Raw s.curSVG]
         , div
@@ -322,7 +325,7 @@ parameters {auto de : Sink DrawEvent}
 --          Controller
 --------------------------------------------------------------------------------
 
-molCanvasCls : String
+molCanvasCls : Class
 molCanvasCls = "cyby-draw-molecule-canvas"
 
 parameters {auto ds : DrawSettings}
@@ -330,7 +333,7 @@ parameters {auto ds : DrawSettings}
            {auto sm : Sink DrawMsg}
            (pre : String)
 
-  canvasCls : List String -> Act ()
+  canvasCls : List Class -> Act ()
   canvasCls = attr (moleculeCanvas pre) . classes . (molCanvasCls ::)
 
   rotating : Act ()
@@ -438,3 +441,33 @@ displayMol sd g m =
   let cdg    := initGraph g
       G o mg := maybe cdg (\ns => highlight ns cdg) m
    in Raw . curSVG $ initMol sd Fill False $ G o mg
+
+||| An editor for molecules.
+export
+molEdit : (DrawMsg -> Act ()) -> Act DrawSettings -> SceneDims -> Editor MolfileAT
+molEdit logmsg getDS sd =
+  E $ \m => Prelude.do
+   ui   <- map interpolate uniqueID
+   ds   <- getDS
+   E es <- event DrawEvent
+   E ms <- event DrawMsg
+   let st := fromMol sd Init (maybe (G 0 empty) graph m)
+       nd := sketcher ui st
+   pure $ Widget.W nd $
+     merge
+       [ es |> P.evalScans1 st (doact ui)
+            |> (\x => cons st x)
+            |> P.mapOutput (Valid . toMolfile . mol)
+       , ms |> foreach logmsg 
+       ]
+
+   where
+     doact :
+          {auto ds : DrawSettings}
+       -> {auto sm : Sink DrawMsg}
+       -> {auto se : Sink DrawEvent}
+       -> (pre     : String)
+       -> DrawState
+       -> DrawEvent
+       -> Act DrawState
+     doact pre s e = let s2 := update e s in displaySketcher pre e s2 $> s2
