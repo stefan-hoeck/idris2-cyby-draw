@@ -4,6 +4,7 @@ import CyBy.Draw
 import CyBy.Draw.Word
 import Data.List
 import Text.Molfile
+import Text.HTML.DomID
 import Text.CSS.Color
 import Web.Async.Util
 import Web.Async.View
@@ -11,8 +12,8 @@ import Text.SVG
 
 %default total
 
-messages : Ref Div
-messages = Id "messages"
+messages : Ref Void
+messages = elemRef $ the DomID "messages"
 
 printMsg : DrawMsg -> String
 printMsg Copied        = "Structure copied to clipboard"
@@ -22,21 +23,31 @@ clearMsg : DrawEvent -> Act ()
 clearMsg (KeyUp str) = pure ()
 clearMsg _           = children messages []
 
-logAndDisplay : DrawSettings => Sink DrawEvent => Sink DrawMsg => DrawEvent -> DrawState -> Act DrawState
-logAndDisplay e s =
- let s2 := update e s
-  in clearMsg e >> displaySketcher "app" e s2 $> s2
+%hint
+logger : Logger JS
+logger =
+  filter Debug $ MkLogger $ \lvl,ms =>
+    traverse_ putStrLn $ map (\x => "[ \{toLower $ show lvl} ] \{x}") ms
 
-ui : DrawSettings => Prog Void ()
+
+logAndDisplay : DrawSettings => Sink DrawEvent => Sink DrawMsg => DrawState -> DrawEvent -> Act DrawState
+logAndDisplay s e =
+ let s2 := update e s
+  in clearMsg e >> displaySketcher {ex = WordExt} "app" e s2 $> s2
+
+
+ui : DrawSettings => JSStream Void
 ui = do
-  des <- signal (KeyDown "Escape")
-  dms <- signal Copied
+  E des <- exec $ event {fs = [JSErr]} DrawEvent
+  E dms <- exec $ event {fs = [JSErr]} DrawMsg
 
   merge
-    [ discrete dms |> tail |> foreach (child messages . Text . printMsg)
-    , mvcActSignal (init (SD 600 400) Init "") logAndDisplay
+    [ foreach (child messages . Text . printMsg) dms
+    , P.cons (KeyDown "Escape") des
+        |> P.evalScans1 (init (SD 600 400) Init "") logAndDisplay
+        |> drain
     ]
 
 export covering
 app : IO ()
-app = runProg $ ui @{{usedExtension := Word} $ defaultSettings abbreviations}
+app = runProg $ ui @{defaultSettings abbreviations}

@@ -10,8 +10,6 @@ import Text.SVG
 import Web.Async
 
 import CyBy.Draw.Internal.Label
-import CyBy.Draw.Extensions.Util
-import CyBy.Draw.Extensions.Word
 
 import public CyBy.Draw.Draw
 import public CyBy.Draw.Event
@@ -53,8 +51,8 @@ public export
 record Extension where
   [noHints]
   constructor E
-  doExport     : DrawSettings => DrawState -> Act ()
-  doImport     : DrawSettings => DrawState -> Act ()
+  doExport     : DrawSettings => DrawState -> JS [] ()
+  doImport     : Sink DrawMsg => Sink DrawEvent => DrawSettings => DrawState -> JS [] ()
   buttons      : Sink DrawEvent => HTMLNodes
 
 --------------------------------------------------------------------------------
@@ -440,8 +438,8 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVG              s = ex.doExport s
-  displayEv SVGimp           s = ex.doImport s
+  displayEv SVG              s = weakenErrors $ ex.doExport s
+  displayEv SVGimp           s = weakenErrors $ ex.doImport s
   displayEv _                s = pure ()
 
   export

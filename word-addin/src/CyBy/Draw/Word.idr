@@ -1,66 +1,15 @@
 ||| This module takes care of all events used for the word add-in (extension)
 module CyBy.Draw.Word
 
-import Web.MVC
-import Derive.Prelude
-import Text.CSS.Class
 import CyBy.Draw
 import CyBy.Draw.Word.DomBindings
-import CyBy.Draw.Word.PromiseMonad
+import Derive.Prelude
+import IO.Async.Logging
+import Text.CSS.Class
 
 %default total
 %hide JS.ByteString.ByteString
 %language ElabReflection
-
---------------------------------------------------------------------------------
--- Debugging
---------------------------------------------------------------------------------
-
-data Level = Trace | Debug | Info | Silence
-
-%runElab derive "Level" [Show,Eq,Ord]
-
-export
-record LogLevel where
-  [noHints]
-  constructor L
-  lvl : Level
-
-failing "Can't find an implementation for LogLevel"
-  testLogLevel : LogLevel
-  testLogLevel = %search
-
-export
-lvlDebug : LogLevel 
-lvlDebug = L Debug
-
-export
-lvlTrace : LogLevel 
-lvlTrace = L Trace
-
-export
-lvlInfo : LogLevel 
-lvlInfo = L Info
-
-export
-lvlSilence : LogLevel 
-lvlSilence = L Silence
-
-export
-log : HasIO io => (d : LogLevel) => Level -> Lazy String -> io ()
-log lvl msg = when (lvl >= d.lvl) (putStrLn msg)
-
-export
-trace : HasIO io => (d : LogLevel) => Lazy String -> io ()
-trace = log Trace
-
-export
-debug : HasIO io => (d : LogLevel) => Lazy String -> io ()
-debug = log Debug
-
-export
-info : HasIO io => (d : LogLevel) => Lazy String -> io ()
-info = log Info
 
 --------------------------------------------------------------------------------
 -- Export / Import Structures
@@ -93,12 +42,12 @@ info = log Info
 -- occurrence is relevant.
 
 exportImgEmptSel :
-     {auto _ : LogLevel}
+     {auto _ : Logger JS}
   -> Context
   -> Selection
   -> (svg : String)
   -> (w,h : EMU)
-  -> Prog ()
+  -> Act ()
 exportImgEmptSel c s svg w h = do
   debug "Selection is empty or no svg is present for replacing the structure"
   -- encode and insert the image to Word
@@ -115,78 +64,81 @@ exportImgEmptSel c s svg w h = do
   replaceOoxml s (replaceSvgAndSize selOoxml svg w h)
   debug "exportImage succcesfull"
 
-exportImage : LogLevel => (svg : String) -> (w,h : EMU) -> Prog ()
-exportImage svg w h =
-  wordRun $ \c => do
-    debug "Begin of function `exportImage`"
-    -- replace the selected svg (or the first in the selection)
-    -- with the updated structure and adjust the size accordingly
-    -- if an svg is selected
-    -- if the selection is empty or does not include an svg,
-    -- insert the new structure after the selection / cursor
-    s <- getSelection c
+exportImage : Logger JS => (svg : String) -> (w,h : EMU) -> Act ()
+exportImage svg w h = Prelude.do
+  c <- wordContext
+  debug "Begin of function `exportImage`"
+  -- replace the selected svg (or the first in the selection)
+  -- with the updated structure and adjust the size accordingly
+  -- if an svg is selected
+  -- if the selection is empty or does not include an svg,
+  -- insert the new structure after the selection / cursor
+  s <- getSelection c
 
-    -- if the selection is empty, insert the svg as a new image
-    False <- isEmpty s | True => exportImgEmptSel c s svg w h
+  -- if the selection is empty, insert the svg as a new image
+  False <- isEmpty s | True => exportImgEmptSel c s svg w h
 
-    -- load the selection as xml
-    ooxml <- getSelectionOoxml c s
+  -- load the selection as xml
+  ooxml <- getSelectionOoxml c s
 
-    -- check if only one CyBy-Draw generated image is selected
-    checkSingleSelection ooxml
+  -- check if only one CyBy-Draw generated image is selected
+  checkSingleSelection ooxml
 
-    -- replace the first occurring svg with the updated one
-    -- and replace the new sizes
-    replaceOoxml s (replaceSvgAndSize ooxml svg w h)
-    debug "Function `exportImage` successful"
+  -- replace the first occurring svg with the updated one
+  -- and replace the new sizes
+  replaceOoxml s (replaceSvgAndSize ooxml svg w h)
+  debug "Function `exportImage` successful"
 
-exportImageToWord : LogLevel => DrawSettings => DrawState -> JSIO ()
+exportImageToWord : Logger JS => DrawSettings => DrawState -> Act ()
 exportImageToWord s =
  let (SD w h, svg) := exportSVGPair True s
-  in runDeflt $ exportImage svg (cast w) (cast h)
+  in exportImage svg (cast w) (cast h)
 
-importImageFromWord : LogLevel => (ByteString -> PrimIO ()) -> Prog ()
-importImageFromWord f =
-  wordRun $ \c => do
-    debug "Begin of function `importImageFromWord`"
-    -- return an empty string if the selection is empty
-    s <- getSelection c
-    False <- isEmpty s | True => debug "Selection is empty" >> primIO (f "")
+importImageFromWord : Logger JS => (ByteString -> Act ()) -> Act ()
+importImageFromWord f = Prelude.do
+  c <- wordContext
+  debug "Begin of function `importImageFromWord`"
+  -- return an empty string if the selection is empty
+  s <- getSelection c
+  False <- isEmpty s | True => debug "Selection is empty" >> f ""
 
-    -- load the whole selection as xml
-    ooxml <- getSelectionOoxml c s
+  -- load the whole selection as xml
+  ooxml <- getSelectionOoxml c s
 
-    -- check if only one CyBy-Draw generated image is selected
-    checkSingleSelection ooxml
+  -- check if only one CyBy-Draw generated image is selected
+  checkSingleSelection ooxml
 
-    -- extracting the MOL file directly from the xml structure
-    -- of the current selection
-    -- if there are several cyby-draw generated structures, the
-    -- first in the selection is imported
-    case extractMol ooxml of
-      Nothing => debug "No MOL-File found"
-      Just g  =>
-        debug "Function `importImageFromWord` succcesfull" >> primIO (f g)
+  -- extracting the MOL file directly from the xml structure
+  -- of the current selection
+  -- if there are several cyby-draw generated structures, the
+  -- first in the selection is imported
+  case extractMol ooxml of
+    Nothing => debug "No MOL-File found"
+    Just g  =>
+      debug "Function `importImageFromWord` succcesfull" >> f g
 
-fromWord : LogLevel => Cmd DrawEvent
+fromWord : Logger JS => Sink DrawEvent => Sink DrawMsg => Act ()
 fromWord =
-  C $ \h =>
-    runDeflt $ importImageFromWord $ \bs =>
-      case readMolfileE (toString bs) of
-        Left e  => toPrim (runJS $ h (Msg $ ReadErr e))
-        Right m => toPrim (runJS $ h (Load m))
+  importImageFromWord $ \bs =>
+    case readMolfileE (toString bs) of
+      Left e  => sink (ReadErr e)
+      Right m => sink $ Load m
 
-wordButtons : List $ Node DrawEvent
+wordButtons : Sink DrawEvent => HTMLNodes
 wordButtons =
   [ icon "from-word" SVGimp "getting selected structure from Word"
   , icon "to-word" SVG "inserting structure into Word"
   ]
 
+parameters {auto log : Logger JS}
+  Loggable JS JSErr where
+    logLoggable err = error $ dispErr err
+
 export
-WordExt : (lvl : LogLevel) -> Extension
-WordExt lvl =
+WordExt : Logger JS => Extension
+WordExt =
   E
-    { doExport     = \s => cmd_ $ exportImageToWord s
-    , doImport     = \s => fromWord
+    { doExport     = logErrs . exportImageToWord
+    , doImport     = \s => logErrs fromWord
     , buttons      = wordButtons
     }
