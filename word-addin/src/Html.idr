@@ -44,7 +44,7 @@ ui = do
   merge
     [ foreach (child messages . Text . printMsg) dms
     , P.cons (KeyDown "Escape") des
-        |> P.evalScans1 (init (SD 600 400) Init "") logAndDisplay
+        |> P.evalScans1 (init (SD 400 266) Init "") logAndDisplay
         |> drain
     ]
 

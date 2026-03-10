@@ -61,7 +61,7 @@ data ClientResult : Type -> Type where [external]
 -- Prim Functions
 -------------------------------------------------------------------------------
 
-%foreign "browser:lambda:(a,fun,w) => Word.run((c) => fun(c)(w))"
+%foreign "browser:lambda:(fun,w) => Word.run((c) => new Promise((x) => fun(c)(w)))"
 prim__wordRun : (Context -> PrimIO ()) -> PrimIO ()
 
 %foreign "browser:lambda:(c,w)=> c.document.getSelection()"

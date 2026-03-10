@@ -115,7 +115,7 @@ importImageFromWord f = Prelude.do
   case extractMol ooxml of
     Nothing => debug "No MOL-File found"
     Just g  =>
-      debug "Function `importImageFromWord` succcesfull" >> f g
+      debug "Function `importImageFromWord` succcesful" >> f g
 
 fromWord : Logger JS => Sink DrawEvent => Sink DrawMsg => Act ()
 fromWord =
