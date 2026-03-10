@@ -94,7 +94,7 @@ exportImageToWord s =
  let (SD w h, svg) := exportSVGPair True s
   in exportImage svg (cast w) (cast h)
 
-importImageFromWord : Logger JS => (ByteString -> Act a) -> Act (Maybe a)
+importImageFromWord : {0 a : _} -> Logger JS => (ByteString -> Act a) -> Act (Maybe a)
 importImageFromWord f = Prelude.do
   c <- wordContext
   debug "Begin of function `importImageFromWord`"
