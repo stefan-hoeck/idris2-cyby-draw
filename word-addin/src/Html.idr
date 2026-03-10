@@ -30,9 +30,15 @@ logger =
     traverse_ putStrLn $ map (\x => "[ \{toLower $ show lvl} ] \{x}") ms
 
 
-logAndDisplay : DrawSettings => Sink DrawEvent => Sink DrawMsg => DrawState -> DrawEvent -> Act DrawState
+logAndDisplay :
+     {auto ds : DrawSettings}
+  -> {auto de : Sink DrawEvent}
+  -> {auto dm : Sink DrawMsg}
+  -> DrawState
+  -> DrawEvent
+  -> Act DrawState
 logAndDisplay s SVGimp =
-  fromWord >>= \case
+  importImage >>= \case
     Nothing => pure s
     Just (Left x) => sink x $> s
     Just (Right g) =>

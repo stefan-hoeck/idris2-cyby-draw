@@ -94,13 +94,14 @@ exportImageToWord s =
  let (SD w h, svg) := exportSVGPair True s
   in exportImage svg (cast w) (cast h)
 
-importImageFromWord : {0 a : _} -> Logger JS => (ByteString -> Act a) -> Act (Maybe a)
-importImageFromWord f = Prelude.do
+export
+importImage : Logger JS => Act (Maybe $ Either DrawMsg CDGraph)
+importImage = Prelude.do
   c <- wordContext
-  debug "Begin of function `importImageFromWord`"
-  -- return an empty string if the selection is empty
+  debug "Begin of function `importImage`"
+
   s <- getSelection c
-  False <- isEmpty s | True => debug "Selection is empty" >> (Just <$> f "")
+  False <- isEmpty s | True => debug "Selection is empty" $> Nothing
 
   -- load the whole selection as xml
   ooxml <- getSelectionOoxml c s
@@ -114,15 +115,9 @@ importImageFromWord f = Prelude.do
   -- first in the selection is imported
   case extractMol ooxml of
     Nothing => debug "No MOL-File found" $> Nothing
-    Just g  => debug "Function `importImageFromWord` succcesful" >> (Just <$> f g)
-
-export
-fromWord : Logger JS => Act (Maybe $ Either DrawMsg CDGraph)
-fromWord =
-  importImageFromWord $ \bs =>
-    case readMolfileE (toString bs) of
-      Left e  => pure (Left $ ReadErr e)
-      Right m => pure (Right m)
+    Just bs => case readMolfileE (toString bs) of
+      Left e  => pure (Just $ Left $ ReadErr e)
+      Right m => debug "Function `importImage` succcesful" $> Just (Right m)
 
 wordButtons : Sink DrawEvent => HTMLNodes
 wordButtons =
