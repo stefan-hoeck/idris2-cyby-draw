@@ -95,13 +95,13 @@ exportImageToWord s =
   in exportImage svg (cast w) (cast h)
 
 export
-importImage : Logger JS => Act (Maybe $ Either DrawMsg CDGraph)
+importImage : Logger JS => Act CDGraph
 importImage = Prelude.do
   c <- wordContext
   debug "Begin of function `importImage`"
 
   s <- getSelection c
-  False <- isEmpty s | True => debug "Selection is empty" $> Nothing
+  False <- isEmpty s | True => throw (Caught "Selection is empty")
 
   -- load the whole selection as xml
   ooxml <- getSelectionOoxml c s
@@ -114,10 +114,10 @@ importImage = Prelude.do
   -- if there are several cyby-draw generated structures, the
   -- first in the selection is imported
   case extractMol ooxml of
-    Nothing => debug "No MOL-File found" $> Nothing
+    Nothing => throw (Caught "No MOL-File found")
     Just bs => case readMolfileE (toString bs) of
-      Left e  => pure (Just $ Left $ ReadErr e)
-      Right m => debug "Function `importImage` succcesful" $> Just (Right m)
+      Left e  => throw (Caught "Error when pasting structure: \{e}")
+      Right m => debug "Function `importImage` succcesful" $> m
 
 wordButtons : Sink DrawEvent => HTMLNodes
 wordButtons =

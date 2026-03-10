@@ -39,12 +39,8 @@ parameters {auto ds : DrawSettings}
     in clearMsg e >> displaySketcher {ex = WordExt} "app" e s2 $> s2
 
   logAndDisplay : DrawState -> DrawEvent -> Act DrawState
-  logAndDisplay s SVGimp =
-    importImage >>= \case
-      Nothing => pure s
-      Just (Left x)  => sink x $> s
-      Just (Right g) => wordDisp s (Load g)
-  logAndDisplay s e = wordDisp s e
+  logAndDisplay s SVGimp = importImage >>= wordDisp s . Load
+  logAndDisplay s e      = wordDisp s e
   
   handled : DrawState -> DrawEvent -> JS [] DrawState
   handled s e =
