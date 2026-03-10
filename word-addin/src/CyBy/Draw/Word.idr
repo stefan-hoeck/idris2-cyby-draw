@@ -126,6 +126,7 @@ wordButtons =
   ]
 
 parameters {auto log : Logger JS}
+  export
   Loggable JS JSErr where
     logLoggable err = error $ dispErr err
 
