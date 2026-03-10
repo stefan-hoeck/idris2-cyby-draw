@@ -94,13 +94,13 @@ exportImageToWord s =
  let (SD w h, svg) := exportSVGPair True s
   in exportImage svg (cast w) (cast h)
 
-importImageFromWord : Logger JS => (ByteString -> Act ()) -> Act ()
+importImageFromWord : Logger JS => (ByteString -> Act a) -> Act (Maybe a)
 importImageFromWord f = Prelude.do
   c <- wordContext
   debug "Begin of function `importImageFromWord`"
   -- return an empty string if the selection is empty
   s <- getSelection c
-  False <- isEmpty s | True => debug "Selection is empty" >> f ""
+  False <- isEmpty s | True => debug "Selection is empty" >> (Just <$> f "")
 
   -- load the whole selection as xml
   ooxml <- getSelectionOoxml c s
@@ -113,16 +113,16 @@ importImageFromWord f = Prelude.do
   -- if there are several cyby-draw generated structures, the
   -- first in the selection is imported
   case extractMol ooxml of
-    Nothing => debug "No MOL-File found"
-    Just g  =>
-      debug "Function `importImageFromWord` succcesful" >> f g
+    Nothing => debug "No MOL-File found" $> Nothing
+    Just g  => debug "Function `importImageFromWord` succcesful" >> (Just <$> f g)
 
-fromWord : Logger JS => Sink DrawEvent => Sink DrawMsg => Act ()
+export
+fromWord : Logger JS => Act (Maybe $ Either DrawMsg CDGraph)
 fromWord =
   importImageFromWord $ \bs =>
     case readMolfileE (toString bs) of
-      Left e  => sink (ReadErr e)
-      Right m => sink $ Load m
+      Left e  => pure (Left $ ReadErr e)
+      Right m => pure (Right m)
 
 wordButtons : Sink DrawEvent => HTMLNodes
 wordButtons =
@@ -139,6 +139,5 @@ WordExt : Logger JS => Extension
 WordExt =
   E
     { doExport     = logErrs . exportImageToWord
-    , doImport     = \s => logErrs fromWord
     , buttons      = wordButtons
     }

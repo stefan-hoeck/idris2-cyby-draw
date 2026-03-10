@@ -31,6 +31,14 @@ logger =
 
 
 logAndDisplay : DrawSettings => Sink DrawEvent => Sink DrawMsg => DrawState -> DrawEvent -> Act DrawState
+logAndDisplay s SVGimp =
+  fromWord >>= \case
+    Nothing => pure s
+    Just (Left x) => sink x $> s
+    Just (Right g) =>
+     let ev := Load g
+         s2 := update ev s
+      in clearMsg ev >> displaySketcher {ex = WordExt} "app" ev s2 $> s2
 logAndDisplay s e =
  let s2 := update e s
   in clearMsg e >> displaySketcher {ex = WordExt} "app" e s2 $> s2

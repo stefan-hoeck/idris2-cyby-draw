@@ -52,7 +52,6 @@ record Extension where
   [noHints]
   constructor E
   doExport     : DrawSettings => DrawState -> JS [] ()
-  doImport     : Sink DrawMsg => Sink DrawEvent => DrawSettings => DrawState -> JS [] ()
   buttons      : Sink DrawEvent => HTMLNodes
 
 --------------------------------------------------------------------------------
@@ -439,7 +438,6 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
   displayEv SVG              s = weakenErrors $ ex.doExport s
-  displayEv SVGimp           s = weakenErrors $ ex.doImport s
   displayEv _                s = pure ()
 
   export
@@ -502,7 +500,6 @@ export %hint
 NoExt : Extension
 NoExt =
   E
-    { doImport     = \s => pure ()
-    , doExport     = toClipboard . exportSVG
+    { doExport     = toClipboard . exportSVG
     , buttons      = [ icon "svg" SVG "svg" ]
     }
