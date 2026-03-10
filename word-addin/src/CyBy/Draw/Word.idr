@@ -81,6 +81,7 @@ exportImage svg w h = Prelude.do
   -- load the selection as xml
   ooxml <- getSelectionOoxml c s
 
+  debug (cast ooxml)
   -- check if only one CyBy-Draw generated image is selected
   checkSingleSelection ooxml
 
