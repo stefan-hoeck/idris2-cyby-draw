@@ -61,13 +61,16 @@ data ClientResult : Type -> Type where [external]
 -- Prim Functions
 -------------------------------------------------------------------------------
 
-%foreign "browser:lambda:(fun,w) => Word.run((c) => new Promise((x) => {fun(c)(w); x();}))"
+%foreign "browser:lambda:(fun,w) => Word.run((c) => new Promise((cb) => fun({context:c, callback:cb})(w)))"
 prim__wordRun : (Context -> PrimIO ()) -> PrimIO ()
 
-%foreign "browser:lambda:(c,w)=> c.document.getSelection()"
+%foreign "browser:lambda:(c,w) => c.callback()"
+prim__release : Context -> PrimIO ()
+
+%foreign "browser:lambda:(c,w)=> c.context.document.getSelection()"
 prim__selection : Context -> PrimIO Selection
 
-%foreign "browser:lambda:(c,w)=> c.document.body.getOoxml()"
+%foreign "browser:lambda:(c,w)=> c.context.document.body.getOoxml()"
 prim__getOoxml : Context -> PrimIO (ClientResult String)
 
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
@@ -82,7 +85,7 @@ prim__isEmpty : a -> PrimIO Bool
 %foreign "browser:lambda:(a,o,w)=> o.value"
 prim__valueClientResult: ClientResult a -> PrimIO a
 
-%foreign "browser:lambda:(c,w)=> c.sync()"
+%foreign "browser:lambda:(c,w)=> c.context.sync()"
 prim__syncContext : Context -> PrimIO (Promise ())
 
 %foreign "browser:lambda:(a,o,s,w)=> o.load(s || undefined)"
@@ -94,6 +97,10 @@ prim__replaceOoxml : Selection -> String -> PrimIO ()
 -------------------------------------------------------------------------------
 -- Functions
 -------------------------------------------------------------------------------
+
+export
+Resource (Async JS) Context where
+  cleanup c = primIO $ prim__release c
 
 export
 syncContext : Context -> Act ()

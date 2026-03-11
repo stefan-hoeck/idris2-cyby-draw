@@ -65,30 +65,30 @@ exportImgEmptSel c s svg w h = do
   debug "exportImage succcesfull"
 
 exportImage : Logger JS => (svg : String) -> (w,h : EMU) -> Act ()
-exportImage svg w h = Prelude.do
-  c <- wordContext
-  debug "Begin of function `exportImage`"
-  -- replace the selected svg (or the first in the selection)
-  -- with the updated structure and adjust the size accordingly
-  -- if an svg is selected
-  -- if the selection is empty or does not include an svg,
-  -- insert the new structure after the selection / cursor
-  s <- getSelection c
+exportImage svg w h =
+  use1 wordContext $ \c => Prelude.do
+    debug "Begin of function `exportImage`"
+    -- replace the selected svg (or the first in the selection)
+    -- with the updated structure and adjust the size accordingly
+    -- if an svg is selected
+    -- if the selection is empty or does not include an svg,
+    -- insert the new structure after the selection / cursor
+    s <- getSelection c
 
-  -- if the selection is empty, insert the svg as a new image
-  False <- isEmpty s | True => exportImgEmptSel c s svg w h
+    -- if the selection is empty, insert the svg as a new image
+    False <- isEmpty s | True => exportImgEmptSel c s svg w h
 
-  -- load the selection as xml
-  ooxml <- getSelectionOoxml c s
+    -- load the selection as xml
+    ooxml <- getSelectionOoxml c s
 
-  debug (cast ooxml)
-  -- check if only one CyBy-Draw generated image is selected
-  checkSingleSelection ooxml
+    debug (cast ooxml)
+    -- check if only one CyBy-Draw generated image is selected
+    checkSingleSelection ooxml
 
-  -- replace the first occurring svg with the updated one
-  -- and replace the new sizes
-  replaceOoxml s (replaceSvgAndSize ooxml svg w h)
-  debug "Function `exportImage` successful"
+    -- replace the first occurring svg with the updated one
+    -- and replace the new sizes
+    replaceOoxml s (replaceSvgAndSize ooxml svg w h)
+    debug "Function `exportImage` successful"
 
 exportImageToWord : Logger JS => DrawSettings => DrawState -> Act ()
 exportImageToWord s =
@@ -97,28 +97,28 @@ exportImageToWord s =
 
 export
 importImage : Logger JS => Act CDGraph
-importImage = Prelude.do
-  c <- wordContext
-  debug "Begin of function `importImage`"
+importImage =
+  use1 wordContext $ \c => Prelude.do
+    debug "Begin of function `importImage`"
 
-  s <- getSelection c
-  False <- isEmpty s | True => throw (Caught "Selection is empty")
+    s <- getSelection c
+    False <- isEmpty s | True => throw (Caught "Selection is empty")
 
-  -- load the whole selection as xml
-  ooxml <- getSelectionOoxml c s
+    -- load the whole selection as xml
+    ooxml <- getSelectionOoxml c s
 
-  -- check if only one CyBy-Draw generated image is selected
-  checkSingleSelection ooxml
+    -- check if only one CyBy-Draw generated image is selected
+    checkSingleSelection ooxml
 
-  -- extracting the MOL file directly from the xml structure
-  -- of the current selection
-  -- if there are several cyby-draw generated structures, the
-  -- first in the selection is imported
-  case extractMol ooxml of
-    Nothing => throw (Caught "No MOL-File found")
-    Just bs => case readMolfileE (toString bs) of
-      Left e  => throw (Caught "Error when pasting structure: \{e}")
-      Right m => debug "Function `importImage` succcesful" $> m
+    -- extracting the MOL file directly from the xml structure
+    -- of the current selection
+    -- if there are several cyby-draw generated structures, the
+    -- first in the selection is imported
+    case extractMol ooxml of
+      Nothing => throw (Caught "No MOL-File found")
+      Just bs => case readMolfileE (toString bs) of
+        Left e  => throw (Caught "Error when pasting structure: \{e}")
+        Right m => debug "Function `importImage` succcesful" $> m
 
 wordButtons : Sink DrawEvent => HTMLNodes
 wordButtons =
