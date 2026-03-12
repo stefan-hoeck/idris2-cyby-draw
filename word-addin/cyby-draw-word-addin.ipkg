@@ -5,6 +5,7 @@ version = 0.1.0
 sourcedir = "src"
 depends = cyby-draw
         , pretty-show
+        , dom-mvc-extra
 
 opts       = "--codegen javascript"
 
