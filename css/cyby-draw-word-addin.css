@@ -2,13 +2,15 @@
     Specialised CSS file for the Word AddIn
 
     This rules overwrite the standard CyBy-Draw CSS settings
-    for adjusting it to the word addin style.
+    for adjusting or adding classes to adhere to the word addin style.
  ---------------------------------------------------------------------------- */
 
 /* replace the padding with the top margin */
 .cyby-draw-main-content {
   padding: 0;
-  margin-top: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  column-gap: 0;
 }
 
 /* extra class for the svg export icon */
@@ -19,4 +21,36 @@
 /* extra class for the svg import icon */
 .cyby-draw-icon.from-word {
   background-image: url("draw_icons/icon_svg_imp_word.svg");
+}
+
+/* extra class for the log window */
+.log-window {
+  display: grid;
+  grid-template-rows: max-content;
+  background-color: rgb(238 238 238);
+  width: 400px;
+  height: 180px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* extra class for the log messages */
+.log-title {
+  font-size: small;
+  padding-left: 9px;
+}
+
+/* extra class for the log messages */
+.log-msg {
+  background-color: rgb(245 245 245);
+  margin: 6px;
+  overflow-y: auto;
+  line-break: auto;
+  scrollbar-width: thin;
+}
+
+/* extra class for the long row entries */
+.long-row {
+  padding-left: 3px;
+  font-size: smaller;
 }

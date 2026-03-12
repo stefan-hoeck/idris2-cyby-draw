@@ -13,21 +13,24 @@ import Text.SVG
 %default total
 
 messages : DomID
-messages = "messages"
+messages = "log-msg"
 
-printMsg : DrawMsg -> String
-printMsg Copied        = "Structure copied to clipboard"
-printMsg (ReadErr str) = "Error when pasting structure: \{str}"
+toLogRow : LogLevel -> String -> HTMLNode
+toLogRow lvl x = li [ class "long-row" ] [Text "[ \{toLower $ show lvl} ] \{x}"]
 
-clearMsg : DrawEvent -> Act ()
-clearMsg (KeyUp str) = pure ()
-clearMsg _           = children (elemRef messages) []
+printErr : HSum [JSErr] -> JS [] ()
+printErr (Here x) = putStrLn "Error: \{dispErr x}"
 
 %hint
 logger : Logger JS
 logger =
-  filter Debug $ MkLogger $ \lvl,ms =>
-    traverse_ putStrLn $ map (\x => "[ \{toLower $ show lvl} ] \{x}") ms
+  filter Info $ MkLogger $ \lvl,ms =>
+    let logRows  := map (toLogRow lvl) ms
+     in handleErrors printErr $ traverse_ (prepend $ elemRef messages) logRows
+
+Loggable JS DrawMsg where
+  logLoggable Copied        = info "Structure copied to clipboard"
+  logLoggable (ReadErr str) = error "Error when pasting structure: \{str}"
 
 parameters {auto ds : DrawSettings}
            {auto de : Sink DrawEvent}
@@ -36,7 +39,7 @@ parameters {auto ds : DrawSettings}
   wordDisp : DrawState -> DrawEvent -> Act DrawState
   wordDisp s e =
    let s2 := update e s
-    in clearMsg e >> displaySketcher {ex = WordExt} "app" e s2 $> s2
+    in displaySketcher {ex = WordExt} "app" e s2 $> s2
 
   logAndDisplay : DrawState -> DrawEvent -> Act DrawState
   logAndDisplay s SVGimp = importImage >>= wordDisp s . Load
@@ -54,7 +57,7 @@ ui = do
   E dms <- exec $ event {fs = []} DrawMsg
 
   merge
-    [ foreach (elemChild messages . Text . printMsg) dms
+    [ foreach logLoggable dms
     , P.cons (KeyDown "Escape") des
         |> P.evalScans1 (init (SD 400 266) Init "") handled
         |> drain

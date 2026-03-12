@@ -91,8 +91,11 @@ exportImage svg w h =
 
 exportImageToWord : Logger JS => DrawSettings => DrawState -> Act ()
 exportImageToWord s =
- let (SD w h, svg) := exportSVGPair True s
-  in exportImage svg (cast w) (cast h)
+  -- throw an error if the canvas is empty
+  if s.mol == G 0 empty
+     then throw (Caught "No molecule to export!")
+     else let (SD w h, svg) := exportSVGPair True s
+           in exportImage svg (cast w) (cast h)
 
 export
 importImage : Logger JS => Act CDGraph
