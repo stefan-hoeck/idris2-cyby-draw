@@ -68,6 +68,11 @@ exportImage : Logger JS => (svg : String) -> (w,h : EMU) -> Act ()
 exportImage svg w h =
   use1 wordContext $ \c => Prelude.do
     debug "Begin of function `exportImage`"
+
+    -- if the canvas is empty (svg == "") throw an error
+    when (svg == "")
+         (throw $ Caught "No molecule to export")
+
     -- replace the selected svg (or the first in the selection)
     -- with the updated structure and adjust the size accordingly
     -- if an svg is selected
