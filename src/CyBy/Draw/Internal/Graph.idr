@@ -1064,13 +1064,26 @@ clearOrphanGroups ns g =
 ||| orphaned nodes visible. Here, we opt for the latter. If users
 ||| want to delete the whole abbreviation, they can do so by
 ||| deleting the atom in question.
+|||
+||| If no nodes or edges are currently selected, this deletes the
+||| node or edge that is currently being hovered over.
 export
 deleteSelected : CDGraph -> CDGraph
 deleteSelected (G o g) =
   case selectedItems g of
-    None => G o g
-    N ns => delNodes (plusGroupNodes g ns) g
-    E es =>
+    None => case hoveredItem g of
+      None => G o g
+      N x  => delNS [fst x]
+      E x  => delES [(node1 x, node2 x)]
+    N ns => delNS ns
+    E es => delES es
+
+  where
+    delNS : List (Fin o) -> CDGraph
+    delNS ns = delNodes (plusGroupNodes g ns) g
+
+    delES : List (Fin o,Fin o) -> CDGraph
+    delES es =
       let ns := es >>= \(x,y) => [x,y]
        in G o $ clearOrphanGroups ns (delEdges es g)
 
