@@ -5,8 +5,7 @@ import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Internal.Graph
 import Derive.Prelude
 import Text.Molfile
-import Web.MVC
-import Web.MVC.Canvas
+import Web.Canvas
 
 %default total
 %language ElabReflection
@@ -71,9 +70,7 @@ data DrawEvent : Type where
   Clear            : DrawEvent
   Expand           : DrawEvent
   Center           : DrawEvent
-  Msg              : DrawMsg -> DrawEvent
-  EndResize        : DrawEvent
-  EndResizeHW      : (h,w : Double) -> DrawEvent
+  Resize           : (h,w : Double) -> DrawEvent
   StartPSE         : DrawEvent
   SVG              : DrawEvent
   SVGimp           : DrawEvent

@@ -35,7 +35,6 @@ export
 Eq DepNode where
   (==) (DN g1 n1) (DN g2 n2) = g1 == g2 && finToNat n1 == finToNat n2
 
-
 --------------------------------------------------------------------------------
 --          Drawing Mode
 --------------------------------------------------------------------------------
@@ -593,7 +592,7 @@ onKeyDown "ArrowLeft"  s = navigate W s
 onKeyDown "+"          s = ifCtrl (zoomIn True) (modAtom {charge $= incCharge}) s
 onKeyDown "-"          s = ifCtrl (zoomOut True) (modAtom {charge $= decCharge}) s
 onKeyDown "c"          s = ifCtrl id (setElemStr "C") s
-onKeyDown "x"          s = ifCtrl id (setElemStr "X") s
+onKeyDown "x"          s = ifCtrl delete (setElemStr "X") s
 onKeyDown "z"          s = ifCtrl undo (setElemStr "Z") s
 onKeyDown "y"          s = ifCtrl redo (setElemStr "Y") s
 onKeyDown "0"          s = addAbbrShortcut "Ph" phenyl s
@@ -661,9 +660,7 @@ upd Expand        s = updateMol expand s
 upd Center        s = reset s
 upd EnableAbbr    s = enableAbbr s
 upd (SelAbbr a)   s = {mode := SetAbbr a, abbr := Just a, mol $= clear} s
-upd (Msg _)       s = s
-upd EndResize     s = s
-upd (EndResizeHW h w) s = endResize h w s
+upd (Resize h w)  s = endResize h w s
 upd StartPSE      s = {mode := PTable Nothing} s
 upd SVG           s = s
 upd SVGimp        s = s

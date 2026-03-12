@@ -1,13 +1,13 @@
 module CyBy.Draw.Word.DomBindings
 
-import CyBy.Draw.Word.PromiseMonad
+import public Web.Async
 import Data.SortedMap as SM
-import JS
 
 import public Data.Buffer
 import public Data.ByteString
 
 %hide JS.ByteString.ByteString
+%hide Text.HTML.Node.a
 %default total
 
 export
@@ -61,13 +61,16 @@ data ClientResult : Type -> Type where [external]
 -- Prim Functions
 -------------------------------------------------------------------------------
 
-%foreign "browser:lambda:(a,fun,w) => Word.run((c) => fun(c)(w))"
-prim__wordRun : (Context -> PrimIO (Promise a)) -> PrimIO (Promise a)
+%foreign "browser:lambda:(fun,w) => Word.run((c) => new Promise((cb) => fun({context:c, callback:cb})(w)))"
+prim__wordRun : (Context -> PrimIO ()) -> PrimIO ()
 
-%foreign "browser:lambda:(c,w)=> c.document.getSelection()"
+%foreign "browser:lambda:(c,w) => c.callback()"
+prim__release : Context -> PrimIO ()
+
+%foreign "browser:lambda:(c,w)=> c.context.document.getSelection()"
 prim__selection : Context -> PrimIO Selection
 
-%foreign "browser:lambda:(c,w)=> c.document.body.getOoxml()"
+%foreign "browser:lambda:(c,w)=> c.context.document.body.getOoxml()"
 prim__getOoxml : Context -> PrimIO (ClientResult String)
 
 %foreign "browser:lambda:(s,w)=> s.getOoxml()"
@@ -82,7 +85,7 @@ prim__isEmpty : a -> PrimIO Bool
 %foreign "browser:lambda:(a,o,w)=> o.value"
 prim__valueClientResult: ClientResult a -> PrimIO a
 
-%foreign "browser:lambda:(c,w)=> c.sync()"
+%foreign "browser:lambda:(c,w)=> c.context.sync()"
 prim__syncContext : Context -> PrimIO (Promise ())
 
 %foreign "browser:lambda:(a,o,s,w)=> o.load(s || undefined)"
@@ -96,15 +99,19 @@ prim__replaceOoxml : Selection -> String -> PrimIO ()
 -------------------------------------------------------------------------------
 
 export
-syncContext : Context -> Prog ()
-syncContext c = liftPrimPromise (prim__syncContext c)
+Resource (Async JS) Context where
+  cleanup c = primIO $ prim__release c
+
+export
+syncContext : Context -> Act ()
+syncContext c = primIO (prim__syncContext c) >>= promise
 
 |||  Queuing a request to fetch data for a proxy object, which initially
 |||  contains no real values. `load("")` requests all properties.
 |||  `context.sync()` is required afterward to retrieve the data and make it
 |||  accessible!
 export
-load : Context -> a -> (properties : String) -> Prog ()
+load : {0 a : _} -> Context -> a -> (properties : String) -> Act ()
 load c o props = primIO (prim__load o props) >> syncContext c
 
 export
@@ -112,8 +119,9 @@ replaceOoxml : HasIO io => Selection -> Ooxml -> io ()
 replaceOoxml s x = primIO (prim__replaceOoxml s $ cast x)
 
 export
-wordRun : (Context -> Prog a) -> Prog a
-wordRun f = P $ fromPrim (prim__wordRun (\c => (toPrim (f c).run)))
+wordContext : Act Context
+wordContext =
+  primAsync_ $ \f => ffi (prim__wordRun $ \c => primRun $ f (Right c))
 
 export
 valueClientResult : HasIO io => ClientResult a -> io a
@@ -121,7 +129,7 @@ valueClientResult a = primIO (prim__valueClientResult a)
 
 -- loaded and synced selection
 export
-getSelection : Context -> Prog Selection
+getSelection : Context -> Act Selection
 getSelection c = do
   s <- primIO (prim__selection c)
   load c s "isEmpty"
@@ -129,7 +137,7 @@ getSelection c = do
   pure s
 
 export
-getOoxml : Context -> Prog Ooxml
+getOoxml : Context -> Act Ooxml
 getOoxml c = do
   crOoxml <- primIO (prim__getOoxml c)
   syncContext c
@@ -137,7 +145,7 @@ getOoxml c = do
   pure (cast s)
 
 export
-getSelectionOoxml : Context -> Selection -> Prog Ooxml
+getSelectionOoxml : Context -> Selection -> Act Ooxml
 getSelectionOoxml c s = do
   crOoxml <- primIO (prim__getSelectionOoxml s)
   syncContext c
@@ -240,9 +248,9 @@ replaceSvgAndSize o svg cx cy  =
           True  => modBetweenAll " cx=\"" EndTag (const $ coords cx cy) t
 
 export
-checkSingleSelection : Ooxml -> Prog ()
+checkSingleSelection : Ooxml -> Act ()
 checkSingleSelection sel = do
   when (length (splitAtSubstring "</w:drawing>" sel.value) /= 2)
-       (failProgC "None or multiple images selected!")
+       (throw $ Caught "None or multiple images selected!")
   when (not $ isInfixOf Created $ sel.value)
-       (failProgC "No CyBy-Draw image selected!")
+       (throw $ Caught "No CyBy-Draw image selected!")
