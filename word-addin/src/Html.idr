@@ -9,20 +9,18 @@ import Text.CSS.Color
 import Web.Async.Util
 import Web.Async.View
 import Text.SVG
-import Text.HTML.Extra
 
 %default total
 
 messages : DomID
-messages = "messages"
+messages = "log-msg"
 
 printMsg : DrawMsg -> String
-printMsg Copied        = "Structure copied to clipboard"
-printMsg (ReadErr str) = "Error when pasting structure: \{str}"
+printMsg Copied        = "[ info ] Structure copied to clipboard"
+printMsg (ReadErr str) = "[ error ] Error when pasting structure: \{str}"
 
-clearMsg : DrawEvent -> Act ()
-clearMsg (KeyUp str) = pure ()
-clearMsg _           = children (elemRef messages) []
+toLogRow : String -> HTMLNode
+toLogRow str = li [ class "long-row" ] [Text str]
 
 %hint
 logger : Logger JS
@@ -37,7 +35,7 @@ parameters {auto ds : DrawSettings}
   wordDisp : DrawState -> DrawEvent -> Act DrawState
   wordDisp s e =
    let s2 := update e s
-    in clearMsg e >> displaySketcher {ex = WordExt} "app" e s2 $> s2
+    in displaySketcher {ex = WordExt} "app" e s2 $> s2
 
   logAndDisplay : DrawState -> DrawEvent -> Act DrawState
   logAndDisplay s SVGimp = importImage >>= wordDisp s . Load
@@ -55,7 +53,7 @@ ui = do
   E dms <- exec $ event {fs = []} DrawMsg
 
   merge
-    [ foreach (elemChild messages . Text . printMsg) dms
+    [ foreach (elemPrepend messages . toLogRow . printMsg) dms
     , P.cons (KeyDown "Escape") des
         |> P.evalScans1 (init (SD 400 266) Init "") handled
         |> drain
