@@ -68,11 +68,6 @@ exportImage : Logger JS => (svg : String) -> (w,h : EMU) -> Act ()
 exportImage svg w h =
   use1 wordContext $ \c => Prelude.do
     debug "Begin of function `exportImage`"
-
-    -- if the canvas is empty (svg == "") throw an error
-    when (svg == "")
-         (throw $ Caught "No molecule to export")
-
     -- replace the selected svg (or the first in the selection)
     -- with the updated structure and adjust the size accordingly
     -- if an svg is selected
@@ -96,8 +91,11 @@ exportImage svg w h =
 
 exportImageToWord : Logger JS => DrawSettings => DrawState -> Act ()
 exportImageToWord s =
- let (SD w h, svg) := exportSVGPair True s
-  in exportImage svg (cast w) (cast h)
+  -- throw an error if the canvas is empty
+  if s.mol == G 0 empty
+     then throw (Caught "No molecule to export!")
+     else let (SD w h, svg) := exportSVGPair True s
+           in exportImage svg (cast w) (cast h)
 
 export
 importImage : Logger JS => Act CDGraph
