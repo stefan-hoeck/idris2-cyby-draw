@@ -15,18 +15,22 @@ import Text.SVG
 messages : DomID
 messages = "log-msg"
 
-printMsg : DrawMsg -> String
-printMsg Copied        = "[ info ] Structure copied to clipboard"
-printMsg (ReadErr str) = "[ error ] Error when pasting structure: \{str}"
+toLogRow : LogLevel -> String -> HTMLNode
+toLogRow lvl x = li [ class "long-row" ] [Text "[ \{toLower $ show lvl} ] \{x}"]
 
-toLogRow : String -> HTMLNode
-toLogRow str = li [ class "long-row" ] [Text str]
+printErr : HSum [JSErr] -> JS [] ()
+printErr (Here x) = putStrLn "Error: \{dispErr x}"
 
 %hint
 logger : Logger JS
 logger =
-  filter Debug $ MkLogger $ \lvl,ms =>
-    traverse_ putStrLn $ map (\x => "[ \{toLower $ show lvl} ] \{x}") ms
+  filter Info $ MkLogger $ \lvl,ms =>
+    let logRows  := map (toLogRow lvl) ms
+     in handleErrors printErr $ traverse_ (prepend $ elemRef messages) logRows
+
+Loggable JS DrawMsg where
+  logLoggable Copied        = info "Structure copied to clipboard"
+  logLoggable (ReadErr str) = error "Error when pasting structure: \{str}"
 
 parameters {auto ds : DrawSettings}
            {auto de : Sink DrawEvent}
@@ -53,7 +57,7 @@ ui = do
   E dms <- exec $ event {fs = []} DrawMsg
 
   merge
-    [ foreach (elemPrepend messages . toLogRow . printMsg) dms
+    [ foreach logLoggable dms
     , P.cons (KeyDown "Escape") des
         |> P.evalScans1 (init (SD 400 266) Init "") handled
         |> drain
