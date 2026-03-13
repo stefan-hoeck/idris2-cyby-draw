@@ -16,13 +16,13 @@ ipkg    = "cyby-draw-word-addin.ipkg"
 [custom.all.chem]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
-commit = "latest:ditch_parser"
+commit = "latest:main"
 ipkg   = "chem.ipkg"
 
 [custom.all.chem-generators]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
-commit = "latest:ditch_parser"
+commit = "latest:main"
 ipkg   = "chem-generators/chem-generators.ipkg"
 
 [custom.all.streams]
