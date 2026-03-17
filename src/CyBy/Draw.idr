@@ -458,7 +458,7 @@ displayMol :
 displayMol sd g m =
   let cdg    := initGraph g
       G o mg := maybe cdg (\ns => highlight ns cdg) m
-   in Raw . curSVG $ initMol sd Fill False $ G o mg
+   in Raw . curSVG $ initMol sd Fill False "" $ G o mg
 
 ||| An editor for molecules.
 export

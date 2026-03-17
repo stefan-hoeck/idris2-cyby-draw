@@ -127,8 +127,12 @@ toMol : DrawState -> MolfileAT
 toMol ds = toMolfile ds.mol
 
 export %inline
-toMolStr : DrawState -> String
-toMolStr = writeMolfile . toMol
+toMolStr : DrawState -> (comment : String) -> String
+toMolStr s c =
+  case toMol s of
+    (MkMolfile n i _ g d) =>
+      let molFile := MkMolfile n i (MkMolLine c) g d
+       in writeMolfile molFile
 
 export %inline
 (.imol) : (s : DrawState) -> CDIGraph s.mol.order
@@ -689,25 +693,30 @@ scene exp s =
 -- Embeds a graph, in the MOL file format, in an SVG node `metadata`.
 -- Therefore, the SVG can be read in again later, and the graph can be
 -- parsed from the string of the MOL file inside the metadata tag.
-metadata : DrawSettings => DrawState -> SVGNode
-metadata s =
+metadata : DrawSettings => DrawState -> (comment : String) -> SVGNode
+metadata s c =
   let m := nextMol s
-   in El "metadata" [] [Txt $ toMolStr s]
+   in El "metadata" [] [Txt $ toMolStr s c]
 
-display : DrawSettings => DrawState -> (metadata : Bool) -> SVGNode
-display s m =
+display :
+     {auto _ : DrawSettings}
+  -> DrawState
+  -> (metadata : Bool)
+  -> (comment : String)
+  -> SVGNode
+display s m c =
   svg
     [ xmlns_2000
     , width 100.perc
     , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
-    ] $ if m then [scene True s, metadata s] else [scene False s]
+    ] $ if m then [scene True s, metadata s c] else [scene False s]
 
 export
 update : DrawSettings => DrawEvent -> DrawState -> DrawState
 update e s =
   let s2 := upd e s
-   in {prevSVG := s.curSVG, curSVG := render (display s2 False)} s2
+   in {prevSVG := s.curSVG, curSVG := render (display s2 False "")} s2
 
 --------------------------------------------------------------------------------
 -- Initialization
@@ -718,22 +727,28 @@ parameters {auto ds : DrawSettings}
   ||| Initializes the drawing state for the given mol graph.
   |||
   ||| The `SceneDims` are used for centering the molecule, as well
-  ||| as for scaling it to fill the scene. The `exp` flag is used
-  ||| to decide if the graph is atached to the SVG in form of a
-  ||| MOL file string (metadata).
+  ||| as for scaling it to fill the scene. The `metadata` flag is
+  ||| used to decide if the graph is atached to the SVG in form of
+  ||| a MOL file string.
   export
-  initMol : SceneDims -> ScaleMode -> (metadata : Bool) -> CDGraph -> DrawState
-  initMol sd sm metadata g =
+  initMol :
+       SceneDims
+    -> ScaleMode
+    -> (metadata : Bool)
+    -> (comment : String)
+    -> CDGraph
+    -> DrawState
+  initMol sd sm metadata c g =
     let s := initST sd sm g
-     in {curSVG := render (display s metadata)} s
+     in {curSVG := render (display s metadata c)} s
   
   export %inline
   init : SceneDims -> ScaleMode -> String -> DrawState
-  init sd sm = initMol sd sm False . readMolfile
+  init sd sm = initMol sd sm False "" . readMolfile
   
   export %inline
   fromMol : SceneDims -> ScaleMode -> MolGraphAT -> DrawState
-  fromMol sd sm = initMol sd sm False . initGraph
+  fromMol sd sm = initMol sd sm False "" . initGraph
 
   ||| Generates a string holding the SVG-encoded molecular structur
   ||| together with the dimensions of the SVG-scnene.
@@ -742,12 +757,16 @@ parameters {auto ds : DrawSettings}
   ||| containing the molecular structure in `.mol` format should be
   ||| included in the SVG content.
   export
-  exportSVGPair : (metadata : Bool) -> DrawState -> (SceneDims, String)
-  exportSVGPair b s =
+  exportSVGPair :
+       (metadata : Bool)
+    -> (comment : String)
+    -> DrawState
+    -> (SceneDims, String)
+  exportSVGPair b c s =
     let Just (p1,p2) := corners $ bounds s.mol | Nothing => (SD 0 0, "")
         (SZ _ _ r1 r2) := selectZones (convert p1) (convert p2)
         sd             := SD (r2-r1).x (r2-r1).y
-     in (sd, curSVG $ initMol sd Init b s.mol)
+     in (sd, curSVG $ initMol sd Init b c s.mol)
 
   ||| Generates an SVG string out of the current DrawState. The
   ||| graph is included as MOL file string inside the metadata tag.
@@ -755,4 +774,4 @@ parameters {auto ds : DrawSettings}
   ||| field value.
   export
   exportSVG : DrawState -> String
-  exportSVG = snd . exportSVGPair False
+  exportSVG = snd . exportSVGPair False ""

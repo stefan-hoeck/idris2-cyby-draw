@@ -94,8 +94,11 @@ exportImageToWord s =
   -- throw an error if the canvas is empty
   if s.mol == G 0 empty
      then throw (Caught "No molecule to export!")
-     else let (SD w h, svg) := exportSVGPair True s
-           in exportImage svg (cast w) (cast h)
+     else do
+       timeStampUTC <- liftIO $ clockTime UTC
+       let ts            := toNano timeStampUTC
+       let (SD w h, svg) := exportSVGPair True ("Timestamp: \{show ts}") s
+       exportImage svg (cast w) (cast h)
 
 export
 importImage : Logger JS => Act CDGraph
