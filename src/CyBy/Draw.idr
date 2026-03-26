@@ -52,7 +52,7 @@ record Extension where
   [noHints]
   constructor E
   doExport     : DrawSettings => DrawState -> JS [] ()
-  buttons      : Sink DrawEvent => HTMLNodes
+  buttons      : Sink DrawEvent => DrawState => HTMLNodes
 
 --------------------------------------------------------------------------------
 --          Events
@@ -495,11 +495,20 @@ molEdit logmsg getDS sd =
        -> Act DrawState
      doact pre s e = let s2 := update e s in displaySketcher pre e s2 $> s2
 
+||| Only allow users to click on the export button if the graph
+||| is not empty.
+export
+disableIfEmptyGraph : Sink DrawEvent => (ds : DrawState) => HTMLNode -> HTMLNode
+disableIfEmptyGraph {ds} node =
+  case ds.mol of
+    G 0 _ => withAttribute (disabled True) $ node
+    _     => node
+
 ||| The default `Extension`
 export %hint
 NoExt : Extension
 NoExt =
   E
     { doExport     = toClipboard . exportSVG
-    , buttons      = [ icon "svg" SVG "svg" ]
+    , buttons      = [ disableIfEmptyGraph $ icon "svg" SVG "svg" ]
     }
