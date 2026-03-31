@@ -125,10 +125,10 @@ importImage =
         Left e  => throw (Caught "Error when pasting structure: \{e}")
         Right m => debug "Function `importImage` succcesful" $> m
 
-wordButtons : Sink DrawEvent => HTMLNodes
-wordButtons =
-  [ icon "from-word" SVGimp "getting selected structure from Word"
-  , icon "to-word" SVG "inserting structure into Word"
+wordButtons : Sink DrawEvent => (pre : String) -> HTMLNodes
+wordButtons pre =
+  [ icon "from-word" SVGimp "get selected structure from Word"
+  , icon' [Id $ expButton pre] "to-word" SVG "insert structure into Word"
   ]
 
 parameters {auto log : Logger JS}
