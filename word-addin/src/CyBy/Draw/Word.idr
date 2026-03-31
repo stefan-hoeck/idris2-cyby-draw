@@ -127,8 +127,8 @@ importImage =
 
 wordButtons : Sink DrawEvent => (pre : String) -> HTMLNodes
 wordButtons pre =
-  [ icon "from-word" SVGimp Nothing "getting selected structure from Word"
-  , icon "to-word" SVG (Just $ expButton pre) "inserting structure into Word"
+  [ icon "from-word" SVGimp "get selected structure from Word"
+  , icon' [Id $ expButton pre] "to-word" SVG "insert structure into Word"
   ]
 
 parameters {auto log : Logger JS}
