@@ -198,13 +198,16 @@ parameters {auto de : Sink DrawEvent}
       dispMass Nothing  = "Mix"
       dispMass (Just m) = show m.value
   
-  icon : (cls : Class) -> DrawEvent -> (title : String) -> HTMLNode
-  icon cls ev ttl =
+  icon :
+       (cls : Class)
+    -> DrawEvent
+    -> Maybe (Ref Tag.Button)
+    -> (title : String)
+    -> HTMLNode
+  icon cls ev Nothing ttl =
     button [classes ["cyby-draw-icon", cls], onClick ev, title ttl] []
-
-  icon' : (cls : Class) -> DrawEvent -> (pre,id,title : String) -> HTMLNode
-  icon' cls ev pre i ttl =
-    button [ id (pre ++ "-" ++ i)
+  icon cls ev (Just i) ttl =
+    button [ Id i
            , classes ["cyby-draw-icon", cls]
            , onClick ev, title ttl
            ] []
@@ -246,12 +249,12 @@ parameters {auto de : Sink DrawEvent}
       [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ] $
       [ radioIcon "sel" SelectMode "select" (s.mode == Select)
       , radioIcon "erase" EraseMode "erase" (s.mode == Erase)
-      , disable (order s.mol == 0) $ icon "clear" Clear "clear"
-      , disable (s.undos == []) $ icon "undo" Undo "undo"
-      , disable (s.redos == []) $ icon "redo" Redo "redo"
-      , icon "center" Center "center"
-      , disable (maxZoom s.transform) $ icon "zoom-in" (ZoomIn False) "zoom in"
-      , disable (minZoom s.transform) $ icon "zoom-out" (ZoomOut False) "zoom out"
+      , disable (order s.mol == 0) $ icon "clear" Clear Nothing "clear"
+      , disable (s.undos == []) $ icon "undo" Undo Nothing "undo"
+      , disable (s.redos == []) $ icon "redo" Redo Nothing "redo"
+      , icon "center" Center Nothing "center"
+      , disable (maxZoom s.transform) $ icon "zoom-in" (ZoomIn False) Nothing "zoom in"
+      , disable (minZoom s.transform) $ icon "zoom-out" (ZoomOut False) Nothing "zoom out"
       , bondIcon "single-bond" (cast Single) "single bond" s
       , bondIcon "single-up" (fromStereo Up) "single bond up" s
       , bondIcon "single-down" (fromStereo Down) "single bond down" s
@@ -516,5 +519,5 @@ NoExt : Extension
 NoExt =
   E
     { doExport     = toClipboard . exportSVG
-    , buttons      = \pre => [ icon' "svg" SVG pre "exp-button" "svg" ]
+    , buttons      = \pre => [ icon "svg" SVG (Just $ expButton pre) "svg" ]
     }
