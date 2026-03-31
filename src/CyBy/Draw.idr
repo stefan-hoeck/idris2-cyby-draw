@@ -52,7 +52,7 @@ record Extension where
   [noHints]
   constructor E
   doExport     : DrawSettings => DrawState -> JS [] ()
-  buttons      : Sink DrawEvent => DrawState => HTMLNodes
+  buttons      : Sink DrawEvent => (pre : String) -> HTMLNodes
 
 --------------------------------------------------------------------------------
 --          Events
@@ -122,6 +122,10 @@ bottomBarID pre = Id "\{pre}-bottom-bar"
 export
 abbrID : String -> Ref Tag.Select
 abbrID pre = Id "\{pre}-abbreviations"
+
+export
+expButton : String -> Ref Tag.Button
+expButton pre = Id "\{pre}-exp-button"
 
 --------------------------------------------------------------------------------
 --          View
@@ -198,6 +202,13 @@ parameters {auto de : Sink DrawEvent}
   icon cls ev ttl =
     button [classes ["cyby-draw-icon", cls], onClick ev, title ttl] []
 
+  icon' : (cls : Class) -> DrawEvent -> (pre,id,title : String) -> HTMLNode
+  icon' cls ev pre i ttl =
+    button [ id (pre ++ "-" ++ i)
+           , classes ["cyby-draw-icon", cls]
+           , onClick ev, title ttl
+           ] []
+
   radioIcon : (cls : Class) -> DrawEvent -> (ttl : String) -> Bool -> HTMLNode
   radioIcon cls ev ttl b =
     input
@@ -247,7 +258,7 @@ parameters {auto de : Sink DrawEvent}
       , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
       , bondIcon "double-bond" (cast Chem.Types.Dbl) "double bond" s
       , bondIcon "triple-bond" (cast Triple) "triple bond" s
-      ] ++ ex.buttons
+      ] ++ ex.buttons pre
 
   template : (cls : Class) -> CDGraph -> String -> DrawState -> HTMLNode
   template cls g nm s =
@@ -440,9 +451,13 @@ parameters {auto ds : DrawSettings}
   displayEv SVG              s = weakenErrors $ ex.doExport s
   displayEv _                s = pure ()
 
+  disableExportIfNoGraph : DrawState -> Act ()
+  disableExportIfNoGraph s =
+    let G o _ := s.mol in disabled (expButton pre) (o == 0)
+
   export
   displaySketcher : DrawEvent -> DrawState -> Act ()
-  displaySketcher e s = displayEv e s >> displayST s
+  displaySketcher e s = displayEv e s >> displayST s >> disableExportIfNoGraph s
 
 ||| Renders a molecule at the given canvas.
 |||
@@ -495,20 +510,11 @@ molEdit logmsg getDS sd =
        -> Act DrawState
      doact pre s e = let s2 := update e s in displaySketcher pre e s2 $> s2
 
-||| Only allow users to click on the export button if the graph
-||| is not empty.
-export
-disableIfEmptyGraph : Sink DrawEvent => (ds : DrawState) => HTMLNode -> HTMLNode
-disableIfEmptyGraph {ds} node =
-  case ds.mol of
-    G 0 _ => withAttribute (disabled True) $ node
-    _     => node
-
 ||| The default `Extension`
 export %hint
 NoExt : Extension
 NoExt =
   E
     { doExport     = toClipboard . exportSVG
-    , buttons      = [ disableIfEmptyGraph $ icon "svg" SVG "svg" ]
+    , buttons      = \pre => [ icon' "svg" SVG pre "exp-button" "svg" ]
     }
