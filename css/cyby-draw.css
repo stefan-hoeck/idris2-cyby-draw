@@ -103,7 +103,7 @@ body {
 
 .cyby-draw-toolbar-right {
   display: grid;
-  grid-template-rows: repeat(3, max-content);
+  grid-template-rows: repeat(5, max-content);
   row-gap: 6px;
   grid-area: right;
 }
