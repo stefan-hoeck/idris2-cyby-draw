@@ -6,6 +6,7 @@ import Geom
 import Text.CSS
 import Text.HTML.DomID
 import Text.HTML.Select
+import Text.Show.Pretty
 import Text.SVG
 import Web.Async
 
@@ -286,16 +287,33 @@ parameters {auto de : Sink DrawEvent}
   rightBar pre s =
     case selectedNodes s.imol False of
       [n] =>
-        let atm := atom $ lab s.imol n
-            tpe := atm.type.name
+        let atm     := atom $ lab s.imol n
+            tpe     := atm.type.name
+            [x,y,_] := atm.position
+            cx      := dispCoordShort x
+            cy      := dispCoordShort y
          in div
               [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ]
-              [ detail "Element" $ elems atm
-              , detail "Isotope" $ massNrs atm
-              , detail "Charge"  $ charges atm
-              , detail "Type"    $ div [ class "cyby-draw-atomtype"] [Text tpe]
+              [ detail "Element"  $ elems atm
+              , detail "Isotope"  $ massNrs atm
+              , detail "Charge"   $ charges atm
+              , detail "Type"     $ div [ class "cyby-draw-atomtype"] [Text tpe]
+              , detail "x-Coord." $ div [ class "cyby-draw-atomtype"] [Text cx]
+              , detail "y-Coord." $ div [ class "cyby-draw-atomtype"] [Text cy]
               ]
-      _   => div [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ] []
+      _   => case selectedEdges s.imol of
+        [(x,y)] =>
+          let px := point $ position $ atom $ lab s.imol x
+              py := point $ position $ atom $ lab s.imol y
+              d  := printDouble 3 $ distance px py
+              a  := angleOrZero (px - py)
+              a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a
+           in div
+                [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ]
+                [ detail "Length"   $ div [ class "cyby-draw-atomtype"] [Text "\{d} Å"]
+                , detail "Angle"    $ div [ class "cyby-draw-atomtype"] [Text "\{a'}°"]
+                ]
+        _       => div [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ] []
 
   bottomBar : (pre : String) -> DrawState -> HTMLNode
   bottomBar pre s =
