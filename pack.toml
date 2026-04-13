@@ -28,11 +28,11 @@ ipkg   = "indexed-graph.ipkg"
 [custom.all.chem]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
-commit = "latest:gen2d"
+commit = "latest:main"
 ipkg   = "chem.ipkg"
 
 [custom.all.chem-generators]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
-commit = "latest:gen2d"
+commit = "latest:main"
 ipkg   = "chem-generators/chem-generators.ipkg"
