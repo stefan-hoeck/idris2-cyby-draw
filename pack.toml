@@ -13,6 +13,18 @@ type    = "local"
 path    = "word-addin"
 ipkg    = "cyby-draw-word-addin.ipkg"
 
+[custom.all.ref1]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-ref1"
+commit = "latest:main"
+ipkg   = "ref1.ipkg"
+
+[custom.all.indexed-graph]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-indexed-graph"
+commit = "latest:main"
+ipkg   = "indexed-graph.ipkg"
+
 [custom.all.chem]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
@@ -24,15 +36,3 @@ type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
 commit = "latest:main"
 ipkg   = "chem-generators/chem-generators.ipkg"
-
-[custom.all.streams]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-streams"
-commit = "latest:main"
-ipkg   = "streams.ipkg"
-
-[custom.all.async-dom]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-async-dom"
-commit = "latest:main"
-ipkg   = "async-dom.ipkg"

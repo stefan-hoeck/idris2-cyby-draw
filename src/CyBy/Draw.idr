@@ -11,6 +11,7 @@ import Text.SVG
 import Web.Async
 
 import CyBy.Draw.Internal.Label
+import Geom.Gen2D.Debug
 
 import public CyBy.Draw.Draw
 import public CyBy.Draw.Event
@@ -35,7 +36,9 @@ fromClipboard : Sink DrawEvent => Sink DrawMsg => HasIO io => io ()
 fromClipboard =
   readFromClipboard1 $ \s =>
     ioToF1 $ case readMolfileE s of
-      Left s  => sink (ReadErr s)
+      Left x  => case smilesToMol s of
+        Left  _ => sink (ReadErr x)
+        Right m => sink (Event.SetTempl $ initGraph m.graph)
       Right g => sink (Event.SetTempl g)
 
 --------------------------------------------------------------------------------
