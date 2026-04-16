@@ -774,4 +774,4 @@ parameters {auto ds : DrawSettings}
   ||| field value.
   export
   exportSVG : DrawState -> String
-  exportSVG = snd . exportSVGPair False ""
+  exportSVG = snd . exportSVGPair True ""
