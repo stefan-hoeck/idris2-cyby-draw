@@ -41,6 +41,12 @@ fromClipboard =
         Right m => sink (Event.SetTempl $ initGraph m.graph)
       Right g => sink (Event.SetTempl g)
 
+%foreign "browser:lambda:(s,w)=> {const blob = new Blob([s], { type: 'image/svg+xml' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'cyby_draw_img.svg'; a.click(); URL.revokeObjectURL(url);}"
+prim__downloadSVG : String -> PrimIO ()
+
+downloadSVG : HasIO io => String -> io ()
+downloadSVG s = primIO (prim__downloadSVG s)
+
 --------------------------------------------------------------------------------
 -- Extensions
 --------------------------------------------------------------------------------
@@ -538,6 +544,6 @@ export %hint
 NoExt : Extension
 NoExt =
   E
-    { doExport     = toClipboard . exportSVG
+    { doExport     = downloadSVG . exportSVG
     , buttons      = \pre => [ icon' [Id $ expButton pre] "svg" SVG "svg" ]
     }
