@@ -9,6 +9,7 @@ import Text.HTML.Select
 import Text.Show.Pretty
 import Text.SVG
 import Web.Async
+import Web.Internal.Types
 
 import CyBy.Draw.Internal.Label
 import Geom.Gen2D.Debug
@@ -41,11 +42,15 @@ fromClipboard =
         Right m => sink (Event.SetTempl $ initGraph m.graph)
       Right g => sink (Event.SetTempl g)
 
-%foreign "browser:lambda:(s,w)=> {const blob = new Blob([s], { type: 'image/svg+xml' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'cyby_draw_img.svg'; a.click(); URL.revokeObjectURL(url);}"
-prim__downloadSVG : String -> PrimIO ()
-
-downloadSVG : HasIO io => String -> io ()
-downloadSVG s = primIO (prim__downloadSVG s)
+downloadSVG : String -> Async JS [] ()
+downloadSVG s =
+  handle [putStrLn . dispErr] $
+    use1 (blob s "image/svg+xml" >>= blobURL) $ \u => Prelude.do
+      e  <- createElement "a"
+      setAttribute e "href" (cast u)
+      setAttribute e "download" "cyby_draw_img.svg"
+      he <- jsCast {t = HTMLElement} "downloadSVG:<a> conversion" e
+      click he
 
 --------------------------------------------------------------------------------
 -- Extensions
