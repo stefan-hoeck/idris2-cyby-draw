@@ -33,24 +33,23 @@ import public Text.Molfile
 molToClipboard : HasIO io => CDGraph -> io ()
 molToClipboard = toClipboard . writeMolfile . toMolfile
 
-fromClipboard : Sink DrawEvent => Sink DrawMsg => HasIO io => io ()
+fromClipboard : Sink DrawEvent => Loggable JS DrawMsg => Act ()
 fromClipboard =
-  readFromClipboard1 $ \s =>
-    ioToF1 $ case readMolfileE s of
+  readFromClipboard >>= \s =>
+    case readMolfileE s of
       Left x  => case smilesToMol s of
-        Left  _ => sink (ReadErr x)
+        Left  _ => logLoggable (ReadErr x)
         Right m => sink (Event.SetTempl $ initGraph m.graph)
       Right g => sink (Event.SetTempl g)
 
-downloadSVG : String -> Async JS [] ()
+downloadSVG : String -> Act ()
 downloadSVG s =
-  handle [putStrLn . dispErr] $
-    use1 (blob s "image/svg+xml" >>= blobURL) $ \u => Prelude.do
-      e  <- createElement "a"
-      setAttribute e "href" (cast u)
-      setAttribute e "download" "cyby_draw_img.svg"
-      he <- jsCast {t = HTMLElement} "downloadSVG:<a> conversion" e
-      click he
+  use1 (blob s "image/svg+xml" >>= blobURL) $ \u => Prelude.do
+    e  <- createElement "a"
+    setAttribute e "href" (cast u)
+    setAttribute e "download" "cyby_draw_img.svg"
+    he <- jsCast {t = HTMLElement} "downloadSVG:<a> conversion" e
+    click he
 
 --------------------------------------------------------------------------------
 -- Extensions
@@ -66,7 +65,7 @@ public export
 record Extension where
   [noHints]
   constructor E
-  doExport     : DrawSettings => DrawState -> JS [] ()
+  doExport     : DrawSettings => DrawState -> Act ()
   buttons      : Sink DrawEvent => (pre : String) -> HTMLNodes
 
 --------------------------------------------------------------------------------
@@ -396,7 +395,7 @@ molCanvasCls = "cyby-draw-molecule-canvas"
 
 parameters {auto ds : DrawSettings}
            {auto se : Sink DrawEvent}
-           {auto sm : Sink DrawMsg}
+           {auto lm : Loggable JS DrawMsg}
            {auto ex : Extension}
            (pre : String)
 
@@ -450,11 +449,11 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "c" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph True s.mol
-       in when (g.order > 0) (molToClipboard g >> sink Copied)
+       in when (g.order > 0) (molToClipboard g >> logLoggable Copied)
   dispKeyDown "x" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph False s.mol
-       in when (g.order > 0) (molToClipboard g >> sink Copied)
+       in when (g.order > 0) (molToClipboard g >> logLoggable Copied)
   dispKeyDown "v"    s = when (s.modifier == Ctrl) fromClipboard
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = pure ()
@@ -482,7 +481,7 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomIn _)       s = adjustBars s
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
-  displayEv SVG              s = weakenErrors $ ex.doExport s
+  displayEv SVG              s = ex.doExport s
   displayEv _                s = pure ()
 
   disableExportIfNoGraph : DrawState -> Act ()
@@ -513,30 +512,25 @@ displayMol sd g m =
 export
 molEdit :
      {auto ex : Extension}
-  -> (DrawMsg -> Act ())
+  -> {auto lg : Loggable JS DrawMsg}
   -> Act DrawSettings
   -> SceneDims
   -> Editor MolfileAT
-molEdit logmsg getDS sd =
+molEdit getDS sd =
   E $ \m => Prelude.do
    ui   <- map interpolate uniqueID
    ds   <- getDS
    E es <- event DrawEvent
-   E ms <- event DrawMsg
    let st := fromMol sd Init (maybe (G 0 empty) graph m)
        nd := sketcher ui st
    pure $ Widget.W nd $
-     merge
-       [ es |> P.evalScans1 st (doact ui)
-            |> (\x => cons st x)
-            |> P.mapOutput (Valid . toMolfile . mol)
-       , ms |> foreach logmsg 
-       ]
+     es |> P.evalScans1 st (doact ui)
+        |> (\x => cons st x)
+        |> P.mapOutput (Valid . toMolfile . mol)
 
    where
      doact :
           {auto ds : DrawSettings}
-       -> {auto sm : Sink DrawMsg}
        -> {auto se : Sink DrawEvent}
        -> (pre     : String)
        -> DrawState
