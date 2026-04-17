@@ -8,6 +8,7 @@ import Text.Molfile
 import Text.SVG
 import Web.Async.Util
 import Web.Async.View
+import Web.Internal.Types
 
 %default total
 
@@ -18,14 +19,17 @@ import Web.Async.View
 AppLog : DomID
 AppLog = "app-log"
 
+Content : Ref Tag.Body
+Content = Id "content"
+
 lvl : LogLevel -> Class
-lvl l = C "loglvl-\{l}"
+lvl l = C "cyby-draw-loglvl-\{l}"
 
 logNode : LogLevel -> List String -> HTMLNode
 logNode l msgs =
-  div [class "log-row"]
+  div [class "cyby-draw-log-row"]
     [ div [class $ lvl l] [Text $ "[\{l}]"]
-    , div [class "log-msg"] $ intersperse (br []) (map Text msgs)
+    , div [class "cyby-draw-log-msg"] $ intersperse (br []) (map Text msgs)
     ]
 
 printErr : JSErr -> JS [] ()
@@ -50,7 +54,9 @@ ui : DrawSettings => JSStream Void
 ui = do
   let lg := uilog Info
   E des <- exec $ eventFrom (KeyDown "Escape")
-  mvcActEvs des (init (SD 600 400) Init "") logAndDisplay
+  r     <- exec $ castElementByRef Content >>= getClientRect
+  let dims := SD (cast $ r.width - 350) (cast $ r.height - 100)
+  mvcActEvs des (init dims Init "") logAndDisplay
 
 export covering
 app : IO ()

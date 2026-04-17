@@ -631,10 +631,15 @@ erase s =
     None => {mode := Erase} s
     _    => delete s
 
+-- prevent unwanted resizes from events that might slightly affect the
+-- canvas dims
+trulyDifferent : SceneDims -> SceneDims -> Bool
+trulyDifferent (SD w1 h1) (SD w2 h2) = abs (w1-w2) >= 5 || abs (h1-h2) >= 5 
+
 endResize : (h,w : Double) -> DrawState -> DrawState
 endResize h w s =
   let sd := if h > 2 && w > 2 then SD {sheight = h - 2, swidth = w - 2} else s.dims
-   in {dims := sd} s
+   in if trulyDifferent s.dims sd then {dims := sd} s else s
 
 upd : DrawSettings => DrawEvent -> DrawState -> DrawState
 upd (ZoomIn b)    s = zoomIn b s
