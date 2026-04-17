@@ -28,13 +28,8 @@ logger =
     let logRows  := map (toLogRow lvl) ms
      in handleErrors printErr $ traverse_ (prepend $ elemRef messages) logRows
 
-Loggable JS DrawMsg where
-  logLoggable Copied        = info "Structure copied to clipboard"
-  logLoggable (ReadErr str) = error "Error when pasting structure: \{str}"
-
 parameters {auto ds : DrawSettings}
            {auto de : Sink DrawEvent}
-           {auto dm : Sink DrawMsg}
 
   wordDisp : DrawState -> DrawEvent -> Act DrawState
   wordDisp s e =

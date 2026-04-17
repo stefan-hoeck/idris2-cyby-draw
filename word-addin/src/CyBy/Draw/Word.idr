@@ -136,10 +136,15 @@ parameters {auto log : Logger JS}
   Loggable JS JSErr where
     logLoggable err = error $ dispErr err
 
+  export
+  Loggable JS DrawMsg where
+    logLoggable Copied        = info "Structure copied to clipboard"
+    logLoggable (ReadErr str) = error "Error when pasting structure: \{str}"
+
 export
 WordExt : Logger JS => Extension
 WordExt =
   E
-    { doExport     = logErrs . exportImageToWord
+    { doExport     = exportImageToWord
     , buttons      = wordButtons
     }

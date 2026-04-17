@@ -12,12 +12,13 @@ html {
 }
 
 body {
-  background-color: darkgrey;
+  background-color: rgb(200 200 200);
   color: black;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   font-family: sans-serif;
   height: 100%;
+  width: 100%;
   margin: 0;
 }
 
@@ -25,7 +26,6 @@ body {
   display: grid;
   grid-template-columns: max-content max-content;
   column-gap: 10px;
-  background-color: darkgrey;
   padding: 20px;
 }
 
@@ -298,4 +298,44 @@ body {
 /* Util */
 .hidden {
   display: none;
+}
+
+/* Logging */
+
+#app-log {
+  padding: 20px 20px 20px 0;
+  margin: 0;
+}
+
+.cyby-draw-loglvl-trace {
+  color: rgb(0  0  0);
+}
+
+.cyby-draw-loglvl-debug {
+  color: rgb(0  0  255);
+}
+
+.cyby-draw-loglvl-info {
+  color: rgb(0  128  0);
+}
+
+.cyby-draw-loglvl-error {
+  color: rgb(255  0  0);
+}
+
+.cyby-draw-loglvl-fatal {
+  color: rgb(255  0  0);
+}
+
+.cyby-draw-loglvl-warning {
+  color: rgb(255  165  0);
+}
+
+.cyby-draw-loglvl-warn {
+  color: rgb(255 165 0);
+}
+
+.cyby-draw-log-row {
+  display: grid;
+  grid-template-columns: 40px 1fr;
 }
