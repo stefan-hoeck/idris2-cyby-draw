@@ -307,12 +307,6 @@ body {
   margin: 0;
 }
 
-.cyby-draw-log-row {
-  display: grid;
-  grid-template-rows: max-content 1fr;
-  row-gap: 2px;
-}
-
 .cyby-draw-loglvl-trace {
   color: rgb(0  0  0);
 }
@@ -339,9 +333,6 @@ body {
 
 .cyby-draw-loglvl-warn {
   color: rgb(255 165 0);
-}
-
-.cyby-draw-log-msg {
 }
 
 .cyby-draw-log-row {
