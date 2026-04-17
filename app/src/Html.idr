@@ -2,39 +2,55 @@ module Html
 
 import CyBy.Draw
 import Data.List
-import Text.Molfile
 import Text.CSS.Color
+import Text.HTML.DomID
+import Text.Molfile
+import Text.SVG
 import Web.Async.Util
 import Web.Async.View
-import Text.SVG
 
 %default total
 
-messages : Ref Div
-messages = Id "messages"
+--------------------------------------------------------------------------------
+-- Logging
+--------------------------------------------------------------------------------
 
-printMsg : DrawMsg -> String
-printMsg Copied        = "Structure copied to clipboard"
-printMsg (ReadErr str) = "Error when pasting structure: \{str}"
+AppLog : DomID
+AppLog = "app-log"
 
-clearMsg : DrawEvent -> Act ()
-clearMsg (KeyUp str) = pure ()
-clearMsg _           = children messages []
+lvl : LogLevel -> Class
+lvl l = C "loglvl-\{l}"
 
-logAndDisplay : DrawSettings => Sink DrawEvent => Sink DrawMsg => DrawEvent -> DrawState -> Act DrawState
-logAndDisplay e s =
- let s2 := update e s
-  in clearMsg e >> displaySketcher "app" e s2 $> s2
+logNode : LogLevel -> List String -> HTMLNode
+logNode l msgs =
+  div [class "log-row"]
+    [ div [class $ lvl l] [Text $ "[\{l}]"]
+    , div [class "log-msg"] $ intersperse (br []) (map Text msgs)
+    ]
+
+printErr : JSErr -> JS [] ()
+printErr x = putStrLn "Error: \{dispErr x}"
+
+uilog : LogLevel -> Logger JS
+uilog x =
+  MkLogger $ \l,ml => Prelude.do
+    when (l >= x) $ handle [printErr] (prepend (elemRef AppLog) $ logNode l ml)
+
+parameters {auto lg : Logger JS}
+  Loggable JS DrawMsg where
+    logLoggable Copied      = info "Structure copied to clipboard"
+    logLoggable (ReadErr s) = error "Error when pasting structure: \{s}"
+
+  logAndDisplay : DrawSettings => Sink DrawEvent => DrawEvent -> DrawState -> Act DrawState
+  logAndDisplay e s =
+   let s2 := update e s
+    in displaySketcher "app" e s2 $> s2
 
 ui : DrawSettings => JSStream Void
 ui = do
+  let lg := uilog Info
   E des <- exec $ eventFrom (KeyDown "Escape")
-  E dms <- exec $ event DrawMsg
-
-  merge
-    [ dms |> foreach (child messages . Text . printMsg)
-    , mvcActEvs des (init (SD 600 400) Init "") logAndDisplay
-    ]
+  mvcActEvs des (init (SD 600 400) Init "") logAndDisplay
 
 export covering
 app : IO ()
