@@ -303,10 +303,7 @@ body {
 /* Logging */
 
 #app-log {
-  padding-top: 20px;
-  padding-bottom: 20px;
-  padding-right: 20px;
-  padding-left: 0;
+  padding: 20px 20px 20px 0;
   margin: 0;
 }
 
@@ -317,31 +314,31 @@ body {
 }
 
 .cyby-draw-loglvl-trace {
-  color: rgba(0, 0, 0, 100%);
+  color: rgb(0  0  0);
 }
 
 .cyby-draw-loglvl-debug {
-  color: rgba(0, 0, 255, 100%);
+  color: rgb(0  0  255);
 }
 
 .cyby-draw-loglvl-info {
-  color: rgba(0, 128, 0, 100%);
+  color: rgb(0  128  0);
 }
 
 .cyby-draw-loglvl-error {
-  color: rgba(255, 0, 0, 100%);
+  color: rgb(255  0  0);
 }
 
 .cyby-draw-loglvl-fatal {
-  color: rgba(255, 0, 0, 100%);
+  color: rgb(255  0  0);
 }
 
 .cyby-draw-loglvl-warning {
-  color: rgba(255, 165, 0, 100%);
+  color: rgb(255  165  0);
 }
 
 .cyby-draw-loglvl-warn {
-  color: rgba(255, 165, 0, 100%);
+  color: rgb(255 165 0);
 }
 
 .cyby-draw-log-msg {
