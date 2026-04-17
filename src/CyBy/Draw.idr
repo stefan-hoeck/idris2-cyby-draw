@@ -454,7 +454,11 @@ parameters {auto ds : DrawSettings}
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph False s.mol
        in when (g.order > 0) (molToClipboard g >> logLoggable Copied)
-  dispKeyDown "v"    s = when (s.modifier == Ctrl) fromClipboard
+  dispKeyDown "v"    s =
+    -- we need to read from the clipboard in a new fiber, because the result
+    -- will be written to the sink of `DrawEvent`s, which we are currently
+    -- processing
+    when (s.modifier == Ctrl) (ignore $ start fromClipboard)
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = pure ()
 
