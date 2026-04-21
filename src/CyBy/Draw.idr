@@ -55,6 +55,15 @@ downloadSVG s =
 -- Extensions
 --------------------------------------------------------------------------------
 
+||| Minimal environment required to run the core of cyby-draw.
+public export
+record DrawEnv where
+  [noHints]
+  constructor DE
+  pre          : String
+  {auto sets   : DrawSettings}
+  {auto events : Sink DrawEvent}
+
 ||| Extension interface, currently used for the word plugin.
 ||| If the import button should be used, a tuple with the
 ||| class and title has to be specified. If no import button
@@ -65,8 +74,15 @@ public export
 record Extension where
   [noHints]
   constructor E
-  doExport     : DrawSettings => DrawState -> Act ()
-  buttons      : Sink DrawEvent => (pre : String) -> HTMLNodes
+  doExport : DrawSettings => DrawState -> Act ()
+
+  ||| Creats additional buttons to be displayed in the top bar
+  ||| These might require additional mutable state (for instance, the current
+  ||| colour scheme) , so this is an effectful computation
+  buttons  : DrawEnv -> DrawState -> Act HTMLNodes
+
+  ||| Make adjustments to the additional top bar buttons 
+  adjust   : DrawEnv -> DrawEvent -> DrawState -> Act ()
 
 --------------------------------------------------------------------------------
 --          Events
@@ -253,16 +269,16 @@ parameters {auto de : Sink DrawEvent}
 
   topBar :
        {auto ds : DrawSettings}
-    -> {auto ex : Extension}
     -> (pre     : String)
+    -> (topadd  : HTMLNodes)
     -> DrawState
     -> HTMLNode
-  topBar {ds} pre s =
+  topBar {ds} pre topadd s =
     div
       [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ] $
       [ radioIcon "sel" SelectMode "select" (s.mode == Select)
       , radioIcon "erase" EraseMode "erase" (s.mode == Erase)
-      , disable (order s.mol == 0) $ icon "clear" Clear "clear"
+      , disable (emptyGraph s) $ icon "clear" Clear "clear"
       , disable (s.undos == []) $ icon "undo" Undo "undo"
       , disable (s.redos == []) $ icon "redo" Redo "redo"
       , icon "center" Center "center"
@@ -274,7 +290,7 @@ parameters {auto de : Sink DrawEvent}
       , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
       , bondIcon "double-bond" (cast Chem.Types.Dbl) "double bond" s
       , bondIcon "triple-bond" (cast Triple) "triple bond" s
-      ] ++ ex.buttons pre
+      ] ++ topadd
 
   template : (cls : Class) -> CDGraph -> String -> DrawState -> HTMLNode
   template cls g nm s =
@@ -344,11 +360,11 @@ parameters {auto de : Sink DrawEvent}
   export
   sketcher :
        {auto ds : DrawSettings}
-    -> {auto ex : Extension}
     -> (pre     : String)
+    -> (topadd  : HTMLNodes)
     -> DrawState
     -> HTMLNode
-  sketcher pre s =
+  sketcher pre topadd s =
     div
       [ class "cyby-draw-main-content"
       , Id $ sketcherDiv pre
@@ -357,7 +373,7 @@ parameters {auto de : Sink DrawEvent}
         [ class "cyby-draw-sketcher-div"
         , Id $ sketcherDivInner pre
         ]
-        [ topBar pre s
+        [ topBar pre topadd s
         , leftBar pre s
         , rightBar pre s
         , div
@@ -385,6 +401,10 @@ parameters {auto de : Sink DrawEvent}
             [ bottomBar pre s, abbrs pre s ]
         ]
       ]
+
+expBtn : DrawEnv => Class -> (title : String) -> DrawState -> HTMLNode
+expBtn @{DE pre} c t s =
+  icon' [Id $ expButton pre, disabled $ emptyGraph s] c SVG t
 
 --------------------------------------------------------------------------------
 --          Controller
@@ -433,8 +453,9 @@ parameters {auto ds : DrawSettings}
       when s.hasFocus focusCurrentApp
 
   adjustBars : DrawState -> Act ()
-  adjustBars s = do
-    replace (topBarID pre) (topBar pre s)
+  adjustBars s = Prelude.do
+    topadd <- ex.buttons (DE pre) s
+    replace (topBarID pre) (topBar pre topadd s)
     replace (bottomBarID pre) (bottomBar pre s)
     replace (leftBarID pre) (leftBar pre s)
     adjAbbrCls s
@@ -445,7 +466,9 @@ parameters {auto ds : DrawSettings}
     adjAbbrCls s
 
   dispKeyDown : String -> DrawState -> Act ()
-  dispKeyDown "Escape" s = replace (sketcherDiv pre) (sketcher pre s)
+  dispKeyDown "Escape" s = Prelude.do
+    topadd <- ex.buttons (DE pre) s
+    replace (sketcherDiv pre) (sketcher pre topadd s)
   dispKeyDown "c" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph True s.mol
@@ -488,13 +511,14 @@ parameters {auto ds : DrawSettings}
   displayEv SVG              s = ex.doExport s
   displayEv _                s = pure ()
 
-  disableExportIfNoGraph : DrawState -> Act ()
-  disableExportIfNoGraph s =
-    let G o _ := s.mol in disabled (expButton pre) (o == 0)
 
   export
   displaySketcher : DrawEvent -> DrawState -> Act ()
-  displaySketcher e s = displayEv e s >> displayST s >> disableExportIfNoGraph s
+  displaySketcher e s = displayEv e s >> displayST s >> ex.adjust (DE pre) e s
+
+export
+disableExport : DrawEnv => DrawState -> Act ()
+disableExport @{DE pre} = disabled (expButton pre) . emptyGraph
 
 ||| Renders a molecule at the given canvas.
 |||
@@ -522,11 +546,12 @@ molEdit :
   -> Editor MolfileAT
 molEdit getDS sd =
   E $ \m => Prelude.do
-   ui   <- map interpolate uniqueID
-   ds   <- getDS
-   E es <- event DrawEvent
+   ui     <- map interpolate uniqueID
+   ds     <- getDS
+   E es   <- event DrawEvent
    let st := fromMol sd Init (maybe (G 0 empty) graph m)
-       nd := sketcher ui st
+   topadd <- ex.buttons (DE ui) st
+   let nd := sketcher ui topadd st
    pure $ Widget.W nd $
      es |> P.evalScans1 st (doact ui)
         |> (\x => cons st x)
@@ -547,6 +572,7 @@ export %hint
 NoExt : Extension
 NoExt =
   E
-    { doExport     = downloadSVG . exportSVG
-    , buttons      = \pre => [ icon' [Id $ expButton pre] "svg" SVG "svg" ]
+    { doExport = downloadSVG . exportSVG
+    , buttons  = \_,s => pure [expBtn "svg" "store image" s]
+    , adjust   = \_,_,s => disableExport s
     }
