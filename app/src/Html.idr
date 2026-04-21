@@ -1,9 +1,11 @@
 module Html
 
 import CyBy.Draw
+import Data.Finite
 import Data.List
 import Text.CSS.Color
 import Text.HTML.DomID
+import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
 import Web.Async.Util
@@ -45,19 +47,72 @@ parameters {auto lg : Logger JS}
     logLoggable Copied      = info "Structure copied to clipboard"
     logLoggable (ReadErr s) = error "Error when pasting structure: \{s}"
 
-  logAndDisplay : DrawSettings => Sink DrawEvent => DrawEvent -> DrawState -> Act DrawState
-  logAndDisplay e s =
-   let s2 := update e s
-    in displaySketcher "app" e s2 $> s2
+--------------------------------------------------------------------------------
+-- App
+--------------------------------------------------------------------------------
 
-ui : DrawSettings => JSStream Void
-ui = do
+data AppEvent : Type where
+  SetColor : ColorScheme -> AppEvent
+
+record AppST where
+  constructor AST
+  scheme : ColorScheme
+
+drawSettings : AppST -> DrawSettings
+drawSettings (AST s) = {elemColor := color s} (defaultSettings abbreviations)
+
+parameters {auto st  : IORef AppST}
+           {auto sde : Sink DrawEvent}
+           {auto sdm : Sink DrawMsg}
+           {auto sae : Sink AppEvent}
+           {auto lg  : Logger JS}
+           (ast      : IORef AppST)
+           (dst      : IORef DrawState)
+
+  btns : DrawEnv -> DrawState -> Act HTMLNodes
+  btns _ s = Prelude.do
+    AST c <- readref ast 
+    pure
+      [ expBtn "svg" "store image" s
+      , selectFromList values (Just c) show SetColor [class "color-scheme"]
+      ]
+
+  ext : Extension
+  ext =
+    E
+      { doExport = storeSVG . exportSVG
+      , buttons  = btns
+      , adjust   = \_,_,s => disableExport s
+      }
+
+  drawEv : DrawState -> DrawEvent -> Act DrawState
+  drawEv s e = Prelude.do
+    ds <- drawSettings <$> readref ast
+    let s2 := update e s
+    displaySketcher {ex = ext} "app" e s2
+    pure s2
+
+  appEv : AppEvent -> Act ()
+  appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
+
+ui : JSStream Void
+ui = Prelude.do
   let lg := uilog Info
-  E des <- exec $ eventFrom (KeyDown "Escape")
+  E dms <- exec $ event {fs = [JSErr]} DrawMsg
+  E aes <- exec $ event {fs = [JSErr]} AppEvent
+  E des <- exec $ eventFrom {fs = [JSErr]} (KeyDown "Escape")
   r     <- exec $ castElementByRef Content >>= getClientRect
-  let dims := SD (cast $ r.width - 350) (cast $ r.height - 100)
-  mvcActEvs des (init dims Init "") logAndDisplay
+  ast   <- newref (AST CyBy)
+  let ds   := drawSettings (AST CyBy)
+      dims := SD (cast $ r.width - 350) (cast $ r.height - 100)
+      st   := init dims Init ""
+  dst   <- newref {s = World} st
+  merge
+    [ foreach logLoggable dms
+    , foreach (appEv ast dst) aes
+    , P.evalScans1 st (drawEv ast dst) des |> foreach (writeref dst)
+    ]
 
 export covering
 app : IO ()
-app = runProg $ ui @{defaultSettings abbreviations}
+app = runProg ui

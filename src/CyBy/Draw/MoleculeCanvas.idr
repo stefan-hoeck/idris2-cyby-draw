@@ -678,6 +678,7 @@ upd (Resize h w)  s = endResize h w s
 upd StartPSE      s = {mode := PTable Nothing} s
 upd SVG           s = s
 upd SVGimp        s = s
+upd Redraw        s = s
 
 ||| Convert an `AffineTransformation` to a transformation to be
 ||| used in an SVG element.

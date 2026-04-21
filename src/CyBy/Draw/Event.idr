@@ -3,12 +3,25 @@ module CyBy.Draw.Event
 import CyBy.Draw.Internal.Abbreviations
 import CyBy.Draw.Internal.Atom
 import CyBy.Draw.Internal.Graph
+import Derive.Finite
+import Derive.FromJSON.Simple
+import Derive.ToJSON.Simple
 import Derive.Prelude
+import JSON.Simple
 import Text.Molfile
 import Web.Canvas
 
 %default total
 %language ElabReflection
+
+--------------------------------------------------------------------------------
+-- Color Schemes
+--------------------------------------------------------------------------------
+
+public export
+data ColorScheme = Black | CyBy | Groups | CPK | CDK | JMol | PyMol
+
+%runElab derive "ColorScheme" [Show,Eq,Ord,Finite,FromJSON,ToJSON]
 
 --------------------------------------------------------------------------------
 --          Event
@@ -70,6 +83,7 @@ data DrawEvent : Type where
   Clear            : DrawEvent
   Expand           : DrawEvent
   Center           : DrawEvent
+  Redraw           : DrawEvent
   Resize           : (h,w : Double) -> DrawEvent
   StartPSE         : DrawEvent
   SVG              : DrawEvent
