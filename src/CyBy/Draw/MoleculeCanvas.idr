@@ -138,6 +138,11 @@ export %inline
 (.imol) : (s : DrawState) -> CDIGraph s.mol.order
 s.imol = s.mol.graph
 
+||| True, if the current mol graph is the empty graph.
+export %inline
+emptyGraph : DrawState -> Bool
+emptyGraph s = order s.mol == 0
+
 --------------------------------------------------------------------------------
 -- State initialization
 --------------------------------------------------------------------------------

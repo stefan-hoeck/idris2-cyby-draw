@@ -82,7 +82,7 @@ record Extension where
   buttons  : DrawEnv -> DrawState -> Act HTMLNodes
 
   ||| Make adjustments to the additional top bar buttons 
-  adjust   : DrawEnv -> DrawState -> DrawEvent -> Act ()
+  adjust   : DrawEnv -> DrawEvent -> DrawState -> Act ()
 
 --------------------------------------------------------------------------------
 --          Events
@@ -278,7 +278,7 @@ parameters {auto de : Sink DrawEvent}
       [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ] $
       [ radioIcon "sel" SelectMode "select" (s.mode == Select)
       , radioIcon "erase" EraseMode "erase" (s.mode == Erase)
-      , disable (order s.mol == 0) $ icon "clear" Clear "clear"
+      , disable (emptyGraph s) $ icon "clear" Clear "clear"
       , disable (s.undos == []) $ icon "undo" Undo "undo"
       , disable (s.redos == []) $ icon "redo" Redo "redo"
       , icon "center" Center "center"
@@ -404,7 +404,7 @@ parameters {auto de : Sink DrawEvent}
 
 expBtn : DrawEnv => Class -> (title : String) -> DrawState -> HTMLNode
 expBtn @{DE pre} c t s =
-  icon' [Id $ expButton pre, disabled $ order s.mol == 0] c SVG t
+  icon' [Id $ expButton pre, disabled $ emptyGraph s] c SVG t
 
 --------------------------------------------------------------------------------
 --          Controller
@@ -511,13 +511,14 @@ parameters {auto ds : DrawSettings}
   displayEv SVG              s = ex.doExport s
   displayEv _                s = pure ()
 
-  disableExportIfNoGraph : DrawState -> Act ()
-  disableExportIfNoGraph s =
-    let G o _ := s.mol in disabled (expButton pre) (o == 0)
 
   export
   displaySketcher : DrawEvent -> DrawState -> Act ()
-  displaySketcher e s = displayEv e s >> displayST s >> disableExportIfNoGraph s
+  displaySketcher e s = displayEv e s >> displayST s >> ex.adjust (DE pre) e s
+
+export
+disableExport : DrawEnv => DrawState -> Act ()
+disableExport @{DE pre} = disabled (expButton pre) . emptyGraph
 
 ||| Renders a molecule at the given canvas.
 |||
@@ -572,6 +573,6 @@ NoExt : Extension
 NoExt =
   E
     { doExport = downloadSVG . exportSVG
-    , buttons  = \de,s => pure [expBtn "svg" "store image" s]
-    , adjust   = \de,e,s => pure ()
+    , buttons  = \_,s => pure [expBtn "svg" "store image" s]
+    , adjust   = \_,_,s => disableExport s
     }

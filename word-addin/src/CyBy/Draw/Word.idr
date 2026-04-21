@@ -147,5 +147,5 @@ WordExt =
   E
     { doExport     = exportImageToWord
     , buttons      = \_ => pure . wordButtons
-    , adjust       = \_,_,_ => pure ()
+    , adjust       = \_,_,s => disableExport s
     }
