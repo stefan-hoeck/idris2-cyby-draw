@@ -125,10 +125,10 @@ importImage =
         Left e  => throw (Caught "Error when pasting structure: \{e}")
         Right m => debug "Function `importImage` succcesful" $> m
 
-wordButtons : Sink DrawEvent => (pre : String) -> HTMLNodes
-wordButtons pre =
+wordButtons : DrawEnv => DrawState -> HTMLNodes
+wordButtons @{DE pre} s =
   [ icon "from-word" SVGimp "get selected structure from Word"
-  , icon' [Id $ expButton pre] "to-word" SVG "insert structure into Word"
+  , expBtn @{DE pre} "to-word" "insert structure into Word" s
   ]
 
 parameters {auto log : Logger JS}
@@ -146,5 +146,6 @@ WordExt : Logger JS => Extension
 WordExt =
   E
     { doExport     = exportImageToWord
-    , buttons      = wordButtons
+    , buttons      = \_ => pure . wordButtons
+    , adjust       = \_,_,_ => pure ()
     }
