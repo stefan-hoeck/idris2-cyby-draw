@@ -11,6 +11,7 @@ import Text.SVG
 import Web.Async
 import Web.Internal.Types
 
+import CyBy.Draw.Internal.Color
 import CyBy.Draw.Internal.Label
 import Geom.Gen2D.Debug
 
@@ -29,6 +30,16 @@ import public Text.Molfile
 
 %default total
 
+export
+color : ColorScheme -> Elem -> SVGColor
+color Black  = const black
+color CyBy   = basicColors
+color Groups = groupColors
+color CPK    = cpkColor
+color CDK    = cdkColor
+color JMol   = jmolColor
+color PyMol  = pymolColor
+
 %inline
 molToClipboard : HasIO io => CDGraph -> io ()
 molToClipboard = toClipboard . writeMolfile . toMolfile
@@ -42,13 +53,14 @@ fromClipboard =
         Right m => sink (Event.SetTempl $ initGraph m.graph)
       Right g => sink (Event.SetTempl g)
 
-downloadSVG : String -> Act ()
-downloadSVG s =
+export
+storeSVG : String -> Act ()
+storeSVG s =
   use1 (blob s "image/svg+xml" >>= blobURL) $ \u => Prelude.do
     e  <- createElement "a"
     setAttribute e "href" (cast u)
     setAttribute e "download" "cyby_draw_img.svg"
-    he <- jsCast {t = HTMLElement} "downloadSVG:<a> conversion" e
+    he <- jsCast {t = HTMLElement} "storeSVG:<a> conversion" e
     click he
 
 --------------------------------------------------------------------------------
@@ -402,6 +414,7 @@ parameters {auto de : Sink DrawEvent}
         ]
       ]
 
+export
 expBtn : DrawEnv => Class -> (title : String) -> DrawState -> HTMLNode
 expBtn @{DE pre} c t s =
   icon' [Id $ expButton pre, disabled $ emptyGraph s] c SVG t
@@ -446,9 +459,9 @@ parameters {auto ds : DrawSettings}
   focusCurrentApp : Act ()
   focusCurrentApp = focus (moleculeCanvas pre)
 
-  displayST : DrawState -> Act ()
-  displayST s =
-    when (s.curSVG /= s.prevSVG) $
+  displayST : (force : Bool) -> DrawState -> Act ()
+  displayST force s =
+    when (force || s.curSVG /= s.prevSVG) $
       child (moleculeCanvas pre) (Raw s.curSVG) >>
       when s.hasFocus focusCurrentApp
 
@@ -509,12 +522,14 @@ parameters {auto ds : DrawSettings}
   displayEv (ZoomOut _)      s = adjustBars s
   displayEv Clear            s = adjustBars s
   displayEv SVG              s = ex.doExport s
+  displayEv Redraw           s = displayST True s
   displayEv _                s = pure ()
 
 
   export
   displaySketcher : DrawEvent -> DrawState -> Act ()
-  displaySketcher e s = displayEv e s >> displayST s >> ex.adjust (DE pre) e s
+  displaySketcher e s =
+    displayEv e s >> displayST False s >> ex.adjust (DE pre) e s
 
 export
 disableExport : DrawEnv => DrawState -> Act ()
@@ -572,7 +587,7 @@ export %hint
 NoExt : Extension
 NoExt =
   E
-    { doExport = downloadSVG . exportSVG
+    { doExport = storeSVG . exportSVG
     , buttons  = \_,s => pure [expBtn "svg" "store image" s]
     , adjust   = \_,_,s => disableExport s
     }
