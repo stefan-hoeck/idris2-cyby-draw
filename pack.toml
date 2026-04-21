@@ -31,6 +31,18 @@ url    = "https://github.com/stefan-hoeck/idris2-indexed-graph"
 commit = "latest:main"
 ipkg   = "indexed-graph.ipkg"
 
+[custom.all.ilex]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-ilex"
+commit = "latest:main"
+ipkg   = "ilex.ipkg"
+
+[custom.all.ilex-json]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-ilex"
+commit = "latest:main"
+ipkg   = "json/ilex-json.ipkg"
+
 [custom.all.chem]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-chem"
