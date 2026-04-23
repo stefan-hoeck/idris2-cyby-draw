@@ -8,11 +8,32 @@ import Text.HTML.DomID
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
+import Web.Async.Confirm as C
 import Web.Async.Util
 import Web.Async.View
 import Web.Internal.Types
 
 %default total
+
+--------------------------------------------------------------------------------
+-- Dialog
+--------------------------------------------------------------------------------
+
+EditDialog : Ref Tag.Dialog
+EditDialog = Id "edit-dialog"
+
+iok, icancel : Sink ConfirmEv => HTMLNode
+
+addRow : Sink ConfirmEv => String -> HTMLNode -> HTMLNode
+addRow s n =
+  dialog
+    [ Id EditDialog, class "cyby-draw-edit-dialog", onClose C.Cancel ]
+    [ div [class "cyby-draw-cancel-edit"]
+       [ div [class "cyby-draw-header"] [Text s]
+       , n
+       , div [class "cancel-edit"] [iok, icancel]
+       ]
+    ]
 
 --------------------------------------------------------------------------------
 -- Logging
@@ -53,6 +74,7 @@ parameters {auto lg : Logger JS}
 
 data AppEvent : Type where
   SetColor : ColorScheme -> AppEvent
+  Load     : AppEvent
 
 record AppST where
   constructor AST
@@ -92,8 +114,9 @@ parameters {auto st  : IORef AppST}
     displaySketcher {ex = ext} "app" e s2
     pure s2
 
-  appEv : AppEvent -> Act ()
-  appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
+  appEv : AppEvent -> JSStream Void 
+  appEv (SetColor x) = exec $ mod ast {scheme := x} >> sink Redraw
+  appEv Load         = ?fooo
 
 ui : JSStream Void
 ui = Prelude.do
@@ -109,7 +132,7 @@ ui = Prelude.do
   dst   <- newref {s = World} st
   merge
     [ foreach logLoggable dms
-    , foreach (appEv ast dst) aes
+    , flatMap aes (appEv ast dst)
     , P.evalScans1 st (drawEv ast dst) des |> foreach (writeref dst)
     ]
 
