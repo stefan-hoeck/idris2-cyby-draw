@@ -111,7 +111,7 @@ parameters {auto lg : Logger JS}
 
 data AppEvent : Type where
   SetColor : ColorScheme -> AppEvent
-  Load     : AppEvent
+  LoadMol  : AppEvent
 
 record AppST where
   constructor AST
@@ -132,8 +132,8 @@ parameters {auto st  : IORef AppST}
   btns _ s = Prelude.do
     AST c <- readref ast 
     pure
-      [ expBtn "svg" "store image" s
-      , icon "load" Html.Load []
+      [ expBtn "Save..." s
+      , button [onClick LoadMol] ["Load..."]
       , selectFromList values (Just c) show SetColor [class "color-scheme"]
       ]
 
@@ -177,7 +177,7 @@ parameters {auto st  : IORef AppST}
 
   appEv : AppEvent -> JSStream Void 
   appEv (SetColor x) = exec $ mod ast {scheme := x} >> sink Redraw
-  appEv Load         = Prelude.do
+  appEv LoadMol      = Prelude.do
     s <- exec $ dialogEdit addRow "Load Molecule" fileEdit Nothing
     P.head s |> foreach (\m => loadFile m >> endEdit)
 

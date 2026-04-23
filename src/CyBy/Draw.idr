@@ -415,9 +415,9 @@ parameters {auto de : Sink DrawEvent}
       ]
 
 export
-expBtn : DrawEnv => Class -> (title : String) -> DrawState -> HTMLNode
-expBtn @{DE pre} c t s =
-  icon' [Id $ expButton pre, disabled $ emptyGraph s] c SVG t
+expBtn : DrawEnv => String -> DrawState -> HTMLNode
+expBtn @{DE pre} txt s =
+  button [Id $ expButton pre, disabled $ emptyGraph s, onClick SVG] [Text txt]
 
 --------------------------------------------------------------------------------
 --          Controller
@@ -588,6 +588,6 @@ NoExt : Extension
 NoExt =
   E
     { doExport = storeSVG . exportSVG
-    , buttons  = \_,s => pure [expBtn "svg" "store image" s]
+    , buttons  = \_,s => pure [expBtn "Save..." s]
     , adjust   = \_,_,s => disableExport s
     }
