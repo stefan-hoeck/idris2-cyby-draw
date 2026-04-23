@@ -9,26 +9,60 @@ import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
 import Web.Async.Confirm as C
-import Web.Async.Util
-import Web.Async.View
+import Web.Async
 import Web.Internal.Types
 
 %default total
+%hide Text.SVG.Types.Path.t
 
 --------------------------------------------------------------------------------
 -- Dialog
 --------------------------------------------------------------------------------
 
-EditDialog : Ref Tag.Dialog
-EditDialog = Id "edit-dialog"
+icon : Sink e => Class -> e -> List (Attribute Tag.Button) -> HTMLNode
+icon v ev as = button (classes ["cyby-icon",v] :: onClick ev :: as) []
+
+btnCls : {0 t : _} -> EditRes t -> Attribute Tag.Button
+btnCls (Valid _) = classes ["cyby-icon", "ok"]
+btnCls _         = classes ["cyby-icon", "ok-disabled"]
+
+EditDialog : DomID
+EditDialog = "edit-dialog"
+
+EditOK : DomID
+EditOK = "dialog-edit-ok"
+
+fileEdit : Editor File
+fileEdit = E $ \_ => fileIn [accept ".mol"]
+
+parameters (addr : Sink ConfirmEv => String -> HTMLNode -> HTMLNode)
+           (ttl  : String)
+
+  conf : HTMLNode -> Act (Sink (EditRes t), Widget ConfirmEv)
+  conf n = Prelude.do
+    E cs <- event ConfirmEv
+    E es <- event (EditRes t)
+    pure $ MkPair %search $
+      W (addr ttl n) $ merge [cs, foreach (\x => let c := btnCls x in putStrLn (displayAttributes [c]) >> attr (btnRef EditOK) c) es]
+
+  dialogEdit : Editor t -> Maybe t -> Act (JSStream $ Maybe t)
+  dialogEdit ed m = confirmedModal conf EditDialog ed m
+
+endEdit : Act ()
+endEdit = cleanupDialog EditDialog
 
 iok, icancel : Sink ConfirmEv => HTMLNode
+iok = icon "ok-disabled" OK [ref EditOK]
+icancel = icon "cancel" C.Cancel []
+
+confAttrs : {0 t : _} -> Sink ConfirmEv => Attributes t
+confAttrs = [onEnterDown OK, onRemove C.Cancel]
 
 addRow : Sink ConfirmEv => String -> HTMLNode -> HTMLNode
 addRow s n =
   dialog
-    [ Id EditDialog, class "cyby-draw-edit-dialog", onClose C.Cancel ]
-    [ div [class "cyby-draw-cancel-edit"]
+    [ ref EditDialog, class "cyby-draw-edit-dialog", onClose C.Cancel ]
+    [ div (class "cyby-draw-cancel-edit" :: confAttrs)
        [ div [class "cyby-draw-header"] [Text s]
        , n
        , div [class "cancel-edit"] [iok, icancel]
@@ -96,6 +130,7 @@ parameters {auto st  : IORef AppST}
     AST c <- readref ast 
     pure
       [ expBtn "svg" "store image" s
+      , icon "load" Html.Load []
       , selectFromList values (Just c) show SetColor [class "color-scheme"]
       ]
 
@@ -114,9 +149,21 @@ parameters {auto st  : IORef AppST}
     displaySketcher {ex = ext} "app" e s2
     pure s2
 
+  loadFile : Maybe File -> Act ()
+  loadFile Nothing  = info "file opening aborted"
+  loadFile (Just f) = Prelude.do
+    info "file opened"
+    bs <- blobBytes (up f)
+    case readMolfileE (cast bs) of
+      Left x  => logLoggable (ReadErr x)
+      Right g => sink (Event.SetTempl g)
+
+
   appEv : AppEvent -> JSStream Void 
   appEv (SetColor x) = exec $ mod ast {scheme := x} >> sink Redraw
-  appEv Load         = ?fooo
+  appEv Load         = Prelude.do
+    s <- exec $ dialogEdit addRow "Load Molecule" fileEdit Nothing
+    P.head s |> foreach (\m => loadFile m >> endEdit)
 
 ui : JSStream Void
 ui = Prelude.do

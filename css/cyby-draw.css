@@ -31,6 +31,14 @@ body {
 
 /* Buttons and Icons */
 
+.cyby-icon {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background-size: 100%;
+  background-color: transparent;
+}
+
 .cyby-draw-icon {
   width: 20px;
   height: 20px;
@@ -128,6 +136,22 @@ body {
 
 .cyby-draw-radio-icon.erase {
   background-image: url("draw_icons/icon_eraser.svg");
+}
+
+.cyby-icon.load {
+  background-image: url("draw_icons/ok.svg");
+}
+
+.cyby-icon.ok {
+  background-image: url("draw_icons/ok.svg");
+}
+
+.cyby-icon.ok-disabled {
+  background-image: url("draw_icons/ok_disabled.svg");
+}
+
+.cyby-icon.cancel {
+  background-image: url("draw_icons/cancel.svg");
 }
 
 .cyby-draw-icon.clear {
