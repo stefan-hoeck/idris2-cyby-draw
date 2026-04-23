@@ -415,9 +415,14 @@ parameters {auto de : Sink DrawEvent}
       ]
 
 export
+cybyDrawBtn : Sink e => String -> e -> Attributes Tag.Button -> HTMLNode
+cybyDrawBtn s e as =
+  button (class "cyby-draw-button" :: onClick e :: as) [Text s]
+
+export
 expBtn : DrawEnv => String -> DrawState -> HTMLNode
 expBtn @{DE pre} txt s =
-  button [Id $ expButton pre, disabled $ emptyGraph s, onClick SVG] [Text txt]
+  cybyDrawBtn txt SVG  [Id $ expButton pre, disabled $ emptyGraph s]
 
 --------------------------------------------------------------------------------
 --          Controller

@@ -36,7 +36,7 @@ EditOK : DomID
 EditOK = "dialog-edit-ok"
 
 fileEdit : Editor FileEv
-fileEdit = E $ \_ => fileIn [accept ".mol"]
+fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 
 parameters (addr : Sink ConfirmEv => String -> HTMLNode -> HTMLNode)
            (ttl  : String)
@@ -133,8 +133,8 @@ parameters {auto st  : IORef AppST}
     AST c <- readref ast 
     pure
       [ expBtn "Save..." s
-      , button [onClick LoadMol] ["Load..."]
-      , selectFromList values (Just c) show SetColor [class "color-scheme"]
+      , cybyDrawBtn "Load..." LoadMol []
+      , selectFromList values (Just c) show SetColor [class "cyby-draw-select"]
       ]
 
   ext : Extension
