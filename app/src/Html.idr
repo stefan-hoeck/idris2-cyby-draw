@@ -1,15 +1,18 @@
 module Html
 
 import CyBy.Draw
+import Data.ByteString
 import Data.Finite
 import Data.List
+import Data.List1
+import Geom.Gen2D.Debug
 import Text.CSS.Color
 import Text.HTML.DomID
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
-import Web.Async.Confirm as C
 import Web.Async
+import Web.Async.Confirm as C
 import Web.Internal.Types
 
 %default total
@@ -32,7 +35,7 @@ EditDialog = "edit-dialog"
 EditOK : DomID
 EditOK = "dialog-edit-ok"
 
-fileEdit : Editor File
+fileEdit : Editor FileEv
 fileEdit = E $ \_ => fileIn [accept ".mol"]
 
 parameters (addr : Sink ConfirmEv => String -> HTMLNode -> HTMLNode)
@@ -149,14 +152,27 @@ parameters {auto st  : IORef AppST}
     displaySketcher {ex = ext} "app" e s2
     pure s2
 
-  loadFile : Maybe File -> Act ()
+  loadFile : Maybe FileEv -> Act ()
   loadFile Nothing  = info "file opening aborted"
-  loadFile (Just f) = Prelude.do
-    info "file opened"
+  loadFile (Just $ FE f p) = Prelude.do
+    info "file opened: \{p}"
     bs <- blobBytes (up f)
-    case readMolfileE (cast bs) of
-      Left x  => logLoggable (ReadErr x)
-      Right g => sink (Event.SetTempl g)
+    case [<] <>< forget (String.split ('.' ==) p) of
+      _:<"mol" =>
+        case readMolfileE (cast bs) of
+          Left x  => logLoggable (ReadErr x)
+          Right g => sink (Event.SetTempl g)
+      _:<"smi" =>
+        case smilesToMol (cast bs) of
+          Left x  => logLoggable (ReadErr x)
+          Right m => sink (Event.SetTempl $ initGraph m.graph)
+      _:<"svg" =>
+        case between "<metadata>" "</metadata>" (cast bs) of
+          Nothing  => logLoggable (ReadErr ".svg file does not contain required metadata")
+          Just bs2 => case readMolfileE (toString bs2) of
+            Left x  => logLoggable (ReadErr x)
+            Right g => sink (Event.SetTempl g)
+      _ => logLoggable (ReadErr "unsupported file type")
 
 
   appEv : AppEvent -> JSStream Void 
