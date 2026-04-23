@@ -35,6 +35,9 @@ EditDialog = "edit-dialog"
 EditOK : DomID
 EditOK = "dialog-edit-ok"
 
+LoadIn : DomID
+LoadIn = "load-input"
+
 fileEdit : Editor FileEv
 fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 
@@ -111,7 +114,7 @@ parameters {auto lg : Logger JS}
 
 data AppEvent : Type where
   SetColor : ColorScheme -> AppEvent
-  LoadMol  : AppEvent
+  LoadMol  : FileEv -> AppEvent
 
 record AppST where
   constructor AST
@@ -133,7 +136,13 @@ parameters {auto st  : IORef AppST}
     AST c <- readref ast 
     pure
       [ expBtn "Save..." s
-      , cybyDrawBtn "Load..." LoadMol []
+      , label [forID LoadIn, class "cyby-draw-button"] ["Load..."]
+      , input
+          [ ref LoadIn
+          , type File
+          , onFileIn LoadMol
+          , acceptAll [".mol",".smi",".svg"]
+          ]
       , selectFromList values (Just c) show SetColor [class "cyby-draw-select"]
       ]
 
@@ -152,9 +161,8 @@ parameters {auto st  : IORef AppST}
     displaySketcher {ex = ext} "app" e s2
     pure s2
 
-  loadFile : Maybe FileEv -> Act ()
-  loadFile Nothing  = info "file opening aborted"
-  loadFile (Just $ FE f p) = Prelude.do
+  loadFile : FileEv -> Act ()
+  loadFile (FE f p) = Prelude.do
     info "file opened: \{p}"
     bs <- blobBytes (up f)
     case [<] <>< forget (String.split ('.' ==) p) of
@@ -174,12 +182,9 @@ parameters {auto st  : IORef AppST}
             Right g => sink (Event.SetTempl g)
       _ => logLoggable (ReadErr "unsupported file type")
 
-
-  appEv : AppEvent -> JSStream Void 
-  appEv (SetColor x) = exec $ mod ast {scheme := x} >> sink Redraw
-  appEv LoadMol      = Prelude.do
-    s <- exec $ dialogEdit addRow "Load Molecule" fileEdit Nothing
-    P.head s |> foreach (\m => loadFile m >> endEdit)
+  appEv : AppEvent -> Act ()
+  appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
+  appEv (LoadMol ev) = loadFile ev
 
 ui : JSStream Void
 ui = Prelude.do
@@ -195,7 +200,7 @@ ui = Prelude.do
   dst   <- newref {s = World} st
   merge
     [ foreach logLoggable dms
-    , flatMap aes (appEv ast dst)
+    , foreach (appEv ast dst) aes
     , P.evalScans1 st (drawEv ast dst) des |> foreach (writeref dst)
     ]
 
