@@ -127,8 +127,8 @@ importImage =
 
 wordButtons : DrawEnv => DrawState -> HTMLNodes
 wordButtons @{DE pre} s =
-  [ icon "from-word" SVGimp "get selected structure from Word"
-  , expBtn @{DE pre} "to-word" "insert structure into Word" s
+  [ cybyDrawBtn "from Word" SVGimp []
+  , expBtn @{DE pre} "to Word" s
   ]
 
 parameters {auto log : Logger JS}

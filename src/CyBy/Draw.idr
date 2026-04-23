@@ -415,9 +415,14 @@ parameters {auto de : Sink DrawEvent}
       ]
 
 export
-expBtn : DrawEnv => Class -> (title : String) -> DrawState -> HTMLNode
-expBtn @{DE pre} c t s =
-  icon' [Id $ expButton pre, disabled $ emptyGraph s] c SVG t
+cybyDrawBtn : Sink e => String -> e -> Attributes Tag.Button -> HTMLNode
+cybyDrawBtn s e as =
+  button (class "cyby-draw-button" :: onClick e :: as) [Text s]
+
+export
+expBtn : DrawEnv => String -> DrawState -> HTMLNode
+expBtn @{DE pre} txt s =
+  cybyDrawBtn txt SVG  [Id $ expButton pre, disabled $ emptyGraph s]
 
 --------------------------------------------------------------------------------
 --          Controller
@@ -588,6 +593,6 @@ NoExt : Extension
 NoExt =
   E
     { doExport = storeSVG . exportSVG
-    , buttons  = \_,s => pure [expBtn "svg" "store image" s]
+    , buttons  = \_,s => pure [expBtn "Save..." s]
     , adjust   = \_,_,s => disableExport s
     }

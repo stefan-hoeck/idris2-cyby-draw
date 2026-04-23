@@ -1,18 +1,28 @@
 module Html
 
 import CyBy.Draw
+import Data.ByteString
 import Data.Finite
 import Data.List
+import Data.List1
+import Geom.Gen2D.Debug
 import Text.CSS.Color
 import Text.HTML.DomID
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
-import Web.Async.Util
-import Web.Async.View
+import Web.Async
+import Web.Async.Confirm as C
 import Web.Internal.Types
 
 %default total
+%hide Text.SVG.Types.Path.t
+
+LoadIn : DomID
+LoadIn = "load-input"
+
+fileEdit : Editor FileEv
+fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 
 --------------------------------------------------------------------------------
 -- Logging
@@ -53,6 +63,7 @@ parameters {auto lg : Logger JS}
 
 data AppEvent : Type where
   SetColor : ColorScheme -> AppEvent
+  LoadMol  : FileEv -> AppEvent
 
 record AppST where
   constructor AST
@@ -73,8 +84,15 @@ parameters {auto st  : IORef AppST}
   btns _ s = Prelude.do
     AST c <- readref ast 
     pure
-      [ expBtn "svg" "store image" s
-      , selectFromList values (Just c) show SetColor [class "color-scheme"]
+      [ expBtn "Save..." s
+      , label [forID LoadIn, class "cyby-draw-button"] ["Load..."]
+      , input
+          [ ref LoadIn
+          , type File
+          , onFileIn LoadMol
+          , acceptAll [".mol",".smi",".svg"]
+          ]
+      , selectFromList values (Just c) show SetColor [class "cyby-draw-select"]
       ]
 
   ext : Extension
@@ -92,8 +110,30 @@ parameters {auto st  : IORef AppST}
     displaySketcher {ex = ext} "app" e s2
     pure s2
 
+  loadFile : FileEv -> Act ()
+  loadFile (FE f p) = Prelude.do
+    info "file opened: \{p}"
+    bs <- blobBytes (up f)
+    case [<] <>< forget (String.split ('.' ==) p) of
+      _:<"mol" =>
+        case readMolfileE (cast bs) of
+          Left x  => logLoggable (ReadErr x)
+          Right g => sink (Event.SetTempl g)
+      _:<"smi" =>
+        case smilesToMol (cast bs) of
+          Left x  => logLoggable (ReadErr x)
+          Right m => sink (Event.SetTempl $ initGraph m.graph)
+      _:<"svg" =>
+        case between "<metadata>" "</metadata>" (cast bs) of
+          Nothing  => logLoggable (ReadErr ".svg file does not contain required metadata")
+          Just bs2 => case readMolfileE (toString bs2) of
+            Left x  => logLoggable (ReadErr x)
+            Right g => sink (Event.SetTempl g)
+      _ => logLoggable (ReadErr "unsupported file type")
+
   appEv : AppEvent -> Act ()
   appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
+  appEv (LoadMol ev) = loadFile ev
 
 ui : JSStream Void
 ui = Prelude.do
