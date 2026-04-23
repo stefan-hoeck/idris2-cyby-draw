@@ -139,22 +139,6 @@ body {
   background-image: url("draw_icons/icon_eraser.svg");
 }
 
-.cyby-icon.load {
-  background-image: url("draw_icons/ok.svg");
-}
-
-.cyby-icon.ok {
-  background-image: url("draw_icons/ok.svg");
-}
-
-.cyby-icon.ok-disabled {
-  background-image: url("draw_icons/ok_disabled.svg");
-}
-
-.cyby-icon.cancel {
-  background-image: url("draw_icons/cancel.svg");
-}
-
 .cyby-draw-icon.clear {
   background-image: url("draw_icons/icon_trash.svg");
 }

@@ -18,62 +18,11 @@ import Web.Internal.Types
 %default total
 %hide Text.SVG.Types.Path.t
 
---------------------------------------------------------------------------------
--- Dialog
---------------------------------------------------------------------------------
-
-icon : Sink e => Class -> e -> List (Attribute Tag.Button) -> HTMLNode
-icon v ev as = button (classes ["cyby-icon",v] :: onClick ev :: as) []
-
-btnCls : {0 t : _} -> EditRes t -> Attribute Tag.Button
-btnCls (Valid _) = classes ["cyby-icon", "ok"]
-btnCls _         = classes ["cyby-icon", "ok-disabled"]
-
-EditDialog : DomID
-EditDialog = "edit-dialog"
-
-EditOK : DomID
-EditOK = "dialog-edit-ok"
-
 LoadIn : DomID
 LoadIn = "load-input"
 
 fileEdit : Editor FileEv
 fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
-
-parameters (addr : Sink ConfirmEv => String -> HTMLNode -> HTMLNode)
-           (ttl  : String)
-
-  conf : HTMLNode -> Act (Sink (EditRes t), Widget ConfirmEv)
-  conf n = Prelude.do
-    E cs <- event ConfirmEv
-    E es <- event (EditRes t)
-    pure $ MkPair %search $
-      W (addr ttl n) $ merge [cs, foreach (\x => let c := btnCls x in putStrLn (displayAttributes [c]) >> attr (btnRef EditOK) c) es]
-
-  dialogEdit : Editor t -> Maybe t -> Act (JSStream $ Maybe t)
-  dialogEdit ed m = confirmedModal conf EditDialog ed m
-
-endEdit : Act ()
-endEdit = cleanupDialog EditDialog
-
-iok, icancel : Sink ConfirmEv => HTMLNode
-iok = icon "ok-disabled" OK [ref EditOK]
-icancel = icon "cancel" C.Cancel []
-
-confAttrs : {0 t : _} -> Sink ConfirmEv => Attributes t
-confAttrs = [onEnterDown OK, onRemove C.Cancel]
-
-addRow : Sink ConfirmEv => String -> HTMLNode -> HTMLNode
-addRow s n =
-  dialog
-    [ ref EditDialog, class "cyby-draw-edit-dialog", onClose C.Cancel ]
-    [ div (class "cyby-draw-cancel-edit" :: confAttrs)
-       [ div [class "cyby-draw-header"] [Text s]
-       , n
-       , div [class "cancel-edit"] [iok, icancel]
-       ]
-    ]
 
 --------------------------------------------------------------------------------
 -- Logging
