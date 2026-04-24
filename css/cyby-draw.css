@@ -22,6 +22,12 @@ body {
   margin: 0;
 }
 
+/* this centers the text in labels vertically */
+label {
+  display: flex;
+  align-items: center;
+}
+
 .cyby-draw-main-content {
   display: grid;
   grid-template-columns: max-content max-content;
@@ -298,21 +304,18 @@ body {
   font-size: 1.1rem;
   height: 20px;
   background-color: transparent;
-  padding: 0 3px;
+  padding: 1px 4px;
   border-radius: 3px;
   border: 1px solid black;
 }
 
-label.cyby-draw-button {
-  line-height: 20px;
-  text-align: center;
-}
-
 .cyby-draw-button:hover {
+  padding: 0 3px;
   border: 2px solid rgb(0 0 128);
 }
 
 .cyby-draw-button:active {
+  padding: 0 3px;
   border: 2px solid rgb(0 0 128);
   box-shadow: 0 0 1px 2px navy;
 }
