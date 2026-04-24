@@ -304,9 +304,8 @@ body {
 }
 
 label.cyby-draw-button {
-  line-height: 18px;
+  line-height: 20px;
   text-align: center;
-  height: 18px;
 }
 
 .cyby-draw-button:hover {
@@ -316,16 +315,6 @@ label.cyby-draw-button {
 .cyby-draw-button:active {
   border: 2px solid rgb(0 0 128);
   box-shadow: 0 0 1px 2px navy;
-}
-
-label.cyby-draw-button:hover {
-  height: 16px;
-  line-height: 16px;
-}
-
-label.cyby-draw-button:active {
-  height: 16px;
-  line-height: 16px;
 }
 
 .cyby-draw-load-label {
