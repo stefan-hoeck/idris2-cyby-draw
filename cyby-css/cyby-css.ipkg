@@ -1,0 +1,12 @@
+package cyby-css
+
+authors = "Stefan Höck"
+brief   = "An opinionated CSS framework written in Idris"
+
+version = 0.1.0
+sourcedir = "src"
+depends = base        >= 0.7.0
+        , css
+
+modules = CyBy.UI.CSS.Classes
+        , CyBy.UI.CSS.Rules
