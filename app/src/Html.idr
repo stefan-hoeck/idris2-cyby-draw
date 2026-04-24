@@ -118,17 +118,17 @@ parameters {auto st  : IORef AppST}
       _:<"mol" =>
         case readMolfileE (cast bs) of
           Left x  => logLoggable (ReadErr x)
-          Right g => sink (Event.SetTempl g)
+          Right g => sink (Event.Load g)
       _:<"smi" =>
         case smilesToMol (cast bs) of
           Left x  => logLoggable (ReadErr x)
-          Right m => sink (Event.SetTempl $ initGraph m.graph)
+          Right m => sink (Event.Load $ initGraph m.graph)
       _:<"svg" =>
         case between "<metadata>" "</metadata>" (cast bs) of
           Nothing  => logLoggable (ReadErr ".svg file does not contain required metadata")
           Just bs2 => case readMolfileE (toString bs2) of
             Left x  => logLoggable (ReadErr x)
-            Right g => sink (Event.SetTempl g)
+            Right g => sink (Event.Load g)
       _ => logLoggable (ReadErr "unsupported file type")
 
   appEv : AppEvent -> Act ()
