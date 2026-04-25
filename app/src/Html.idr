@@ -1,6 +1,7 @@
 module Html
 
 import CyBy.Draw
+import CyBy.UI.CSS.Classes
 import Data.ByteString
 import Data.Finite
 import Data.List
@@ -85,14 +86,15 @@ parameters {auto st  : IORef AppST}
     AST c <- readref ast 
     pure
       [ expBtn "Save..." s
-      , label [forID LoadIn, class "cyby-draw-button"] ["Load..."]
+      , label [forID LoadIn, class widget] ["Load..."]
       , input
           [ ref LoadIn
+          , class hidden
           , type File
           , onFileIn LoadMol
           , acceptAll [".mol",".smi",".svg"]
           ]
-      , selectFromList values (Just c) show SetColor [class "cyby-draw-select"]
+      , selectFromList values (Just c) show SetColor [class widget]
       ]
 
   ext : Extension
