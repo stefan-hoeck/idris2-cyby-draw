@@ -43,6 +43,12 @@ record Colours where
   primary80           : Color
   primary90           : Color
 
+  secondary10         : Color
+  secondary20         : Color
+  secondary50         : Color
+  secondary80         : Color
+  secondary90         : Color
+
   boron               : Color
   bromine             : Color
   carbon              : Color
@@ -69,6 +75,12 @@ defaultColours =
   , primary80           = hsl 240 60.perc 25.perc
   , primary90           = hsl 240 40.perc 10.perc
 
+  , secondary10         = hsl 180 20.perc 95.perc
+  , secondary20         = hsl 180 30.perc 90.perc
+  , secondary50         = hsl 180 80.perc 40.perc
+  , secondary80         = hsl 180 60.perc 25.perc
+  , secondary90         = hsl 180 40.perc 10.perc
+
   , boron               = rgb 0xff 0xb5 0xb5
   , carbon              = dimgray
   , fluorine            = limegreen
@@ -93,29 +105,75 @@ export %inline
 --------------------------------------------------------------------------------
 
 export
-gridGaps : {default 3 gap : Bits16} -> List Declaration
+gridGaps : {default 5 gap : Bits16} -> List Declaration
 gridGaps = [rowGap gap.px, columnGap gap.px]
 
 export
-flexRow : {default 3 gap : Bits16} -> List Declaration
-flexRow = [display Flex, flexDirection Row, rowGap gap.px]
+flexRow : {default 5 gap : Bits16} -> List Declaration
+flexRow = [display Flex, flexDirection Row, columnGap gap.px]
 
 export
-flexColumn : {default 3 gap : Bits16} -> List Declaration
-flexColumn = [display Flex, flexDirection Column, columnGap gap.px]
+flexColumn : {default 5 gap : Bits16} -> List Declaration
+flexColumn = [display Flex, flexDirection Column, rowGap gap.px]
 
 export
-solidBorder : {default 2 width : Bits16} -> Color -> List Declaration
-solidBorder c =
-  [borderStyle (All Solid), borderWidth width.px, borderColor (All c)]
+solidBorder : (width : Bits16) -> Color -> List Declaration
+solidBorder w c =
+  [borderStyle (All Solid), borderWidth w.px, borderColor (All c)]
 
 export
-roundedBorder :
-     {default 2 width : Bits16}
-  -> {default 4 rad: Bits16}
-  -> Color
-  -> List Declaration
-roundedBorder c = borderRadius rad.px :: solidBorder c
+roundedBorder : (width, rad : Bits16) -> Color -> List Declaration
+roundedBorder w r c = borderRadius r.px :: solidBorder w c
+
+export
+wregular : (c : Colours) => List Declaration
+wregular =
+  backgroundColor c.primary20
+  :: color c.primary80
+  :: roundedBorder 1 3 c.primary80
+
+export
+wactive : (c : Colours) => List Declaration
+wactive =
+  backgroundColor c.primary10
+  :: color c.primary50
+  :: outlineStyle Solid
+  :: outlineWidth 1.px
+  :: roundedBorder 1 3 c.primary50
+  
+
+export
+whovered : (c : Colours) => List Declaration
+whovered =
+  backgroundColor c.primary20
+  :: color c.primary50
+  :: outlineStyle Solid
+  :: outlineWidth 1.px
+  :: roundedBorder 1 3 c.primary50
+
+export
+wdisabled : (c : Colours) => List Declaration
+wdisabled =
+  color c.gray80
+  :: backgroundColor c.gray20
+  :: outlineStyle None
+  :: roundedBorder 1 3 c.gray20
+
+export
+hoveredSVG : Class -> Selector
+hoveredSVG c = Complex [class widget, Hover] Descendant (class c)
+
+export
+activeSVG : Class -> Selector
+activeSVG c = Complex Active Descendant (class c)
+
+export
+activeAttrSVG : Class -> Selector
+activeAttrSVG c = Complex (attribute "data-active") Descendant (class c)
+
+export
+disabledSVG : Class -> Selector
+disabledSVG c = Complex Disabled Descendant (class c)
 
 --------------------------------------------------------------------------------
 -- General
@@ -164,42 +222,45 @@ components =
   , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
   , class toolbarRight  $ gridArea Rules.Right :: flexColumn
 
-  , class moleculeCanvas $ gridArea Draw :: roundedBorder c.bg
+  , class moleculeCanvas $ gridArea Draw :: roundedBorder 1 3 c.bg
   , sel [class moleculeCanvas, Focus] [borderColor $ All c.primary50]
   , classes [moleculeCanvas,dragging] [cursor [Move]]
   , classes [moleculeCanvas,rotating]
       [cursor [URL_ "draw_icons/icon_rotation.svg", Cursor.Auto]]
   ]
 
+export
+icons : (c : Colours) => Rules
+icons =
+  [ class fillPath [stroke Nothing, fill $ Just c.primary80]
+  , sel (activeSVG fillPath) [fill $ Just c.primary50]
+  , sel (activeAttrSVG fillPath) [fill $ Just c.primary50]
+  , sel (hoveredSVG fillPath) [fill $ Just c.primary50]
+  , sel (disabledSVG fillPath) [fill $ Just c.gray20]
+  , class molPath
+      [ fill Nothing
+      , stroke $ Just c.primary80
+      , strokeWidth 2.px
+      , strokeLinejoin Round
+      , strokeLinecap Round
+      ]
+  , sel (activeSVG molPath) [stroke $ Just c.primary50]
+  , sel (activeAttrSVG molPath) [stroke $ Just c.primary50]
+  , sel (hoveredSVG molPath) [stroke $ Just c.primary50]
+  , sel (disabledSVG molPath) [stroke $ Just c.gray20]
+  ]
+
 ||| Rules for interactive UI elements
 export
 widgets : (c : Colours) => Rules
 widgets =
-  [ class widget $
-         backgroundColor c.primary50
-      :: color c.primary10
-      :: roundedBorder c.primary50
+  [ class widget wregular
+  , sel [Class widget, Hover] whovered
+  , sel [Class widget, Active] wactive
+  , sel [Class widget, attribute "data-active"] wactive
+  , sel [Class widget, Disabled] wdisabled
 
-  , sel [Class widget, Active]
-      [ backgroundColor c.primary10
-      , color c.primary50
-      ]
-
-  , sel [Class widget, attribute "data-active"]
-      [ backgroundColor c.primary10
-      , color c.primary50
-      ]
-
-  , sel [Class widget, Hover]
-      [ backgroundColor c.primary20
-      , color c.primary50
-      ]
-
-  , sel [Class widget, Disabled]
-      [ color c.gray80
-      , backgroundColor c.gray20
-      , borderColor (All c.gray20)
-      ]
+  , class icon [minWidth 20.px, padding (All 0.px)]
 
   , class (elemText B)  [fontWeight Bold, color c.boron]
   , class (elemText C)  [fontWeight Bold, color c.carbon]
@@ -214,7 +275,7 @@ widgets =
 
 export
 all : Rules
-all = general ++ components ++ widgets
+all = general ++ components ++ icons ++ widgets
 
 main : IO ()
 main = traverse_ (putStrLn . interpolate) all

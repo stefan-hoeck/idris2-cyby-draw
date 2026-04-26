@@ -72,12 +72,29 @@ dragging : Class
 dragging = "cyby-draw-dragging"
 
 --------------------------------------------------------------------------------
+-- Icons
+--------------------------------------------------------------------------------
+
+export %inline
+fillPath : Class
+fillPath = "cyby-fill-path"
+
+export %inline
+molPath : Class
+molPath = "cyby-mol-path"
+
+--------------------------------------------------------------------------------
 -- Interactive Elements
 --------------------------------------------------------------------------------
 
 export %inline
 widget : Class
 widget = "cyby-widget"
+
+||| A button with an background image an therefore no padding
+export %inline
+icon : Class
+icon = "cyby-icon"
 
 export %inline
 elemText : Elem -> Class

@@ -5,42 +5,6 @@
     and will overwrite the classes here.
  ---------------------------------------------------------------------------- */
 
-.cyby-draw-radio-icon.sel {
-  background-image: url("draw_icons/icon_select.svg");
-}
-
-.cyby-draw-radio-icon.erase {
-  background-image: url("draw_icons/icon_eraser.svg");
-}
-
-.cyby-draw-icon.clear {
-  background-image: url("draw_icons/icon_trash.svg");
-}
-
-.cyby-draw-icon.svg {
-  background-image: url("draw_icons/icon_svg.svg");
-}
-
-.cyby-draw-icon.undo {
-  background-image: url("draw_icons/icon_undo.svg");
-}
-
-.cyby-draw-icon.redo {
-  background-image: url("draw_icons/icon_redo.svg");
-}
-
-.cyby-draw-icon.zoom-in {
-  background-image: url("draw_icons/icon_zoomIn.svg");
-}
-
-.cyby-draw-icon.center {
-  background-image: url("draw_icons/icon_centering.svg");
-}
-
-.cyby-draw-icon.zoom-out {
-  background-image: url("draw_icons/icon_zoomOut.svg");
-}
-
 .cyby-draw-radio-icon.benzene {
   background-image: url("draw_icons/icon_benzene.svg");
 }
@@ -91,46 +55,6 @@
 
 .cyby-draw-radio-icon.triple-bond {
   background-image: url("draw_icons/icon_trplB.svg");
-}
-
-.cyby-draw-radio-icon.set-c {
-  background-image: url("draw_icons/icon_c.svg");
-}
-
-.cyby-draw-radio-icon.set-n {
-  background-image: url("draw_icons/icon_n.svg");
-}
-
-.cyby-draw-radio-icon.set-o {
-  background-image: url("draw_icons/icon_o.svg");
-}
-
-.cyby-draw-radio-icon.set-s {
-  background-image: url("draw_icons/icon_s.svg");
-}
-
-.cyby-draw-radio-icon.set-f {
-  background-image: url("draw_icons/icon_f.svg");
-}
-
-.cyby-draw-radio-icon.set-p {
-  background-image: url("draw_icons/icon_p.svg");
-}
-
-.cyby-draw-radio-icon.set-b {
-  background-image: url("draw_icons/icon_b.svg");
-}
-
-.cyby-draw-radio-icon.set-cl {
-  background-image: url("draw_icons/icon_cl.svg");
-}
-
-.cyby-draw-radio-icon.set-br {
-  background-image: url("draw_icons/icon_br.svg");
-}
-
-.cyby-draw-radio-icon.pse {
-  background-image: url("draw_icons/icon_pse.svg");
 }
 
 .cyby-draw-detail {
