@@ -290,7 +290,7 @@ parameters {auto de : Sink DrawEvent}
       , bondIcon (cast Single) "single bond" s single
       , bondIcon (fromStereo Up) "single bond up" s bondUp
       , bondIcon (fromStereo Down) "single bond down" s bondDown
-      -- , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
+      , bondIcon (fromStereo Either) "single bond up or down" s bondEither
       , bondIcon (cast Types.Dbl) "double bond" s double
       , bondIcon (cast Triple) "triple bond" s triple
       ] ++ topadd

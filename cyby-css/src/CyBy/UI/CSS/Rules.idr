@@ -261,6 +261,17 @@ icons =
   , sel (activeAttrSVG molPath) [stroke $ Just c.primary50]
   , sel (hoveredSVG molPath) [stroke $ Just c.primary50]
   , sel (disabledSVG molPath) [stroke $ Just c.gray80]
+  , class molFillPath
+      [ fill $ Just c.primary80
+      , stroke $ Just c.primary80
+      , strokeWidth 1.px
+      , strokeLinejoin Round
+      , strokeLinecap Round
+      ]
+  , sel (activeSVG molFillPath) [stroke $ Just c.primary50, fill $ Just c.primary50]
+  , sel (activeAttrSVG molFillPath) [stroke $ Just c.primary50, fill $ Just c.primary50]
+  , sel (hoveredSVG molFillPath) [stroke $ Just c.primary50, fill $ Just c.primary50]
+  , sel (disabledSVG molFillPath) [stroke $ Just c.gray80, fill $ Just c.gray80]
   ]
 
 ||| Rules for interactive UI elements

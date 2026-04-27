@@ -72,7 +72,7 @@ triple = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g transform='translat
 ||| A wedged bond towards the viewer
 export
 bondUp : HTMLNode
-bondUp = Raw "<svg viewBox='0 0 20 20' class='\{fillPath}'><path d='M 13.82885,1.8834035 1.7076869,18.082345 18.320575,5.7048658 Z'</svg>"
+bondUp = Raw "<svg viewBox='0 0 20 20' class='\{molFillPath}'><g transform='rotate(45,-342.8831,373.22481)'><polygon points='-352.556,-141.8546 -347.556,-141.8542 -350.0076,-121.856 -350.1076,-121.856'/></g></svg>"
 
 ||| A wedged bond away from the viewer
 export
@@ -82,3 +82,4 @@ bondDown = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g transform='rotate
 ||| A wavy bond
 export
 bondEither : HTMLNode
+bondEither = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 3.0731136,17.109234 A 1.5,1.5 0 0 1 4.8410474,15.34164 1.5,1.5 0 0 0 6.6089812,13.574045 1.5,1.5 0 0 1 8.3769221,11.806439 1.5,1.5 0 0 0 10.144856,10.038844 1.5,1.5 0 0 1 11.912799,8.2712479 1.5,1.5 0 0 0 13.680733,6.5036528 1.5,1.5 0 0 1 15.448677,4.736056 1.5,1.5 0 0 0 17.21661,2.9684617'/>"

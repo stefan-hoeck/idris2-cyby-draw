@@ -83,6 +83,10 @@ export %inline
 molPath : Class
 molPath = "cyby-mol-path"
 
+export %inline
+molFillPath : Class
+molFillPath = "cyby-molfill-path"
+
 --------------------------------------------------------------------------------
 -- Interactive Elements
 --------------------------------------------------------------------------------
