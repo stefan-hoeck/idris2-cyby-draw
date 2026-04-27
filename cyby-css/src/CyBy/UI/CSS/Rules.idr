@@ -173,7 +173,7 @@ activeAttrSVG c = Complex (attribute "data-active") Descendant (class c)
 
 export
 disabledSVG : Class -> Selector
-disabledSVG c = Complex Disabled Descendant (class c)
+disabledSVG c = Complex [class widget, Disabled] Descendant (class c)
 
 --------------------------------------------------------------------------------
 -- General
@@ -182,7 +182,7 @@ disabledSVG c = Complex Disabled Descendant (class c)
 export
 general : (c : Colours) => Rules
 general =
-  [ elem Html [height 100.perc]
+  [ elem Html [height 100.perc, width 100.perc]
 
   , elem Body
       [ display Flex
@@ -190,6 +190,7 @@ general =
       , width 100.perc
       , backgroundColor c.primary10
       , color c.primary90
+      , padding (All 10.px)
       ]
 
   -- this makes sure that the text in a label is vertically centered
@@ -208,13 +209,14 @@ components : (c : Colours) => Rules
 components =
   [ class sketcherDiv $
       area
-        [MaxContent, 1.fr, MaxContent]
-        [MaxContent, 1.fr, MaxContent]
+        [25.px, 1.fr, 25.px]
+        [25.px, 1.fr, MaxContent]
         [ [Top, Top, Dot]
         , [Left, Draw, Right]
         , [Bot, Bot, Dot]
         ]
-        :: padding (All 3.px)
+        :: width 100.perc
+        :: height 100.perc
         :: gridGaps
 
   , class toolbarTop    $ gridArea Rules.Top   :: flexRow
@@ -222,8 +224,19 @@ components =
   , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
   , class toolbarRight  $ gridArea Rules.Right :: flexColumn
 
-  , class moleculeCanvas $ gridArea Draw :: roundedBorder 1 3 c.bg
-  , sel [class moleculeCanvas, Focus] [borderColor $ All c.primary50]
+  , class moleculeCanvas $
+      width 100.perc
+      :: height 100.perc
+      :: minWidth 0.px
+      :: minHeight 0.px
+      :: gridArea Draw
+      :: outlineStyle Solid
+      :: outlineWidth 1.px
+      :: outlineColor c.gray80
+      :: roundedBorder 1 3 c.bg
+
+  , sel [class moleculeCanvas, Focus]
+      [backgroundColor white, outlineWidth 2.px, outlineColor c.primary50]
   , classes [moleculeCanvas,dragging] [cursor [Move]]
   , classes [moleculeCanvas,rotating]
       [cursor [URL_ "draw_icons/icon_rotation.svg", Cursor.Auto]]
@@ -236,7 +249,7 @@ icons =
   , sel (activeSVG fillPath) [fill $ Just c.primary50]
   , sel (activeAttrSVG fillPath) [fill $ Just c.primary50]
   , sel (hoveredSVG fillPath) [fill $ Just c.primary50]
-  , sel (disabledSVG fillPath) [fill $ Just c.gray20]
+  , sel (disabledSVG fillPath) [fill $ Just c.gray80]
   , class molPath
       [ fill Nothing
       , stroke $ Just c.primary80
@@ -247,7 +260,7 @@ icons =
   , sel (activeSVG molPath) [stroke $ Just c.primary50]
   , sel (activeAttrSVG molPath) [stroke $ Just c.primary50]
   , sel (hoveredSVG molPath) [stroke $ Just c.primary50]
-  , sel (disabledSVG molPath) [stroke $ Just c.gray20]
+  , sel (disabledSVG molPath) [stroke $ Just c.gray80]
   ]
 
 ||| Rules for interactive UI elements
@@ -260,7 +273,7 @@ widgets =
   , sel [Class widget, attribute "data-active"] wactive
   , sel [Class widget, Disabled] wdisabled
 
-  , class icon [minWidth 20.px, padding (All 0.px)]
+  , class icon [height 25.px, padding (All 0.px)]
 
   , class (elemText B)  [fontWeight Bold, color c.boron]
   , class (elemText C)  [fontWeight Bold, color c.carbon]

@@ -639,7 +639,7 @@ erase s =
 -- prevent unwanted resizes from events that might slightly affect the
 -- canvas dims
 trulyDifferent : SceneDims -> SceneDims -> Bool
-trulyDifferent (SD w1 h1) (SD w2 h2) = abs (w1-w2) >= 5 || abs (h1-h2) >= 5 
+trulyDifferent (SD w1 h1) (SD w2 h2) = abs (w1-w2) >= 1 || abs (h1-h2) >= 1
 
 endResize : (h,w : Double) -> DrawState -> DrawState
 endResize h w s =
@@ -718,8 +718,6 @@ display :
 display s m c =
   svg
     [ xmlns_2000
-    , width 100.perc
-    , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
     ] $ if m then [scene True s, metadata s c] else [scene False s]
 
