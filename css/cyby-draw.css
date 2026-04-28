@@ -5,58 +5,6 @@
     and will overwrite the classes here.
  ---------------------------------------------------------------------------- */
 
-.cyby-draw-radio-icon.benzene {
-  background-image: url("draw_icons/icon_benzene.svg");
-}
-
-.cyby-draw-radio-icon.cyclopropane {
-  background-image: url("draw_icons/icon_cyclopropane.svg");
-}
-
-.cyby-draw-radio-icon.cyclobutane {
-  background-image: url("draw_icons/icon_cyclobutane.svg");
-}
-
-.cyby-draw-radio-icon.cyclopentane {
-  background-image: url("draw_icons/icon_cyclopentane.svg");
-}
-
-.cyby-draw-radio-icon.cyclohexane {
-  background-image: url("draw_icons/icon_cyclohexane.svg");
-}
-
-.cyby-draw-radio-icon.cycloheptane {
-  background-image: url("draw_icons/icon_cycloheptane.svg");
-}
-
-.cyby-draw-radio-icon.cyclooctane {
-  background-image: url("draw_icons/icon_cyclooctane.svg");
-}
-
-.cyby-draw-radio-icon.single-bond {
-  background-image: url("draw_icons/icon_snglB.svg");
-}
-
-.cyby-draw-radio-icon.single-up {
-  background-image: url("draw_icons/icon_snglBUp.svg");
-}
-
-.cyby-draw-radio-icon.single-down {
-  background-image: url("draw_icons/icon_snglBDown.svg");
-}
-
-.cyby-draw-radio-icon.single-up-down {
-  background-image: url("draw_icons/icon_snglBUpDown.svg");
-}
-
-.cyby-draw-radio-icon.double-bond {
-  background-image: url("draw_icons/icon_dblB.svg");
-}
-
-.cyby-draw-radio-icon.triple-bond {
-  background-image: url("draw_icons/icon_trplB.svg");
-}
-
 .cyby-draw-detail {
   display: grid;
   grid-template-rows: max-content max-content;

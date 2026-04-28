@@ -105,32 +105,34 @@ export %inline
 --------------------------------------------------------------------------------
 
 export
-gridGaps : {default 5 gap : Bits16} -> List Declaration
-gridGaps = [rowGap gap.px, columnGap gap.px]
+gridGaps : List Declaration
+gridGaps = [rowGap 0.25.rem, columnGap 0.25.rem]
 
 export
-flexRow : {default 5 gap : Bits16} -> List Declaration
-flexRow = [display Flex, flexDirection Row, columnGap gap.px]
+flexRow : List Declaration
+flexRow = [display Flex, flexDirection Row, columnGap 0.25.rem]
 
 export
-flexColumn : {default 5 gap : Bits16} -> List Declaration
-flexColumn = [display Flex, flexDirection Column, rowGap gap.px]
+flexColumn : List Declaration
+flexColumn = [display Flex, flexDirection Column, rowGap 0.25.rem]
 
 export
-solidBorder : (width : Bits16) -> Color -> List Declaration
-solidBorder w c =
-  [borderStyle (All Solid), borderWidth w.px, borderColor (All c)]
+solidBorder : Color -> List Declaration
+solidBorder c =
+  [borderStyle (All Solid), borderWidth 1.px, borderColor (All c)]
 
 export
-roundedBorder : (width, rad : Bits16) -> Color -> List Declaration
-roundedBorder w r c = borderRadius r.px :: solidBorder w c
+roundedBorder : Color -> List Declaration
+roundedBorder c = borderRadius 0.25.rem :: solidBorder c
 
 export
 wregular : (c : Colours) => List Declaration
 wregular =
   backgroundColor c.primary20
   :: color c.primary80
-  :: roundedBorder 1 3 c.primary80
+  :: outlineColor Current
+  :: outlineStyle None
+  :: roundedBorder Current
 
 export
 wactive : (c : Colours) => List Declaration
@@ -139,7 +141,7 @@ wactive =
   :: color c.primary50
   :: outlineStyle Solid
   :: outlineWidth 1.px
-  :: roundedBorder 1 3 c.primary50
+  :: Nil
   
 
 export
@@ -149,7 +151,7 @@ whovered =
   :: color c.primary50
   :: outlineStyle Solid
   :: outlineWidth 1.px
-  :: roundedBorder 1 3 c.primary50
+  :: Nil
 
 export
 wdisabled : (c : Colours) => List Declaration
@@ -157,7 +159,7 @@ wdisabled =
   color c.gray80
   :: backgroundColor c.gray20
   :: outlineStyle None
-  :: roundedBorder 1 3 c.gray20
+  :: roundedBorder c.gray20
 
 export
 hoveredSVG : Class -> Selector
@@ -190,11 +192,11 @@ general =
       , width 100.perc
       , backgroundColor c.primary10
       , color c.primary90
-      , padding (All 10.px)
+      , padding (All 1.rem)
       ]
 
   -- this makes sure that the text in a label is vertically centered
-  , elem Label [display Flex , alignItems Center, padding (VH 1.px 4.px)]
+  , elem Label [display Flex , alignItems Center, padding (VH 0.1.rem 0.4.rem)]
 
   , class hidden [display None]
 
@@ -209,8 +211,8 @@ components : (c : Colours) => Rules
 components =
   [ class sketcherDiv $
       area
-        [25.px, 1.fr, 25.px]
-        [25.px, 1.fr, MaxContent]
+        [2.rem, 1.fr, 2.rem]
+        [2.rem, 1.fr, MaxContent]
         [ [Top, Top, Dot]
         , [Left, Draw, Right]
         , [Bot, Bot, Dot]
@@ -233,7 +235,7 @@ components =
       :: outlineStyle Solid
       :: outlineWidth 1.px
       :: outlineColor c.gray80
-      :: roundedBorder 1 3 c.bg
+      :: roundedBorder c.bg
 
   , sel [class moleculeCanvas, attribute "data-active"]
       [backgroundColor white, outlineWidth 2.px, outlineColor c.primary50]
@@ -245,16 +247,8 @@ components =
 export
 icons : (c : Colours) => Rules
 icons =
-  [ class fillPath [fill $ Just c.primary80]
-  , sel (activeSVG fillPath) [fill $ Just c.primary50]
-  , sel (activeAttrSVG fillPath) [fill $ Just c.primary50]
-  , sel (hoveredSVG fillPath) [fill $ Just c.primary50]
-  , sel (disabledSVG fillPath) [fill $ Just c.gray80]
-  , class molPath [stroke $ Just c.primary80]
-  , sel (activeSVG molPath) [stroke $ Just c.primary50]
-  , sel (activeAttrSVG molPath) [stroke $ Just c.primary50]
-  , sel (hoveredSVG molPath) [stroke $ Just c.primary50]
-  , sel (disabledSVG molPath) [stroke $ Just c.gray80]
+  [ class fillPath [fill $ Just Current]
+  , class molPath [stroke $ Just Current]
   ]
 
 ||| Rules for interactive UI elements
@@ -267,7 +261,7 @@ widgets =
   , sel [Class widget, attribute "data-active"] wactive
   , sel [Class widget, Disabled] wdisabled
 
-  , class icon [height 25.px, padding (All 0.px)]
+  , class icon [height 2.rem, padding (All 0.px)]
 
   , class (elemText B)  [fontWeight Bold, color c.boron]
   , class (elemText C)  [fontWeight Bold, color c.carbon]
