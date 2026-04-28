@@ -245,33 +245,16 @@ components =
 export
 icons : (c : Colours) => Rules
 icons =
-  [ class fillPath [stroke Nothing, fill $ Just c.primary80]
+  [ class fillPath [fill $ Just c.primary80]
   , sel (activeSVG fillPath) [fill $ Just c.primary50]
   , sel (activeAttrSVG fillPath) [fill $ Just c.primary50]
   , sel (hoveredSVG fillPath) [fill $ Just c.primary50]
   , sel (disabledSVG fillPath) [fill $ Just c.gray80]
-  , class molPath
-      [ fill Nothing
-      , stroke $ Just c.primary80
-      , strokeWidth 1.px
-      , strokeLinejoin Round
-      , strokeLinecap Round
-      ]
+  , class molPath [stroke $ Just c.primary80]
   , sel (activeSVG molPath) [stroke $ Just c.primary50]
   , sel (activeAttrSVG molPath) [stroke $ Just c.primary50]
   , sel (hoveredSVG molPath) [stroke $ Just c.primary50]
   , sel (disabledSVG molPath) [stroke $ Just c.gray80]
-  , class molFillPath
-      [ fill $ Just c.primary80
-      , stroke $ Just c.primary80
-      , strokeWidth 1.px
-      , strokeLinejoin Round
-      , strokeLinecap Round
-      ]
-  , sel (activeSVG molFillPath) [stroke $ Just c.primary50, fill $ Just c.primary50]
-  , sel (activeAttrSVG molFillPath) [stroke $ Just c.primary50, fill $ Just c.primary50]
-  , sel (hoveredSVG molFillPath) [stroke $ Just c.primary50, fill $ Just c.primary50]
-  , sel (disabledSVG molFillPath) [stroke $ Just c.gray80, fill $ Just c.gray80]
   ]
 
 ||| Rules for interactive UI elements
