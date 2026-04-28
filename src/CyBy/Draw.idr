@@ -174,9 +174,6 @@ expButton pre = Id "\{pre}-exp-button"
 --          View
 --------------------------------------------------------------------------------
   
-hidden : {0 t : _} -> Attribute t
-hidden = class "hidden"
-
 abbrActive : DrawState -> Attribute t
 abbrActive s =
   case s.mode of
@@ -222,12 +219,12 @@ parameters {auto de : Sink DrawEvent}
   elems : MolAtomAT -> HTMLNode
   elems a =
     selectFromListBy values (a.elem.elem ==) symbol ChgElem
-      [ class widget, title "Set Element" ]
+      [ class widget, title "set element" ]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
     selectFromListBy chs (a.charge ==) (show . value) ChgCharge
-      [ class widget, title "Set Charge" ]
+      [ class widget, title "set charge" ]
     where
       chs : List Charge
       chs = mapMaybe refineCharge [(-8) .. 8]
@@ -235,7 +232,7 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [ class widget, title "Set Charge" ]
+      [ class widget, title "set charge" ]
     where
       dispMass : Maybe MassNr -> String
       dispMass Nothing  = "Mix"
@@ -263,7 +260,7 @@ parameters {auto de : Sink DrawEvent}
       [ Id $ abbrID pre
       , class widget
       , abbrActive s
-      , title "Abbreviations"
+      , title "abbreviations"
       , Event (MouseDown $ \mi => toMaybe (mi.button == 0) EnableAbbr)
       ]
 
@@ -295,9 +292,8 @@ parameters {auto de : Sink DrawEvent}
       , bondIcon (cast Triple) "triple bond" s triple
       ] ++ topadd
 
-  template : (cls : Class) -> CDGraph -> String -> DrawState -> HTMLNode
-  -- template cls g nm s =
-  --   radioIcon cls (SetTempl g) "Template \{nm}" (s.mode == SetTempl g)
+  template : CDGraph -> String -> DrawState -> HTMLNode -> HTMLNode
+  template g nm s = icon [] (SetTempl g) (s.mode == SetTempl g) "template \{nm}"
 
   elemIcon : DrawState -> String -> Elem -> HTMLNode
   elemIcon s t e = icon [elemText e] (SetElem e) (setting e s) t (Text $ symbol e)
@@ -349,19 +345,19 @@ parameters {auto de : Sink DrawEvent}
                 ]
         _       => div [ Id $ rightBarID pre, class toolbarRight ] []
 
-  bottomBar : (pre : String) -> DrawState -> HTMLNode
+  bottomBar : DrawSettings => (pre : String) -> DrawState -> HTMLNode
   bottomBar pre s =
     div
-      [ Id $ bottomBarID pre, class "cyby-draw-toolbar-bottom-inner" ]
-      []
-      -- [ template "benzene" phenyl "Benzene" s
-      -- , template "cyclohexane" (ring 6) "Cyclohexane" s
-      -- , template "cyclopentane" (ring 5) "Cyclopentane" s
-      -- , template "cyclopropane" (ring 3) "Cyclopropane" s
-      -- , template "cyclobutane" (ring 4) "Cyclobutane" s
-      -- , template "cycloheptane" (ring 7) "Cycloheptane" s
-      -- , template "cyclooctane" (ring 8) "Cyclooctane" s
-      -- ]
+      [ Id $ bottomBarID pre, class toolbarBottom ]
+      [ template phenyl "benzene" s benzene
+      , template (ring 6) "cyclohexane" s cyclohexane
+      , template (ring 5) "cyclopentane" s cyclopentane
+      , template (ring 3) "cyclopropane" s cyclopropane
+      , template (ring 4) "cyclobutane" s cyclobutane
+      , template (ring 7) "cycloheptane" s cycloheptane
+      , template (ring 8) "cyclooctane" s cyclooctane
+      , abbrs pre s
+      ]
 
   export
   sketcher :
@@ -372,14 +368,12 @@ parameters {auto de : Sink DrawEvent}
     -> HTMLNode
   sketcher pre topadd s =
     div
-      [ class "cyby-draw-sketcher-div"
-      , Id $ sketcherDiv pre
-      ]
+      [ class sketcherDiv, Id $ sketcherDiv pre ]
       [ topBar pre topadd s
       , leftBar pre s
       , rightBar pre s
       , div
-          [ class "cyby-draw-molecule-canvas"
+          [ class moleculeCanvas
           , Id $ moleculeCanvas pre
           , Event $ MouseMove move
           , Event $ MouseDown down
@@ -394,9 +388,7 @@ parameters {auto de : Sink DrawEvent}
           , Str "tabindex" "1"
           ]
           [Raw s.curSVG]
-      , div
-          [ class toolbarBottom ]
-          [ bottomBar pre s, abbrs pre s ]
+      , bottomBar pre s
       ]
 
 export

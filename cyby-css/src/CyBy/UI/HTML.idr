@@ -83,3 +83,31 @@ bondDown = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g transform='rotate
 export
 bondEither : HTMLNode
 bondEither = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 3.0731136,17.109234 A 1.5,1.5 0 0 1 4.8410474,15.34164 1.5,1.5 0 0 0 6.6089812,13.574045 1.5,1.5 0 0 1 8.3769221,11.806439 1.5,1.5 0 0 0 10.144856,10.038844 1.5,1.5 0 0 1 11.912799,8.2712479 1.5,1.5 0 0 0 13.680733,6.5036528 1.5,1.5 0 0 1 15.448677,4.736056 1.5,1.5 0 0 0 17.21661,2.9684617'/>"
+
+export
+cyclopropane : HTMLNode
+cyclopropane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.54602243' d='m 9.0106867,6.0010816 -16.8125064,-1e-7 8.40625322,-14.5600576 z' transform='matrix(0.9157133,0,0,0.9157133,9.5121174,11.039322)'/></svg>"
+
+export
+cyclobutane : HTMLNode
+cyclobutane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.32634345' d='m 5.9497284,6.2458279 -10.0278506,0 0,-10.0278506 10.0278506,0 z' transform='matrix(1.5321282,0,0,1.5321282,8.5662297,8.1125673)'/></svg>"
+
+export
+cyclopentane : HTMLNode
+cyclopentane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.134157' d='M 0.98222887,4.5325906 -1.1036876,3.0170837 -0.30693849,0.56494182 2.271396,0.56494175 3.0681453,3.0170836 Z' transform='matrix(3.726985,0,0,3.726985,6.3611941,0.47127815)'/></svg>"
+
+export
+cyclohexane : HTMLNode
+cyclohexane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.46488717' d='M 0.75390624,9.3075056 -6.4947314,5.122503 l -2e-7,-8.3700056 7.24863739,-4.185003 7.24863761,4.1850026 2e-7,8.3700056 z' transform='matrix(1.0755298,0,0,1.0755298,9.1891516,9.2200565)'/></svg>"
+
+export
+cycloheptane : HTMLNode
+cycloheptane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.413138' d='m 1.5038097,8.2223349 -5.1636063,-2.4866616 -1.2753056,-5.58747813 3.5733263,-4.48080967 5.7311706,-2e-7 L 7.9427212,0.14819482 6.6674159,5.735673 Z' transform='matrix(1.2102501,0,0,1.2102501,8.1800144,7.6324933)'/></svg>"
+
+export
+cyclooctane : HTMLNode
+cyclooctane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.245849' d='M 0.83291863,-2.7505434 3.5397473,-1.6293381 4.6609524,1.0774907 3.5397472,3.7843194 0.83291842,4.9055245 -1.8739103,3.7843192 -2.9951154,1.0774905 -1.8739101,-1.6293383 Z' transform='matrix(2.033767,0,0,2.033767,8.3060378,7.8086352)'/></svg>"
+
+export
+benzene : HTMLNode
+benzene = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path 'd='M 527.009375 195.0625 L 287.15 59.992188 M 287.15 600.007812 L 527.009375 464.9375 M 54.99375 195.0625 L 54.99375 464.9375 M 9.970312 490.039062 L 9.970312 169.960938 L 287.15 10.054688 L 564.196875 169.960938 L 564.196875 490.039062 L 287.15 649.945312 Z M 9.970312 490.039062 ' transform='matrix(0.0294118,0,0,0.0294118,1.554412,0.294118)'/></svg>"
