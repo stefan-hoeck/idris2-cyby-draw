@@ -253,7 +253,7 @@ icons =
   , class molPath
       [ fill Nothing
       , stroke $ Just c.primary80
-      , strokeWidth 2.px
+      , strokeWidth 1.px
       , strokeLinejoin Round
       , strokeLinecap Round
       ]

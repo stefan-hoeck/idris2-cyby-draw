@@ -62,22 +62,22 @@ single = Raw "<svg viewBox='0 0 20 20' class='\{fillPath}'><path d='M 2.746094 1
 ||| A double bond
 export
 double : HTMLNode
-double = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 13.9974 4.000678 L 14.000714 20.000073 M 10.000037 4.000678 L 10.000037 19.996759 ' transform='matrix(0.589256,0.589256,-0.589256,0.589256,10,-4)'/></svg>"
+double = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 13.9974 4.000678 L 14.000714 20.000073 M 10.000037 4.000678 L 10.000037 19.996759 ' vector-effect='non-scaling-stroke' transform='matrix(0.589256,0.589256,-0.589256,0.589256,10,-4)'/></svg>"
 
 ||| A triple bond
 export
 triple : HTMLNode
-triple = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g transform='translate(1.1112556,1.0188408)'> <path d='m 13.9974,4.000678 0.0033,15.999395 M 10.000037,4.000678 v 15.996081' transform='matrix(0.589256,0.589256,-0.589256,0.589256,10,-4)' id='path1'/></g><g transform='translate(-1.3459359,-1.2765732)'><path d='m 13.9974,4.000678 0.0033,15.999395 M 10.000037,4.000678 v 15.996081' transform='matrix(0.589256,0.589256,-0.589256,0.589256,10,-4)'/></g></svg>"
+triple = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g vector-effect='non-scaling-stroke' transform='translate(1.1112556,1.0188408)'> <path d='m 13.9974,4.000678 0.0033,15.999395 M 10.000037,4.000678 v 15.996081' vector-effect='non-scaling-stroke' transform='matrix(0.589256,0.589256,-0.589256,0.589256,10,-4)' id='path1'/></g><g vector-effect='non-scaling-stroke' transform='translate(-1.3459359,-1.2765732)'><path d='m 13.9974,4.000678 0.0033,15.999395 M 10.000037,4.000678 v 15.996081' vector-effect='non-scaling-stroke' transform='matrix(0.589256,0.589256,-0.589256,0.589256,10,-4)'/></g></svg>"
 
 ||| A wedged bond towards the viewer
 export
 bondUp : HTMLNode
-bondUp = Raw "<svg viewBox='0 0 20 20' class='\{molFillPath}'><g transform='rotate(45,-342.8831,373.22481)'><polygon points='-352.556,-141.8546 -347.556,-141.8542 -350.0076,-121.856 -350.1076,-121.856'/></g></svg>"
+bondUp = Raw "<svg viewBox='0 0 20 20' class='\{molFillPath}'><g vector-effect='non-scaling-stroke' transform='rotate(45,-342.8831,373.22481)'><polygon points='-352.556,-141.8546 -347.556,-141.8542 -350.0076,-121.856 -350.1076,-121.856'/></g></svg>"
 
 ||| A wedged bond away from the viewer
 export
 bondDown : HTMLNode
-bondDown = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g transform='rotate(45,-29.937929,-7.9558901)'><path d='m 13.45072,-31.375028 -4.2999999,-3.44e-4'/><path d='m 13.10048,-28.375056 -3.6,-2.88e-4' /><path d='m 12.75024,-25.375084 -2.9,-2.32e-4' /><path d='m 12.4,-22.375112 -2.2,-1.76e-4' /><path d='m 12.04976,-19.37514 -1.5,-1.2e-4' /><path d='m 11.69952,-16.375168 -0.8,-6.4e-5' /><path d='m 11.34928,-13.375196 -0.1,-8e-6' /></g></svg>"
+bondDown = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><g vector-effect='non-scaling-stroke' transform='rotate(45,-29.937929,-7.9558901)'><path d='m 13.45072,-31.375028 -4.2999999,-3.44e-4'/><path d='m 13.10048,-28.375056 -3.6,-2.88e-4' /><path d='m 12.75024,-25.375084 -2.9,-2.32e-4' /><path d='m 12.4,-22.375112 -2.2,-1.76e-4' /><path d='m 12.04976,-19.37514 -1.5,-1.2e-4' /><path d='m 11.69952,-16.375168 -0.8,-6.4e-5' /><path d='m 11.34928,-13.375196 -0.1,-8e-6' /></g></svg>"
 
 ||| A wavy bond
 export
@@ -86,28 +86,28 @@ bondEither = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 3.07311
 
 export
 cyclopropane : HTMLNode
-cyclopropane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.54602243' d='m 9.0106867,6.0010816 -16.8125064,-1e-7 8.40625322,-14.5600576 z' transform='matrix(0.9157133,0,0,0.9157133,9.5121174,11.039322)'/></svg>"
+cyclopropane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='m 9.0106867,6.0010816 -16.8125064,-1e-7 8.40625322,-14.5600576 z' vector-effect='non-scaling-stroke' transform='matrix(0.9157133,0,0,0.9157133,9.5121174,11.039322)'/></svg>"
 
 export
 cyclobutane : HTMLNode
-cyclobutane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.32634345' d='m 5.9497284,6.2458279 -10.0278506,0 0,-10.0278506 10.0278506,0 z' transform='matrix(1.5321282,0,0,1.5321282,8.5662297,8.1125673)'/></svg>"
+cyclobutane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='m 5.9497284,6.2458279 -10.0278506,0 0,-10.0278506 10.0278506,0 z' vector-effect='non-scaling-stroke' transform='matrix(1.5321282,0,0,1.5321282,8.5662297,8.1125673)'/></svg>"
 
 export
 cyclopentane : HTMLNode
-cyclopentane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.134157' d='M 0.98222887,4.5325906 -1.1036876,3.0170837 -0.30693849,0.56494182 2.271396,0.56494175 3.0681453,3.0170836 Z' transform='matrix(3.726985,0,0,3.726985,6.3611941,0.47127815)'/></svg>"
+cyclopentane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 0.98222887,4.5325906 -1.1036876,3.0170837 -0.30693849,0.56494182 2.271396,0.56494175 3.0681453,3.0170836 Z' vector-effect='non-scaling-stroke' transform='matrix(3.726985,0,0,3.726985,6.3611941,0.47127815)'/></svg>"
 
 export
 cyclohexane : HTMLNode
-cyclohexane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.46488717' d='M 0.75390624,9.3075056 -6.4947314,5.122503 l -2e-7,-8.3700056 7.24863739,-4.185003 7.24863761,4.1850026 2e-7,8.3700056 z' transform='matrix(1.0755298,0,0,1.0755298,9.1891516,9.2200565)'/></svg>"
+cyclohexane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 0.75390624,9.3075056 -6.4947314,5.122503 l -2e-7,-8.3700056 7.24863739,-4.185003 7.24863761,4.1850026 2e-7,8.3700056 z' vector-effect='non-scaling-stroke' transform='matrix(1.0755298,0,0,1.0755298,9.1891516,9.2200565)'/></svg>"
 
 export
 cycloheptane : HTMLNode
-cycloheptane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.413138' d='m 1.5038097,8.2223349 -5.1636063,-2.4866616 -1.2753056,-5.58747813 3.5733263,-4.48080967 5.7311706,-2e-7 L 7.9427212,0.14819482 6.6674159,5.735673 Z' transform='matrix(1.2102501,0,0,1.2102501,8.1800144,7.6324933)'/></svg>"
+cycloheptane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='m 1.5038097,8.2223349 -5.1636063,-2.4866616 -1.2753056,-5.58747813 3.5733263,-4.48080967 5.7311706,-2e-7 L 7.9427212,0.14819482 6.6674159,5.735673 Z' vector-effect='non-scaling-stroke' transform='matrix(1.2102501,0,0,1.2102501,8.1800144,7.6324933)'/></svg>"
 
 export
 cyclooctane : HTMLNode
-cyclooctane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path style='stroke-width:0.245849' d='M 0.83291863,-2.7505434 3.5397473,-1.6293381 4.6609524,1.0774907 3.5397472,3.7843194 0.83291842,4.9055245 -1.8739103,3.7843192 -2.9951154,1.0774905 -1.8739101,-1.6293383 Z' transform='matrix(2.033767,0,0,2.033767,8.3060378,7.8086352)'/></svg>"
+cyclooctane = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 0.83291863,-2.7505434 3.5397473,-1.6293381 4.6609524,1.0774907 3.5397472,3.7843194 0.83291842,4.9055245 -1.8739103,3.7843192 -2.9951154,1.0774905 -1.8739101,-1.6293383 Z' vector-effect='non-scaling-stroke' transform='matrix(2.033767,0,0,2.033767,8.3060378,7.8086352)'/></svg>"
 
 export
 benzene : HTMLNode
-benzene = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path 'd='M 527.009375 195.0625 L 287.15 59.992188 M 287.15 600.007812 L 527.009375 464.9375 M 54.99375 195.0625 L 54.99375 464.9375 M 9.970312 490.039062 L 9.970312 169.960938 L 287.15 10.054688 L 564.196875 169.960938 L 564.196875 490.039062 L 287.15 649.945312 Z M 9.970312 490.039062 ' transform='matrix(0.0294118,0,0,0.0294118,1.554412,0.294118)'/></svg>"
+benzene = Raw "<svg viewBox='0 0 20 20' class='\{molPath}'><path d='M 527.009375 195.0625 L 287.15 59.992188 M 287.15 600.007812 L 527.009375 464.9375 M 54.99375 195.0625 L 54.99375 464.9375 M 9.970312 490.039062 L 9.970312 169.960938 L 287.15 10.054688 L 564.196875 169.960938 L 564.196875 490.039062 L 287.15 649.945312 Z M 9.970312 490.039062 ' vector-effect='non-scaling-stroke' transform='matrix(0.0294118,0,0,0.0294118,1.554412,0.294118)'/></svg>"
