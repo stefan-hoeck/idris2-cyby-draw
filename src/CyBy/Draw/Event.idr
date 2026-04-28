@@ -65,7 +65,6 @@ data DrawEvent : Type where
   ChgCharge        : Charge -> DrawEvent
   ChgMass          : Maybe MassNr -> DrawEvent
   SelAbbr          : Abbreviation -> DrawEvent
-  EnableAbbr       : DrawEvent
   SetBond          : MolBond -> DrawEvent
   Move             : (x,y : Double) -> DrawEvent
   LeftDown         : DrawEvent

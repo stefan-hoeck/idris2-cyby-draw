@@ -235,7 +235,7 @@ components =
       :: outlineColor c.gray80
       :: roundedBorder 1 3 c.bg
 
-  , sel [class moleculeCanvas, Focus]
+  , sel [class moleculeCanvas, attribute "data-active"]
       [backgroundColor white, outlineWidth 2.px, outlineColor c.primary50]
   , classes [moleculeCanvas,dragging] [cursor [Move]]
   , classes [moleculeCanvas,rotating]

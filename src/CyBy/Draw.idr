@@ -163,10 +163,6 @@ bottomBarID : String -> Ref Div
 bottomBarID pre = Id "\{pre}-bottom-bar"
 
 export
-abbrID : String -> Ref Tag.Select
-abbrID pre = Id "\{pre}-abbreviations"
-
-export
 expButton : String -> Ref Tag.Button
 expButton pre = Id "\{pre}-exp-button"
 
@@ -211,8 +207,9 @@ detail title n =
     [class "cyby-draw-detail"]
     [label [] [ Text title ], n]
 
-px : Double -> String
-px v = show (cast {to = Bits32} v) ++ "px"
+currAbbr : Mode -> Maybe String
+currAbbr (SetAbbr a) = Just a.label
+currAbbr _           = Nothing
 
 parameters {auto de : Sink DrawEvent}
 
@@ -253,16 +250,11 @@ parameters {auto de : Sink DrawEvent}
   abbrs : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
   abbrs pre s =
     selectFromListBy
-      ds.abbreviations
-      (\a => any ((a.label ==) . label) s.abbr)
-      label
-      SelAbbr
-      [ Id $ abbrID pre
-      , class widget
-      , abbrActive s
-      , title "abbreviations"
-      , Event (MouseDown $ \mi => toMaybe (mi.button == 0) EnableAbbr)
-      ]
+      (Nothing :: map Just ds.abbreviations)
+      (\v => currAbbr s.mode == map label v)
+      (maybe "--abbreviation--" label)
+      (maybe Redraw SelAbbr)
+      [class widget, abbrActive s]
 
   bondIcon : MolBond -> String -> DrawState -> HTMLNode -> HTMLNode
   bondIcon b title s = icon [] (SetBond b) (drawing b s) title
@@ -386,6 +378,7 @@ parameters {auto de : Sink DrawEvent}
           , onDblClick Expand
           , onResize (\r => Resize r.height r.width)
           , Str "tabindex" "1"
+          , active s.isActive
           ]
           [Raw s.curSVG]
       , bottomBar pre s
@@ -434,17 +427,11 @@ parameters {auto ds : DrawSettings}
       Translating _ => dragging
       _             => applyWhenSel s dragging rotating normal
 
-  adjAbbr : DrawState -> Act ()
-  adjAbbr = attr (abbrID pre) . abbrActive
-
-  focusCurrentApp : Act ()
-  focusCurrentApp = focus (moleculeCanvas pre)
-
   displayST : (force : Bool) -> DrawState -> Act ()
-  displayST force s =
+  displayST force s = Prelude.do
+    when s.isActive $ focus (moleculeCanvas pre)
     when (force || s.curSVG /= s.prevSVG) $
-      child (moleculeCanvas pre) (Raw s.curSVG) >>
-      when s.hasFocus focusCurrentApp
+      child (moleculeCanvas pre) (Raw s.curSVG)
 
   adjustBars : DrawState -> Act ()
   adjustBars s = Prelude.do
@@ -452,12 +439,6 @@ parameters {auto ds : DrawSettings}
     replace (topBarID pre) (topBar pre topadd s)
     replace (bottomBarID pre) (bottomBar pre s)
     replace (leftBarID pre) (leftBar pre s)
-    adjAbbr s
-
-  adjustRightBar : DrawState -> Act ()
-  adjustRightBar s = do
-    replace (rightBarID pre) (rightBar pre s)
-    adjAbbr s
 
   dispKeyDown : String -> DrawState -> Act ()
   dispKeyDown "Escape" s = Prelude.do
@@ -480,23 +461,22 @@ parameters {auto ds : DrawSettings}
   dispKeyDown _      s = pure ()
 
   displayEv : DrawEvent -> DrawState -> Act ()
-  displayEv Focus            s = focusCurrentApp
-  displayEv Blur             s = blur (moleculeCanvas pre)
+  displayEv Focus            s = focus (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active True)
+  displayEv Blur             s = blur (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active False)
   displayEv (KeyDown k)      s = dispKeyDown k s
-  displayEv (KeyUp _)        s = adjustRightBar s
+  displayEv (KeyUp _)        s = adjustBars s
   displayEv (SetElem _)      s = adjustBars s
   displayEv (SelAbbr _)      s = adjustBars s
-  displayEv  EnableAbbr      s = adjustBars s
   displayEv (SetBond _)      s = adjustBars s
   displayEv (SetTempl _)     s = adjustBars s
   displayEv (Load _)         s = adjustBars s
   displayEv SelectMode       s = adjustBars s
   displayEv EraseMode        s = adjustBars s
-  displayEv (ChgElem _)      s = adjustRightBar s
+  displayEv (ChgElem _)      s = adjustBars s
   displayEv (Move _ _)       s = selectCursor s
   displayEv MiddleDown       s = selectCursor s
   displayEv MiddleUp         s = selectCursor s
-  displayEv LeftUp           s = adjustBars s >> adjustRightBar s
+  displayEv LeftUp           s = adjustBars s
   displayEv Undo             s = adjustBars s
   displayEv Redo             s = adjustBars s
   displayEv (ZoomIn _)       s = adjustBars s
