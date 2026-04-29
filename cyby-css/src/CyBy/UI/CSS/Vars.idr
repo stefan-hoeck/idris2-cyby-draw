@@ -42,6 +42,10 @@ record Vars where
   --    containers --
   gap                 : Length       -- preferred gap in grids and flex boxes
   bardim              : Length       -- height of a horizontal toolbar
+  titleHeight         : Width        -- height of a component title
+  formLblWidth        : Width        -- width of a label in a form
+  barSepwidth         : Width        -- width of a separator in a toolbar
+  formSepwidth        : Width        -- width of field separator in a form
 
   --    widgets --
   cornerRad           : BorderRadius -- preferred border radius
@@ -65,11 +69,11 @@ defaultVars =
   , primary80           = hsl 240 60.perc 25.perc
   , primary90           = hsl 240 40.perc 10.perc
 
-  , secondary10         = hsl 180 20.perc 95.perc
-  , secondary20         = hsl 180 30.perc 90.perc
-  , secondary50         = hsl 180 80.perc 40.perc
-  , secondary80         = hsl 180 60.perc 25.perc
-  , secondary90         = hsl 180 40.perc 10.perc
+  , secondary10         = hsl 60 20.perc 95.perc
+  , secondary20         = hsl 60 30.perc 90.perc
+  , secondary50         = hsl 60 80.perc 40.perc
+  , secondary80         = hsl 60 60.perc 25.perc
+  , secondary90         = hsl 60 40.perc 10.perc
 
   , boron               = rgb 0xff 0xb5 0xb5
   , carbon              = dimgray
@@ -83,6 +87,10 @@ defaultVars =
 
   , gap                 = 0.4.em
   , bardim              = 2.0.em
+  , titleHeight         = 1.5.em
+  , formLblWidth        = 6.em
+  , barSepwidth         = 3.px
+  , formSepwidth        = 1.px
 
   , cornerRad           = 0.25.em
   , narrowBW            = 1.px
@@ -129,3 +137,7 @@ parameters {auto v : Vars}
   export
   disabledBG : Color
   disabledBG = v.gray20
+
+  export
+  bar : Color
+  bar = v.secondary50

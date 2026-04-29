@@ -19,7 +19,7 @@ public export
 0 Rules : Type
 Rules = List (Rule 1)
 
-data Tag = Top | Bot | Left | Right | Draw | Dot
+data Tag = Top | Bot | Left | Details | Log | Draw | Dot
 
 %runElab derive "Tag" [Show,Eq]
 
@@ -89,21 +89,13 @@ parameters {auto v : Vars}
     :: outlineStyle None
     :: roundedBorder disabledBG
 
-export
-hoveredSVG : Class -> Selector
-hoveredSVG c = Complex [class widget, Hover] Descendant (class c)
-
-export
-activeSVG : Class -> Selector
-activeSVG c = Complex Active Descendant (class c)
-
-export
-activeAttrSVG : Class -> Selector
-activeAttrSVG c = Complex (attribute "data-active") Descendant (class c)
-
-export
-disabledSVG : Class -> Selector
-disabledSVG c = Complex [class widget, Disabled] Descendant (class c)
+  export
+  drawCompBorder : List Declaration
+  drawCompBorder =
+    outlineStyle Solid
+    :: outlineWidth v.narrowBW
+    :: outlineColor v.gray80
+    :: roundedBorder bg
 
 --------------------------------------------------------------------------------
 -- General
@@ -132,6 +124,12 @@ parameters {auto v : Vars}
     , class quadratic [aspectRatio 1]
   
     , class smallText [fontSize Small]
+
+    , class hbarsep [backgroundColor bar, width 100.perc, height v.barSepwidth]
+
+    , class vbarsep [backgroundColor bar, height 100.perc, width v.barSepwidth]
+
+    , class formsep [backgroundColor bar, width 100.perc, height v.formSepwidth]
     ]
 
   ||| Rules the main UI components
@@ -140,11 +138,12 @@ parameters {auto v : Vars}
   components =
     [ class sketcherDiv $
         area
-          [cast v.bardim, 1.fr, cast v.bardim]
+          [cast v.bardim, 2.fr, 1.fr, cast v.bardim]
           [cast v.bardim, 3.fr, 1.fr]
-          [ [Top, Top, Dot]
-          , [Left, Draw, Right]
-          , [Bot, Bot, Dot]
+          [ [Dot, Top, Top]
+          , [Left, Draw, Details]
+          , [Left, Draw, Log]
+          , [Dot, Bot, Bot]
           ]
           :: width 100.perc
           :: height 100.perc
@@ -153,7 +152,22 @@ parameters {auto v : Vars}
     , class toolbarTop    $ gridArea Rules.Top   :: flexRow
     , class toolbarBottom $ gridArea Rules.Bot   :: flexRow
     , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
-    , class toolbarRight  $ gridArea Rules.Right :: flexColumn
+    , class toolbarRight  $
+           [containerType Size, gridArea Rules.Details]
+        ++ drawCompBorder
+
+    , class drawLog $
+           [fontSize Small, containerType Size, gridArea Rules.Log, padding (All v.paddingH)]
+        ++ drawCompBorder
+
+    , class compList $ padding (All v.paddingH) :: flexColumn
+
+    , class compTitle $
+           width 100.perc
+        :: height v.titleHeight
+        :: backgroundColor widgetFG
+        :: color v.primary10
+        :: roundedBorder widgetFG
   
     , class moleculeCanvas $
         width 100.perc
@@ -161,10 +175,7 @@ parameters {auto v : Vars}
         :: minWidth 0.px
         :: minHeight 0.px
         :: gridArea Draw
-        :: outlineStyle Solid
-        :: outlineWidth v.narrowBW
-        :: outlineColor v.gray80
-        :: roundedBorder bg
+        :: drawCompBorder
   
     , sel [class moleculeCanvas, attribute "data-active"]
         [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
@@ -172,12 +183,19 @@ parameters {auto v : Vars}
     , classes [moleculeCanvas,rotating]
         [cursor [URL_ "draw_icons/icon_rotation.svg", Cursor.Auto]]
     ]
-  
+
+  ||| Rules for form-like lists (label plus description/widget)
   export
-  icons : Rules
-  icons =
-    [ class fillPath [fill $ Just Current]
-    , class molPath [stroke $ Just Current]
+  forms : Rules
+  forms =
+    [ class formRow $ alignItems Stretch :: flexRow
+    , class formLabel [width v.formLblWidth]
+    , class formValue [flex "1"]
+    , Container "width < 300px"
+        [class formRow $ alignItems Start :: flexColumn
+        ,class formLabel [width 100.perc]
+        ,class formValue [flex "0 0 auto", margin (Left v.gap)]
+        ]
     ]
   
   ||| Rules for interactive UI elements
@@ -205,7 +223,7 @@ parameters {auto v : Vars}
 
 export
 all : Rules
-all = general ++ components ++ icons ++ widgets
+all = general ++ components ++ forms ++ widgets
 
 main : IO ()
 main = traverse_ (putStrLn . interpolate) all

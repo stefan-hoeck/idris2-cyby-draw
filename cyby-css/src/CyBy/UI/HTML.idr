@@ -6,6 +6,22 @@ import public Text.HTML
 %default total
 
 --------------------------------------------------------------------------------
+-- Utilities
+--------------------------------------------------------------------------------
+
+export
+formSep : HTMLNode
+formSep = div [class formsep] []
+
+export
+hbarSep : HTMLNode
+hbarSep = div [class hbarsep] []
+
+export
+vbarSep : HTMLNode
+vbarSep = div [class vbarsep] []
+
+--------------------------------------------------------------------------------
 -- Icons
 --------------------------------------------------------------------------------
 
@@ -13,18 +29,8 @@ export
 pathNoStroke : String
 pathNoStroke = "path style='stroke:none;fill:currentcolor;'"
 
-export
-roundedPath : {default False fill: Bool} -> Double -> String
-roundedPath sw =
- let fs : String
-     fs = if fill then "fill:currentcolor" else "fill:none"
-  in "style='\{fs};stroke:currentcolor;stroke-width:\{show sw};stroke-linejoin:round;stroke-linecap:round'"
-
-
--- The following icons are to be inlined directly in the DOM. This allows us
--- to change their colouring based on CSS rules, which prevents us from
--- having to come up with several `.svg` files for the different states
--- (active, hovered, disabled) an icon can be in
+-- The following icons are to be inlined directly in the DOM. We use
+-- `currentcolor` to adopt the coloring of the parent container.
 
 ||| Icon for selecting items in the UI
 export

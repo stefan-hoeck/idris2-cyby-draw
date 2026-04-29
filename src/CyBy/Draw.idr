@@ -2,12 +2,12 @@ module CyBy.Draw
 
 import CyBy.Draw.Internal.Color
 import CyBy.Draw.Internal.Label
+import CyBy.UI.CSS.Classes
 import CyBy.UI.HTML
 import Data.Finite
 import Data.List
 import Geom
 import Geom.Gen2D.Debug
-import Text.CSS
 import Text.HTML.DomID
 import Text.HTML.Select
 import Text.SVG
@@ -202,10 +202,7 @@ pse (SetAtom i) = all (i.elem /=) (the (List Elem) [C,O,N,F,P,S,Cl,Br])
 pse _           = False
 
 detail : String -> HTMLNode -> HTMLNode
-detail title n =
-  div
-    [class "cyby-draw-detail"]
-    [label [] [ Text title ], n]
+detail ttl n = div [class formRow] [label [class formLabel] [Text ttl], n]
 
 currAbbr : Mode -> Maybe String
 currAbbr (SetAbbr a) = Just a.label
@@ -216,12 +213,12 @@ parameters {auto de : Sink DrawEvent}
   elems : MolAtomAT -> HTMLNode
   elems a =
     selectFromListBy values (a.elem.elem ==) symbol ChgElem
-      [ class widget, title "set element" ]
+      [ classes [widget,formValue], title "set element" ]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
     selectFromListBy chs (a.charge ==) (show . value) ChgCharge
-      [ class widget, title "set charge" ]
+      [ classes [widget,formValue], title "set charge" ]
     where
       chs : List Charge
       chs = mapMaybe refineCharge [(-8) .. 8]
@@ -229,7 +226,7 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [ class widget, title "set charge" ]
+      [ classes [widget,formValue], title "set charge" ]
     where
       dispMass : Maybe MassNr -> String
       dispMass Nothing  = "Mix"
@@ -271,17 +268,21 @@ parameters {auto de : Sink DrawEvent}
       [ icon [] SelectMode (s.mode == Select) "select" select
       , icon [] EraseMode (s.mode == Erase) "erase" erase
       , icon [] Clear False "clear" trash
+      , vbarSep
       , disable (s.undos == []) $ icon [] Undo False "undo" undo
       , disable (s.redos == []) $ icon [] Redo False "redo" redo
+      , vbarSep
       , icon [] Center False "center" center
       , disable (maxZoom s.transform) $ icon [] (ZoomIn False) False "zoom in" zoomIn
       , disable (minZoom s.transform) $ icon [] (ZoomOut False) False "zoom out" zoomOut
+      , vbarSep
       , bondIcon (cast Single) "single bond" s single
       , bondIcon (fromStereo Up) "single bond up" s bondUp
       , bondIcon (fromStereo Down) "single bond down" s bondDown
       , bondIcon (fromStereo Either) "single bond up or down" s bondEither
       , bondIcon (cast Types.Dbl) "double bond" s double
       , bondIcon (cast Triple) "triple bond" s triple
+      , vbarSep
       ] ++ topadd
 
   template : CDGraph -> String -> DrawState -> HTMLNode -> HTMLNode
@@ -302,11 +303,12 @@ parameters {auto de : Sink DrawEvent}
       , elemIcon s "Sulfur" S
       , elemIcon s "Chlorine" Cl
       , elemIcon s "Bromine" Br
-      , icon [smallText] StartPSE (pse s.mode) "PSE" "PSE"
+      , hbarSep
+      , icon [] StartPSE (pse s.mode) "PSE" "PSE"
       ]
 
-  rightBar : (pre : String) -> DrawState -> HTMLNode
-  rightBar pre s =
+  rightBarItems : (pre : String) -> DrawState -> HTMLNodes
+  rightBarItems pre s =
     case selectedNodes s.imol False of
       [n] =>
         let atm     := atom $ lab s.imol n
@@ -314,15 +316,13 @@ parameters {auto de : Sink DrawEvent}
             [x,y,_] := atm.position
             cx      := dispCoordShort x
             cy      := dispCoordShort y
-         in div
-              [ Id $ rightBarID pre, class toolbarRight ]
-              [ detail "Element"  $ elems atm
-              , detail "Isotope"  $ massNrs atm
-              , detail "Charge"   $ charges atm
-              , detail "Type"     $ div [ class "cyby-draw-atomtype"] [Text tpe]
-              , detail "x-Coord." $ div [ class "cyby-draw-atomtype"] [Text cx]
-              , detail "y-Coord." $ div [ class "cyby-draw-atomtype"] [Text cy]
-              ]
+         in [ detail "Element"  $ elems atm, formSep
+            , detail "Isotope"  $ massNrs atm, formSep
+            , detail "Charge"   $ charges atm, formSep
+            , detail "Type"     $ div [class formValue] [Text tpe], formSep
+            , detail "x-Coord." $ div [class formValue] [Text cx], formSep
+            , detail "y-Coord." $ div [class formValue] [Text cy]
+            ]
       _   => case selectedEdges s.imol of
         [(x,y)] =>
           let px := point $ position $ atom $ lab s.imol x
@@ -330,12 +330,18 @@ parameters {auto de : Sink DrawEvent}
               d  := printDouble 3 $ distance px py
               a  := angleOrZero (px - py)
               a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a
-           in div
-                [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ]
-                [ detail "Length"   $ div [ class "cyby-draw-atomtype"] [Text "\{d} Å"]
-                , detail "Angle"    $ div [ class "cyby-draw-atomtype"] [Text "\{a'}°"]
-                ]
-        _       => div [ Id $ rightBarID pre, class toolbarRight ] []
+           in [ detail "Length"   $ div [class formValue] [Text "\{d} Å"], formSep
+              , detail "Angle"    $ div [class formValue] [Text "\{a'}°"]
+              ]
+        _       => []
+
+  rightBar : (pre : String) -> DrawState -> HTMLNode
+  rightBar pre s =
+    div
+      [ Id $ rightBarID pre, class toolbarRight ]
+      [ div [class compTitle] ["Details"]
+      , div [class compList] (rightBarItems pre s)
+      ]
 
   bottomBar : DrawSettings => (pre : String) -> DrawState -> HTMLNode
   bottomBar pre s =
@@ -348,6 +354,7 @@ parameters {auto de : Sink DrawEvent}
       , template (ring 4) "cyclobutane" s cyclobutane
       , template (ring 7) "cycloheptane" s cycloheptane
       , template (ring 8) "cyclooctane" s cyclooctane
+      , vbarSep
       , abbrs pre s
       ]
 
@@ -397,9 +404,6 @@ expBtn @{DE pre} txt s =
 --          Controller
 --------------------------------------------------------------------------------
 
-molCanvasCls : Class
-molCanvasCls = "cyby-draw-molecule-canvas"
-
 parameters {auto ds : DrawSettings}
            {auto se : Sink DrawEvent}
            {auto lm : Loggable JS DrawMsg}
@@ -407,13 +411,13 @@ parameters {auto ds : DrawSettings}
            (pre : String)
 
   canvasCls : List Class -> Act ()
-  canvasCls = attr (moleculeCanvas pre) . classes . (molCanvasCls ::)
+  canvasCls = attr (moleculeCanvas pre) . classes . (moleculeCanvas ::)
 
   rotating : Act ()
-  rotating = canvasCls ["rotating"]
+  rotating = canvasCls [rotating]
 
   dragging : Act ()
-  dragging = canvasCls ["dragging"]
+  dragging = canvasCls [dragging]
 
   normal : Act ()
   normal = canvasCls []
@@ -439,6 +443,7 @@ parameters {auto ds : DrawSettings}
     replace (topBarID pre) (topBar pre topadd s)
     replace (bottomBarID pre) (bottomBar pre s)
     replace (leftBarID pre) (leftBar pre s)
+    replace (rightBarID pre) (rightBar pre s)
 
   dispKeyDown : String -> DrawState -> Act ()
   dispKeyDown "Escape" s = Prelude.do

@@ -35,6 +35,18 @@ export %inline
 smallText : Class
 smallText = "cyby-small-text"
 
+export %inline
+formsep : Class
+formsep = "cyby-form-sep"
+
+export %inline
+hbarsep : Class
+hbarsep = "cyby-hbar-sep"
+
+export %inline
+vbarsep : Class
+vbarsep = "cyby-vbar-sep"
+
 --------------------------------------------------------------------------------
 -- Components
 --------------------------------------------------------------------------------
@@ -60,6 +72,18 @@ toolbarBottom : Class
 toolbarBottom = "cyby-draw-toolbar-bottom"
 
 export %inline
+drawLog : Class
+drawLog = "cyby-draw-log"
+
+export %inline
+compList : Class
+compList = "cyby-comp-list"
+
+export %inline
+compTitle : Class
+compTitle = "cyby-comp-title"
+
+export %inline
 moleculeCanvas : Class
 moleculeCanvas = "cyby-draw-molecule-canvas"
 
@@ -71,21 +95,17 @@ export %inline
 dragging : Class
 dragging = "cyby-draw-dragging"
 
---------------------------------------------------------------------------------
--- Icons
---------------------------------------------------------------------------------
+export %inline
+formRow : Class
+formRow = "cyby-form-row"
 
 export %inline
-fillPath : Class
-fillPath = "cyby-fill-path"
+formLabel : Class
+formLabel = "cyby-form-label"
 
 export %inline
-molPath : Class
-molPath = "cyby-mol-path"
-
-export %inline
-molFillPath : Class
-molFillPath = "cyby-molfill-path"
+formValue : Class
+formValue = "cyby-form-value"
 
 --------------------------------------------------------------------------------
 -- Interactive Elements
