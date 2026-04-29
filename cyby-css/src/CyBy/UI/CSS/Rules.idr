@@ -2,11 +2,11 @@ module CyBy.UI.CSS.Rules
 
 import Chem.Elem
 import Derive.Prelude
-import Text.CSS
 import Text.CSS.Cursor
 import Text.HTML.Ref
 import Text.HTML.Tag
 import CyBy.UI.CSS.Classes
+import CyBy.UI.CSS.Vars
 
 %default total
 %language ElabReflection
@@ -24,142 +24,70 @@ data Tag = Top | Bot | Left | Right | Draw | Dot
 %runElab derive "Tag" [Show,Eq]
 
 --------------------------------------------------------------------------------
--- Colours
---------------------------------------------------------------------------------
-
-public export
-record Colours where
-  [noHints]
-  constructor C
-  gray10              : Color
-  gray20              : Color
-  gray50              : Color
-  gray80              : Color
-  gray90              : Color
-
-  primary10           : Color
-  primary20           : Color
-  primary50           : Color
-  primary80           : Color
-  primary90           : Color
-
-  secondary10         : Color
-  secondary20         : Color
-  secondary50         : Color
-  secondary80         : Color
-  secondary90         : Color
-
-  boron               : Color
-  bromine             : Color
-  carbon              : Color
-  chlorine            : Color
-  fluorine            : Color
-  nitrogen            : Color
-  oxygen              : Color
-  phosphorous         : Color
-  sulfur              : Color
-
-export %hint
-defaultColours : Colours
-defaultColours =
-  C {
-    gray10              = hsl 240 10.perc 95.perc
-  , gray20              = hsl 240 10.perc 90.perc
-  , gray50              = hsl 240 10.perc 55.perc
-  , gray80              = hsl 240 10.perc 25.perc
-  , gray90              = hsl 240 10.perc 10.perc
-
-  , primary10           = hsl 240 20.perc 95.perc
-  , primary20           = hsl 240 30.perc 90.perc
-  , primary50           = hsl 240 80.perc 40.perc
-  , primary80           = hsl 240 60.perc 25.perc
-  , primary90           = hsl 240 40.perc 10.perc
-
-  , secondary10         = hsl 180 20.perc 95.perc
-  , secondary20         = hsl 180 30.perc 90.perc
-  , secondary50         = hsl 180 80.perc 40.perc
-  , secondary80         = hsl 180 60.perc 25.perc
-  , secondary90         = hsl 180 40.perc 10.perc
-
-  , boron               = rgb 0xff 0xb5 0xb5
-  , carbon              = dimgray
-  , fluorine            = limegreen
-  , sulfur              = rgb 0xE6 0xC6 0x40
-  , oxygen              = rgb 0xFF 0x0D 0x0D
-  , nitrogen            = rgb 0x30 0x50 0xF8
-  , chlorine            = rgb 0x1F 0xF0 0x1F
-  , bromine             = rgb 0xA6 0x29 0x29
-  , phosphorous         = rgb 0xFF 0x80 0x00
-  }
-
-export %inline
-(.bg) : Colours -> Color
-(.bg) = primary10
-
-export %inline
-(.fg) : Colours -> Color
-(.fg) = primary90
-
---------------------------------------------------------------------------------
 -- Reusable
 --------------------------------------------------------------------------------
 
-export
-gridGaps : List Declaration
-gridGaps = [rowGap 0.25.rem, columnGap 0.25.rem]
+parameters {auto v : Vars}
 
-export
-flexRow : List Declaration
-flexRow = [display Flex, flexDirection Row, columnGap 0.25.rem]
 
-export
-flexColumn : List Declaration
-flexColumn = [display Flex, flexDirection Column, rowGap 0.25.rem]
+  export
+  gridGaps : List Declaration
+  gridGaps = [rowGap v.gap, columnGap v.gap]
 
-export
-solidBorder : Color -> List Declaration
-solidBorder c =
-  [borderStyle (All Solid), borderWidth 1.px, borderColor (All c)]
+  export
+  flexRow : List Declaration
+  flexRow = [display Flex, flexDirection Row, columnGap v.gap]
 
-export
-roundedBorder : Color -> List Declaration
-roundedBorder c = borderRadius 0.25.rem :: solidBorder c
+  export
+  flexColumn : List Declaration
+  flexColumn = [display Flex, flexDirection Column, rowGap v.gap]
 
-export
-wregular : (c : Colours) => List Declaration
-wregular =
-  backgroundColor c.primary20
-  :: color c.primary80
-  :: outlineColor Current
-  :: outlineStyle None
-  :: roundedBorder Current
+  export
+  solidBorder : Color -> List Declaration
+  solidBorder c =
+    [ borderStyle (All Solid)
+    , borderWidth  (All v.narrowBW)
+    , borderColor (All c)
+    ]
 
-export
-wactive : (c : Colours) => List Declaration
-wactive =
-  backgroundColor c.primary10
-  :: color c.primary50
-  :: outlineStyle Solid
-  :: outlineWidth 1.px
-  :: Nil
-  
+  export
+  roundedBorder : Color -> List Declaration
+  roundedBorder c = borderRadius v.cornerRad :: solidBorder c
 
-export
-whovered : (c : Colours) => List Declaration
-whovered =
-  backgroundColor c.primary20
-  :: color c.primary50
-  :: outlineStyle Solid
-  :: outlineWidth 1.px
-  :: Nil
+  export
+  wregular : List Declaration
+  wregular =
+    backgroundColor widgetBG
+    :: color widgetFG
+    :: outlineColor Current
+    :: outlineStyle None
+    :: roundedBorder Current
 
-export
-wdisabled : (c : Colours) => List Declaration
-wdisabled =
-  color c.gray80
-  :: backgroundColor c.gray20
-  :: outlineStyle None
-  :: roundedBorder c.gray20
+  export
+  wactive : List Declaration
+  wactive =
+    [ backgroundColor activeBG
+    , color activeFG
+    , outlineStyle Solid
+    , outlineWidth v.narrowBW
+    ]
+
+  export
+  whovered : List Declaration
+  whovered =
+    [ backgroundColor widgetBG
+    , color activeFG
+    , outlineStyle Solid
+    , outlineWidth v.narrowBW
+    ]
+
+  export
+  wdisabled : List Declaration
+  wdisabled =
+    color disabledFG
+    :: backgroundColor disabledBG
+    :: outlineStyle None
+    :: roundedBorder disabledBG
 
 export
 hoveredSVG : Class -> Selector
@@ -181,98 +109,99 @@ disabledSVG c = Complex [class widget, Disabled] Descendant (class c)
 -- General
 --------------------------------------------------------------------------------
 
-export
-general : (c : Colours) => Rules
-general =
-  [ elem Html [height 100.perc, width 100.perc]
-
-  , elem Body
-      [ display Flex
-      , height 100.perc
-      , width 100.perc
-      , backgroundColor c.primary10
-      , color c.primary90
-      , padding (All 1.rem)
-      ]
-
-  -- this makes sure that the text in a label is vertically centered
-  , elem Label [display Flex , alignItems Center, padding (VH 0.1.rem 0.4.rem)]
-
-  , class hidden [display None]
-
-  , class quadratic [aspectRatio 1]
-
-  , class smallText [fontSize Small]
-  ]
-
-||| Rules the main UI components
-export
-components : (c : Colours) => Rules
-components =
-  [ class sketcherDiv $
-      area
-        [2.rem, 1.fr, 2.rem]
-        [2.rem, 1.fr, MaxContent]
-        [ [Top, Top, Dot]
-        , [Left, Draw, Right]
-        , [Bot, Bot, Dot]
+parameters {auto v : Vars}
+  export
+  general : Rules
+  general =
+    [ elem Html [height 100.perc, width 100.perc]
+  
+    , elem Body
+        [ display Flex
+        , height 100.perc
+        , width 100.perc
+        , backgroundColor bg
+        , color fg
+        , padding 1.em
         ]
-        :: width 100.perc
+  
+    -- this makes sure that the text in a label is vertically centered
+    , elem Label [display Flex , alignItems Center]
+  
+    , class hidden [display None]
+  
+    , class quadratic [aspectRatio 1]
+  
+    , class smallText [fontSize Small]
+    ]
+
+  ||| Rules the main UI components
+  export
+  components : Rules
+  components =
+    [ class sketcherDiv $
+        area
+          [cast v.bardim, 1.fr, cast v.bardim]
+          [cast v.bardim, 3.fr, 1.fr]
+          [ [Top, Top, Dot]
+          , [Left, Draw, Right]
+          , [Bot, Bot, Dot]
+          ]
+          :: width 100.perc
+          :: height 100.perc
+          :: gridGaps
+  
+    , class toolbarTop    $ gridArea Rules.Top   :: flexRow
+    , class toolbarBottom $ gridArea Rules.Bot   :: flexRow
+    , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
+    , class toolbarRight  $ gridArea Rules.Right :: flexColumn
+  
+    , class moleculeCanvas $
+        width 100.perc
         :: height 100.perc
-        :: gridGaps
-
-  , class toolbarTop    $ gridArea Rules.Top   :: flexRow
-  , class toolbarBottom $ gridArea Rules.Bot   :: flexRow
-  , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
-  , class toolbarRight  $ gridArea Rules.Right :: flexColumn
-
-  , class moleculeCanvas $
-      width 100.perc
-      :: height 100.perc
-      :: minWidth 0.px
-      :: minHeight 0.px
-      :: gridArea Draw
-      :: outlineStyle Solid
-      :: outlineWidth 1.px
-      :: outlineColor c.gray80
-      :: roundedBorder c.bg
-
-  , sel [class moleculeCanvas, attribute "data-active"]
-      [backgroundColor white, outlineWidth 2.px, outlineColor c.primary50]
-  , classes [moleculeCanvas,dragging] [cursor [Move]]
-  , classes [moleculeCanvas,rotating]
-      [cursor [URL_ "draw_icons/icon_rotation.svg", Cursor.Auto]]
-  ]
-
-export
-icons : (c : Colours) => Rules
-icons =
-  [ class fillPath [fill $ Just Current]
-  , class molPath [stroke $ Just Current]
-  ]
-
-||| Rules for interactive UI elements
-export
-widgets : (c : Colours) => Rules
-widgets =
-  [ class widget wregular
-  , sel [Class widget, Hover] whovered
-  , sel [Class widget, Active] wactive
-  , sel [Class widget, attribute "data-active"] wactive
-  , sel [Class widget, Disabled] wdisabled
-
-  , class icon [height 2.rem, padding (All 0.px)]
-
-  , class (elemText B)  [fontWeight Bold, color c.boron]
-  , class (elemText C)  [fontWeight Bold, color c.carbon]
-  , class (elemText F)  [fontWeight Bold, color c.fluorine]
-  , class (elemText S)  [fontWeight Bold, color c.sulfur]
-  , class (elemText O)  [fontWeight Bold, color c.oxygen]
-  , class (elemText N)  [fontWeight Bold, color c.nitrogen]
-  , class (elemText P)  [fontWeight Bold, color c.phosphorous]
-  , class (elemText Br) [fontWeight Bold, color c.bromine]
-  , class (elemText Cl) [fontWeight Bold, color c.chlorine]
-  ]
+        :: minWidth 0.px
+        :: minHeight 0.px
+        :: gridArea Draw
+        :: outlineStyle Solid
+        :: outlineWidth v.narrowBW
+        :: outlineColor v.gray80
+        :: roundedBorder bg
+  
+    , sel [class moleculeCanvas, attribute "data-active"]
+        [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
+    , classes [moleculeCanvas,dragging] [cursor [Move]]
+    , classes [moleculeCanvas,rotating]
+        [cursor [URL_ "draw_icons/icon_rotation.svg", Cursor.Auto]]
+    ]
+  
+  export
+  icons : Rules
+  icons =
+    [ class fillPath [fill $ Just Current]
+    , class molPath [stroke $ Just Current]
+    ]
+  
+  ||| Rules for interactive UI elements
+  export
+  widgets : Rules
+  widgets =
+    [ class widget $ alignSelf Stretch :: padding (VH 0.px v.paddingH) :: wregular
+    , sel [Class widget, Hover] whovered
+    , sel [Class widget, Active] wactive
+    , sel [Class widget, attribute "data-active"] wactive
+    , sel [Class widget, Disabled] wdisabled
+  
+    , classes [widget, icon] [padding 0.px]
+  
+    , class (elemText B)  [fontWeight Bold, color v.boron]
+    , class (elemText C)  [fontWeight Bold, color v.carbon]
+    , class (elemText F)  [fontWeight Bold, color v.fluorine]
+    , class (elemText S)  [fontWeight Bold, color v.sulfur]
+    , class (elemText O)  [fontWeight Bold, color v.oxygen]
+    , class (elemText N)  [fontWeight Bold, color v.nitrogen]
+    , class (elemText P)  [fontWeight Bold, color v.phosphorous]
+    , class (elemText Br) [fontWeight Bold, color v.bromine]
+    , class (elemText Cl) [fontWeight Bold, color v.chlorine]
+    ]
 
 export
 all : Rules
