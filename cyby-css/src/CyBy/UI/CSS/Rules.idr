@@ -1,12 +1,14 @@
 module CyBy.UI.CSS.Rules
 
 import Chem.Elem
+import CyBy.UI.CSS.Classes
+import CyBy.UI.CSS.Vars
+import CyBy.UI.HTML
 import Derive.Prelude
+import IO.Async.Logging
 import Text.CSS.Cursor
 import Text.HTML.Ref
 import Text.HTML.Tag
-import CyBy.UI.CSS.Classes
-import CyBy.UI.CSS.Vars
 
 %default total
 %language ElabReflection
@@ -29,10 +31,17 @@ data Tag = Top | Bot | Left | Details | Log | Draw | Dot
 
 parameters {auto v : Vars}
 
-
   export
   gridGaps : List Declaration
   gridGaps = [rowGap v.gap, columnGap v.gap]
+
+  export
+  hpadded : Declaration
+  hpadded = padding (VH 0.px v.paddingH)
+
+  export
+  padded : Declaration
+  padded = padding (All v.paddingH)
 
   export
   flexRow : List Declaration
@@ -114,6 +123,7 @@ parameters {auto v : Vars}
         , backgroundColor bg
         , color fg
         , padding 1.em
+        , containerType Size
         ]
   
     -- this makes sure that the text in a label is vertically centered
@@ -139,38 +149,47 @@ parameters {auto v : Vars}
     [ class sketcherDiv $
         area
           [cast v.bardim, 2.fr, 1.fr, cast v.bardim]
-          [cast v.bardim, 3.fr, 1.fr]
-          [ [Dot, Top, Top]
+          [cast v.bardim, 4.fr, 1.fr]
+          [ [Dot,  Top,  Top]
           , [Left, Draw, Details]
           , [Left, Draw, Log]
-          , [Dot, Bot, Bot]
+          , [Dot,  Bot,  Bot]
           ]
-          :: width 100.perc
-          :: height 100.perc
-          :: gridGaps
+        :: width 100.perc
+        :: height 100.perc
+        :: gridGaps
+
+    , Container "width < 1440px" [class sketcherDiv [fontSize v.smallFont]]
+    , Container "width < 1024px" [class sketcherDiv [fontSize v.xsmallFont]]
+    , Container "width < 768px"  [class sketcherDiv [fontSize v.xxsmallFont]]
   
     , class toolbarTop    $ gridArea Rules.Top   :: flexRow
     , class toolbarBottom $ gridArea Rules.Bot   :: flexRow
     , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
     , class toolbarRight  $
            [containerType Size, gridArea Rules.Details]
+        ++ flexColumn
         ++ drawCompBorder
 
     , class drawLog $
-           [fontSize Small, containerType Size, gridArea Rules.Log, padding (All v.paddingH)]
+           [fontSize v.smallFont, containerType Size, gridArea Rules.Log]
+        ++ flexColumn
         ++ drawCompBorder
 
-    , class compList $ padding (All v.paddingH) :: flexColumn
+    , class compList $ flex "1" :: overflowY Scroll :: padded :: flexColumn
 
     , class compTitle $
            width 100.perc
+        :: display Flex
+        :: alignItems Center
         :: height v.titleHeight
         :: backgroundColor widgetFG
         :: color v.primary10
+        :: hpadded
         :: roundedBorder widgetFG
   
     , class moleculeCanvas $
-        width 100.perc
+           width 100.perc
         :: height 100.perc
         :: minWidth 0.px
         :: minHeight 0.px
@@ -181,7 +200,14 @@ parameters {auto v : Vars}
         [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
     , classes [moleculeCanvas,dragging] [cursor [Move]]
     , classes [moleculeCanvas,rotating]
-        [cursor [URL_ "draw_icons/icon_rotation.svg", Cursor.Auto]]
+        [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
+
+    , class (level Fatal) [color red]
+    , class (level Error) [color red]
+    , class (level Warn)  [color $ rgb 255 165 0]
+    , class (level Info)  [color $ rgb 0 128 0]
+    , class (level Debug) [color $ gray]
+    , class (level Trace) [color $ gray]
     ]
 
   ||| Rules for form-like lists (label plus description/widget)
@@ -202,7 +228,7 @@ parameters {auto v : Vars}
   export
   widgets : Rules
   widgets =
-    [ class widget $ alignSelf Stretch :: padding (VH 0.px v.paddingH) :: wregular
+    [ class widget $ alignSelf Stretch :: hpadded :: wregular
     , sel [Class widget, Hover] whovered
     , sel [Class widget, Active] wactive
     , sel [Class widget, attribute "data-active"] wactive

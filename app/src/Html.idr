@@ -29,20 +29,20 @@ fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 -- Logging
 --------------------------------------------------------------------------------
 
+App : String
+App = "app"
+
 AppLog : DomID
 AppLog = "app-log"
 
 Content : Ref Tag.Body
 Content = Id "content"
 
-lvl : LogLevel -> Class
-lvl l = C "cyby-draw-loglvl-\{l}"
-
 logNode : LogLevel -> List String -> HTMLNode
 logNode l msgs =
-  div [class "cyby-draw-log-row"]
-    [ div [class $ lvl l] [Text $ "[\{l}]"]
-    , div [class "cyby-draw-log-msg"] $ intersperse (br []) (map Text msgs)
+  div [class formRow]
+    [ div [classes [formLabel, level l]] [Text $ "[\{l}]"]
+    , div [class formValue] $ intersperse (br []) (map Text msgs)
     ]
 
 printErr : JSErr -> JS [] ()
@@ -109,7 +109,7 @@ parameters {auto st  : IORef AppST}
   drawEv s e = Prelude.do
     ds <- drawSettings <$> readref ast
     let s2 := update e s
-    displaySketcher {ex = ext} "app" e s2
+    displaySketcher {ex = ext} App e s2
     pure s2
 
   loadFile : FileEv -> Act ()
@@ -137,18 +137,29 @@ parameters {auto st  : IORef AppST}
   appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
   appEv (LoadMol ev) = loadFile ev
 
+appLog : HTMLNode
+appLog =
+  div
+    [ class drawLog ]
+    [ div [class compTitle] ["Log"]
+    , div [ref AppLog, classes [compList]] []
+    ]
+
 ui : JSStream Void
 ui = Prelude.do
   let lg := uilog Info
-  E dms <- exec $ event {fs = [JSErr]} DrawMsg
-  E aes <- exec $ event {fs = [JSErr]} AppEvent
-  E des <- exec $ eventFrom {fs = [JSErr]} (KeyDown "Escape")
-  r     <- exec $ castElementByRef Content >>= getClientRect
-  ast   <- newref (AST CyBy)
+  E dms  <- exec $ event {fs = [JSErr]} DrawMsg
+  E aes  <- exec $ event {fs = [JSErr]} AppEvent
+  E des  <- exec $ event {fs = [JSErr]} DrawEvent
+  r      <- exec $ castElementByRef Content >>= getClientRect
+  ast    <- newref (AST CyBy)
   let ds   := drawSettings (AST CyBy)
       dims := SD (cast $ r.width - 350) (cast $ r.height - 100)
       st   := init dims Init ""
-  dst   <- newref {s = World} st
+  dst    <- newref {s = World} st
+  topadd <- exec (buttons (ext ast dst) (DE App) st)
+  exec $ child Content (sketcher App topadd st)
+  exec $ append (sketcherDiv App) appLog
   merge
     [ foreach logLoggable dms
     , foreach (appEv ast dst) aes

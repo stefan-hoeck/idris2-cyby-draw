@@ -446,9 +446,7 @@ parameters {auto ds : DrawSettings}
     replace (rightBarID pre) (rightBar pre s)
 
   dispKeyDown : String -> DrawState -> Act ()
-  dispKeyDown "Escape" s = Prelude.do
-    topadd <- ex.buttons (DE pre) s
-    replace (sketcherDiv pre) (sketcher pre topadd s)
+  dispKeyDown "Escape" s = adjustBars s
   dispKeyDown "c" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph True s.mol

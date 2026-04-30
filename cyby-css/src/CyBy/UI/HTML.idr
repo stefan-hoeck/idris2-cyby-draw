@@ -129,3 +129,8 @@ cyclooctane = Raw "<svg viewBox='0 0 20 20'><g transform='matrix(0.36164455,0,0,
 export
 benzene : HTMLNode
 benzene = Raw "<svg viewBox='0 0 20 20'><g transform='matrix(0.45096964,0,0,0.45303572,116.42884,56.435799)' style='fill:none;stroke:currentcolor;stroke-width:1.47492141;stroke-linecap:round'><path d='m -236,-122.4992 -17.3184,10 m 17.31816,-5.3812 13.31852,7.69039 M -236,-122.4992 l 17.3184,10 m -30.6368,2.3094 v 15.381199 m -4,-17.690599 v 20 m 0,0 17.3184,10 m -2.4e-4,-4.618802 13.31852,-7.690388 M -236,-82.4992 l 17.3184,-10 m 0,0 v -20'/></g></svg>"
+
+||| base-64 encoded png of the rotate icon
+export
+rotate : String
+rotate = "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAATlJREFUOI2t1L8rt1EYx/HXhcQgkygZDKRkYkOZlNm/oWzKIFam58litTH4JwzKbPEjZZNsFE89OIbvwZfur/u+5arTqXN9rvc5netHpJT8prVVEUVE568CcRwRw5WUKaWWC71YxAtuMfedPqVUDEQP/uABqWnt1gZiCOe4xwbG8B9riFpAdOMEVxhtOl8oA7UCruEfJqoCWgJzxq+x81NYSulT2YxjAAcVS6nQmoGDeb+sGhwRXRFxGBFjRcDHvHfXeNAIZtFXBDzXqLXJGsDJHHPxdhDNwyEijvCSUpopI0VE4E0//e74UjYL+cal0vJgOWvnyzplG09YQUeBvwOreMbfKq3Xji2NgXCKdY0BsajRimfZt4n2SsMhg6ewjzsfw+EOe5hqFfcpKd8koD//902ptgqwjr0CIOjbf9SaOuwAAAAASUVORK5CYII="

@@ -47,6 +47,11 @@ record Vars where
   barSepwidth         : Width        -- width of a separator in a toolbar
   formSepwidth        : Width        -- width of field separator in a form
 
+  --    Fontsizes --
+  smallFont           : FontSize
+  xsmallFont          : FontSize
+  xxsmallFont         : FontSize
+
   --    widgets --
   cornerRad           : BorderRadius -- preferred border radius
   narrowBW            : BorderWidth  -- narrow border width
@@ -91,6 +96,10 @@ defaultVars =
   , formLblWidth        = 6.em
   , barSepwidth         = 3.px
   , formSepwidth        = 1.px
+
+  , smallFont           = 0.89.em
+  , xsmallFont          = 0.75.em
+  , xxsmallFont         = 0.60.em
 
   , cornerRad           = 0.25.em
   , narrowBW            = 1.px

@@ -2,6 +2,7 @@ module CyBy.UI.CSS.Classes
 
 import Chem.Elem
 import Data.String
+import IO.Async.Logging
 import Text.HTML.Attribute
 import public Text.CSS.Class
 
@@ -106,6 +107,10 @@ formLabel = "cyby-form-label"
 export %inline
 formValue : Class
 formValue = "cyby-form-value"
+
+export
+level : LogLevel -> Class
+level l = C "cyby-loglvl-\{l}"
 
 --------------------------------------------------------------------------------
 -- Interactive Elements
