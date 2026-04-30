@@ -1,19 +1,19 @@
 module CyBy.Draw
 
+import CyBy.Draw.Internal.Color
+import CyBy.Draw.Internal.Label
+import CyBy.UI.CSS.Classes
+import CyBy.UI.HTML
 import Data.Finite
 import Data.List
 import Geom
-import Text.CSS
+import Geom.Gen2D.Debug
 import Text.HTML.DomID
 import Text.HTML.Select
-import Text.Show.Pretty
 import Text.SVG
+import Text.Show.Pretty
 import Web.Async
 import Web.Internal.Types
-
-import CyBy.Draw.Internal.Color
-import CyBy.Draw.Internal.Label
-import Geom.Gen2D.Debug
 
 import public CyBy.Draw.Draw
 import public CyBy.Draw.Event
@@ -29,6 +29,11 @@ import public CyBy.Draw.PeriodicTableCanvas
 import public Text.Molfile
 
 %default total
+%hide Text.SVG.Types.Path.t
+
+--------------------------------------------------------------------------------
+-- Extensions
+--------------------------------------------------------------------------------
 
 export
 color : ColorScheme -> Elem -> SVGColor
@@ -134,10 +139,6 @@ sketcherDiv : String -> Ref Div
 sketcherDiv pre = Id "\{pre}-sketcher-div"
 
 export
-sketcherDivInner : String -> Ref Div
-sketcherDivInner pre = Id "\{pre}-sketcher-div-inner"
-
-export
 molReader : String -> Ref Div
 molReader pre = Id "\{pre}-mol-reader"
 
@@ -162,10 +163,6 @@ bottomBarID : String -> Ref Div
 bottomBarID pre = Id "\{pre}-bottom-bar"
 
 export
-abbrID : String -> Ref Tag.Select
-abbrID pre = Id "\{pre}-abbreviations"
-
-export
 expButton : String -> Ref Tag.Button
 expButton pre = Id "\{pre}-exp-button"
 
@@ -173,14 +170,11 @@ expButton pre = Id "\{pre}-exp-button"
 --          View
 --------------------------------------------------------------------------------
   
-hidden : {0 t : _} -> Attribute t
-hidden = class "hidden"
-
-abbrCls : DrawState -> List Class
-abbrCls s =
+abbrActive : DrawState -> Attribute t
+abbrActive s =
   case s.mode of
-    SetAbbr _ => ["cyby-draw-select","active"]
-    _         => ["cyby-draw-select"]
+    SetAbbr _ => active True
+    _         => active False
 
 drawing : MolBond -> DrawState -> Bool
 drawing b s =
@@ -208,25 +202,23 @@ pse (SetAtom i) = all (i.elem /=) (the (List Elem) [C,O,N,F,P,S,Cl,Br])
 pse _           = False
 
 detail : String -> HTMLNode -> HTMLNode
-detail title n =
-  div
-    [class "cyby-draw-detail"]
-    [label [ class "cyby-draw-label" ] [ Text title ], n]
+detail ttl n = div [class formRow] [label [class formLabel] [Text ttl], n]
 
-px : Double -> String
-px v = show (cast {to = Bits32} v) ++ "px"
+currAbbr : Mode -> Maybe String
+currAbbr (SetAbbr a) = Just a.label
+currAbbr _           = Nothing
 
 parameters {auto de : Sink DrawEvent}
 
   elems : MolAtomAT -> HTMLNode
   elems a =
     selectFromListBy values (a.elem.elem ==) symbol ChgElem
-      [ class "cyby-draw-select", title "Set Element" ]
+      [ classes [widget,formValue], title "set element" ]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
     selectFromListBy chs (a.charge ==) (show . value) ChgCharge
-      [ class "cyby-draw-select", title "Set Charge" ]
+      [ classes [widget,formValue], title "set charge" ]
     where
       chs : List Charge
       chs = mapMaybe refineCharge [(-8) .. 8]
@@ -234,50 +226,35 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [ class "cyby-draw-select", title "Set Charge" ]
+      [ classes [widget,formValue], title "set charge" ]
     where
       dispMass : Maybe MassNr -> String
       dispMass Nothing  = "Mix"
       dispMass (Just m) = show m.value
   
-  icon' :
-       List (Attribute Tag.Button)
-    -> (cls : Class)
+  icon :
+       Classes
     -> DrawEvent
+    -> (active : Bool)
     -> (title : String)
     -> HTMLNode
-  icon' as cls ev ttl =
-    button (classes ["cyby-draw-icon", cls] :: onClick ev :: title ttl :: as) []
-
-  %inline
-  icon : (cls : Class) -> DrawEvent -> (title : String) -> HTMLNode
-  icon = icon' []
-
-  radioIcon : (cls : Class) -> DrawEvent -> (ttl : String) -> Bool -> HTMLNode
-  radioIcon cls ev ttl b =
-    input
-      [ name "tool"
-      , type Radio
-      , classes ["cyby-draw-radio-icon", cls]
-      , onClick ev, title ttl
-      , checked b
-      ]
+    -> HTMLNode
+  icon cs ev a ttl child =
+    button
+      [classes (widget::icon::quadratic::cs),active a,onClick ev,title ttl]
+      [child]
 
   abbrs : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
   abbrs pre s =
     selectFromListBy
-      ds.abbreviations
-      (\a => any ((a.label ==) . label) s.abbr)
-      label
-      SelAbbr
-      [ Id $ abbrID pre
-      , classes $ abbrCls s
-      , title "Abbreviations"
-      , Event (MouseDown $ \mi => toMaybe (mi.button == 0) EnableAbbr)
-      ]
+      (Nothing :: map Just ds.abbreviations)
+      (\v => currAbbr s.mode == map label v)
+      (maybe "--abbreviation--" label)
+      (maybe Redraw SelAbbr)
+      [class widget, abbrActive s]
 
-  bondIcon : Class -> MolBond -> String -> DrawState -> HTMLNode
-  bondIcon c b title = radioIcon c (SetBond b) title . drawing b
+  bondIcon : MolBond -> String -> DrawState -> HTMLNode -> HTMLNode
+  bondIcon b title s = icon [] (SetBond b) (drawing b s) title
 
   topBar :
        {auto ds : DrawSettings}
@@ -287,45 +264,51 @@ parameters {auto de : Sink DrawEvent}
     -> HTMLNode
   topBar {ds} pre topadd s =
     div
-      [ Id $ topBarID pre, class "cyby-draw-toolbar-top" ] $
-      [ radioIcon "sel" SelectMode "select" (s.mode == Select)
-      , radioIcon "erase" EraseMode "erase" (s.mode == Erase)
-      , disable (emptyGraph s) $ icon "clear" Clear "clear"
-      , disable (s.undos == []) $ icon "undo" Undo "undo"
-      , disable (s.redos == []) $ icon "redo" Redo "redo"
-      , icon "center" Center "center"
-      , disable (maxZoom s.transform) $ icon "zoom-in" (ZoomIn False) "zoom in"
-      , disable (minZoom s.transform) $ icon "zoom-out" (ZoomOut False) "zoom out"
-      , bondIcon "single-bond" (cast Single) "single bond" s
-      , bondIcon "single-up" (fromStereo Up) "single bond up" s
-      , bondIcon "single-down" (fromStereo Down) "single bond down" s
-      , bondIcon "single-up-down" (fromStereo Either) "single bond up or down" s
-      , bondIcon "double-bond" (cast Chem.Types.Dbl) "double bond" s
-      , bondIcon "triple-bond" (cast Triple) "triple bond" s
+      [ Id $ topBarID pre, class toolbarTop ] $
+      [ icon [] SelectMode (s.mode == Select) "select" select
+      , icon [] EraseMode (s.mode == Erase) "erase" erase
+      , icon [] Clear False "clear" trash
+      , vbarSep
+      , disable (s.undos == []) $ icon [] Undo False "undo" undo
+      , disable (s.redos == []) $ icon [] Redo False "redo" redo
+      , vbarSep
+      , icon [] Center False "center" center
+      , disable (maxZoom s.transform) $ icon [] (ZoomIn False) False "zoom in" zoomIn
+      , disable (minZoom s.transform) $ icon [] (ZoomOut False) False "zoom out" zoomOut
+      , vbarSep
+      , bondIcon (cast Single) "single bond" s single
+      , bondIcon (fromStereo Up) "single bond up" s bondUp
+      , bondIcon (fromStereo Down) "single bond down" s bondDown
+      , bondIcon (fromStereo Either) "single bond up or down" s bondEither
+      , bondIcon (cast Types.Dbl) "double bond" s double
+      , bondIcon (cast Triple) "triple bond" s triple
+      , vbarSep
       ] ++ topadd
 
-  template : (cls : Class) -> CDGraph -> String -> DrawState -> HTMLNode
-  template cls g nm s =
-    radioIcon cls (SetTempl g) "Template \{nm}" (s.mode == SetTempl g)
+  template : CDGraph -> String -> DrawState -> HTMLNode -> HTMLNode
+  template g nm s = icon [] (SetTempl g) (s.mode == SetTempl g) "template \{nm}"
 
-  leftBar : (pre : String) -> DrawState -> HTMLNode
+  elemIcon : DrawState -> String -> Elem -> HTMLNode
+  elemIcon s t e = icon [elemText e] (SetElem e) (setting e s) t (Text $ symbol e)
+
   leftBar pre s =
     div
-      [ Id $ leftBarID pre, class "cyby-draw-toolbar-left" ]
-      [ radioIcon "set-c" (SetElem C) "Carbon" (setting C s)
-      , radioIcon "set-o" (SetElem O) "Oxygen" (setting O s)
-      , radioIcon "set-n" (SetElem N) "Nitrogen" (setting N s)
-      , radioIcon "set-f" (SetElem F) "Fluorine" (setting F s)
-      , radioIcon "set-p" (SetElem P) "Phosphorus" (setting P s)
-      , radioIcon "set-s" (SetElem S) "Sulfur" (setting S s)
-      , radioIcon "set-cl" (SetElem Cl) "Chlorine" (setting Cl s)
-      , radioIcon "set-br" (SetElem Br) "Bromine" (setting Br s)
-      , radioIcon "pse" StartPSE "PSE" (pse s.mode)
+      [ Id $ leftBarID pre, class toolbarLeft ]
+      [ elemIcon s "Boron" B
+      , elemIcon s "Carbon" C
+      , elemIcon s "Oxygen" O
+      , elemIcon s "Nitrogen" N
+      , elemIcon s "Fluorine" F
+      , elemIcon s "Phosphorous" P
+      , elemIcon s "Sulfur" S
+      , elemIcon s "Chlorine" Cl
+      , elemIcon s "Bromine" Br
+      , hbarSep
+      , icon [] StartPSE (pse s.mode) "PSE" "PSE"
       ]
 
-
-  rightBar : (pre : String) -> DrawState -> HTMLNode
-  rightBar pre s =
+  rightBarItems : (pre : String) -> DrawState -> HTMLNodes
+  rightBarItems pre s =
     case selectedNodes s.imol False of
       [n] =>
         let atm     := atom $ lab s.imol n
@@ -333,15 +316,13 @@ parameters {auto de : Sink DrawEvent}
             [x,y,_] := atm.position
             cx      := dispCoordShort x
             cy      := dispCoordShort y
-         in div
-              [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ]
-              [ detail "Element"  $ elems atm
-              , detail "Isotope"  $ massNrs atm
-              , detail "Charge"   $ charges atm
-              , detail "Type"     $ div [ class "cyby-draw-atomtype"] [Text tpe]
-              , detail "x-Coord." $ div [ class "cyby-draw-atomtype"] [Text cx]
-              , detail "y-Coord." $ div [ class "cyby-draw-atomtype"] [Text cy]
-              ]
+         in [ detail "Element"  $ elems atm, formSep
+            , detail "Isotope"  $ massNrs atm, formSep
+            , detail "Charge"   $ charges atm, formSep
+            , detail "Type"     $ div [class formValue] [Text tpe], formSep
+            , detail "x-Coord." $ div [class formValue] [Text cx], formSep
+            , detail "y-Coord." $ div [class formValue] [Text cy]
+            ]
       _   => case selectedEdges s.imol of
         [(x,y)] =>
           let px := point $ position $ atom $ lab s.imol x
@@ -349,24 +330,32 @@ parameters {auto de : Sink DrawEvent}
               d  := printDouble 3 $ distance px py
               a  := angleOrZero (px - py)
               a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a
-           in div
-                [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ]
-                [ detail "Length"   $ div [ class "cyby-draw-atomtype"] [Text "\{d} Å"]
-                , detail "Angle"    $ div [ class "cyby-draw-atomtype"] [Text "\{a'}°"]
-                ]
-        _       => div [ Id $ rightBarID pre, class "cyby-draw-toolbar-right" ] []
+           in [ detail "Length"   $ div [class formValue] [Text "\{d} Å"], formSep
+              , detail "Angle"    $ div [class formValue] [Text "\{a'}°"]
+              ]
+        _       => []
 
-  bottomBar : (pre : String) -> DrawState -> HTMLNode
+  rightBar : (pre : String) -> DrawState -> HTMLNode
+  rightBar pre s =
+    div
+      [ Id $ rightBarID pre, class toolbarRight ]
+      [ div [class compTitle] ["Details"]
+      , div [class compList] (rightBarItems pre s)
+      ]
+
+  bottomBar : DrawSettings => (pre : String) -> DrawState -> HTMLNode
   bottomBar pre s =
     div
-      [ Id $ bottomBarID pre, class "cyby-draw-toolbar-bottom-inner" ]
-      [ template "benzene" phenyl "Benzene" s
-      , template "cyclohexane" (ring 6) "Cyclohexane" s
-      , template "cyclopentane" (ring 5) "Cyclopentane" s
-      , template "cyclopropane" (ring 3) "Cyclopropane" s
-      , template "cyclobutane" (ring 4) "Cyclobutane" s
-      , template "cycloheptane" (ring 7) "Cycloheptane" s
-      , template "cyclooctane" (ring 8) "Cyclooctane" s
+      [ Id $ bottomBarID pre, class toolbarBottom ]
+      [ template phenyl "benzene" s benzene
+      , template (ring 6) "cyclohexane" s cyclohexane
+      , template (ring 5) "cyclopentane" s cyclopentane
+      , template (ring 3) "cyclopropane" s cyclopropane
+      , template (ring 4) "cyclobutane" s cyclobutane
+      , template (ring 7) "cycloheptane" s cycloheptane
+      , template (ring 8) "cyclooctane" s cyclooctane
+      , vbarSep
+      , abbrs pre s
       ]
 
   export
@@ -378,46 +367,33 @@ parameters {auto de : Sink DrawEvent}
     -> HTMLNode
   sketcher pre topadd s =
     div
-      [ class "cyby-draw-main-content"
-      , Id $ sketcherDiv pre
-      ]
-      [ div
-        [ class "cyby-draw-sketcher-div"
-        , Id $ sketcherDivInner pre
-        ]
-        [ topBar pre topadd s
-        , leftBar pre s
-        , rightBar pre s
-        , div
-            [ class "cyby-draw-molecule-canvas"
-            , Id $ moleculeCanvas pre
-            , Event $ MouseMove move
-            , Event $ MouseDown down
-            , Event $ MouseUp up
-            , Event_ True False $ Wheel wheel
-            , Event_ True False $ KeyDown (Just . KeyDown . key)
-            , Event_ True False $ KeyUp (Just . KeyUp . key)
-            , onMouseEnter Draw.Event.Focus
-            , onMouseLeave Draw.Event.Blur
-            , onDblClick Expand
-            , onResize (\r => Resize r.height r.width)
-            , Str "tabindex" "1"
-            , style
-                [ width $ px $ cast s.dims.swidth
-                , height $ px $ cast s.dims.sheight
-                ]
-            ]
-            [Raw s.curSVG]
-        , div
-            [ class "cyby-draw-toolbar-bottom-outer" ]
-            [ bottomBar pre s, abbrs pre s ]
-        ]
+      [ class sketcherDiv, Id $ sketcherDiv pre ]
+      [ topBar pre topadd s
+      , leftBar pre s
+      , rightBar pre s
+      , div
+          [ class moleculeCanvas
+          , Id $ moleculeCanvas pre
+          , Event $ MouseMove move
+          , Event $ MouseDown down
+          , Event $ MouseUp up
+          , Event_ True False $ Wheel wheel
+          , Event_ True False $ KeyDown (Just . KeyDown . key)
+          , Event_ True False $ KeyUp (Just . KeyUp . key)
+          , onMouseEnter Draw.Event.Focus
+          , onMouseLeave Draw.Event.Blur
+          , onDblClick Expand
+          , onResize (\r => Resize r.height r.width)
+          , Str "tabindex" "1"
+          , active s.isActive
+          ]
+          [Raw s.curSVG]
+      , bottomBar pre s
       ]
 
 export
 cybyDrawBtn : Sink e => String -> e -> Attributes Tag.Button -> HTMLNode
-cybyDrawBtn s e as =
-  button (class "cyby-draw-button" :: onClick e :: as) [Text s]
+cybyDrawBtn s e as = button (class widget :: onClick e :: as) [Text s]
 
 export
 expBtn : DrawEnv => String -> DrawState -> HTMLNode
@@ -428,9 +404,6 @@ expBtn @{DE pre} txt s =
 --          Controller
 --------------------------------------------------------------------------------
 
-molCanvasCls : Class
-molCanvasCls = "cyby-draw-molecule-canvas"
-
 parameters {auto ds : DrawSettings}
            {auto se : Sink DrawEvent}
            {auto lm : Loggable JS DrawMsg}
@@ -438,13 +411,13 @@ parameters {auto ds : DrawSettings}
            (pre : String)
 
   canvasCls : List Class -> Act ()
-  canvasCls = attr (moleculeCanvas pre) . classes . (molCanvasCls ::)
+  canvasCls = attr (moleculeCanvas pre) . classes . (moleculeCanvas ::)
 
   rotating : Act ()
-  rotating = canvasCls ["rotating"]
+  rotating = canvasCls [rotating]
 
   dragging : Act ()
-  dragging = canvasCls ["dragging"]
+  dragging = canvasCls [dragging]
 
   normal : Act ()
   normal = canvasCls []
@@ -458,17 +431,11 @@ parameters {auto ds : DrawSettings}
       Translating _ => dragging
       _             => applyWhenSel s dragging rotating normal
 
-  adjAbbrCls : DrawState -> Act ()
-  adjAbbrCls s = attr (abbrID pre) . classes $ abbrCls s
-
-  focusCurrentApp : Act ()
-  focusCurrentApp = focus (moleculeCanvas pre)
-
   displayST : (force : Bool) -> DrawState -> Act ()
-  displayST force s =
+  displayST force s = Prelude.do
+    when s.isActive $ focus (moleculeCanvas pre)
     when (force || s.curSVG /= s.prevSVG) $
-      child (moleculeCanvas pre) (Raw s.curSVG) >>
-      when s.hasFocus focusCurrentApp
+      child (moleculeCanvas pre) (Raw s.curSVG)
 
   adjustBars : DrawState -> Act ()
   adjustBars s = Prelude.do
@@ -476,17 +443,10 @@ parameters {auto ds : DrawSettings}
     replace (topBarID pre) (topBar pre topadd s)
     replace (bottomBarID pre) (bottomBar pre s)
     replace (leftBarID pre) (leftBar pre s)
-    adjAbbrCls s
-
-  adjustRightBar : DrawState -> Act ()
-  adjustRightBar s = do
     replace (rightBarID pre) (rightBar pre s)
-    adjAbbrCls s
 
   dispKeyDown : String -> DrawState -> Act ()
-  dispKeyDown "Escape" s = Prelude.do
-    topadd <- ex.buttons (DE pre) s
-    replace (sketcherDiv pre) (sketcher pre topadd s)
+  dispKeyDown "Escape" s = adjustBars s
   dispKeyDown "c" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph True s.mol
@@ -504,23 +464,22 @@ parameters {auto ds : DrawSettings}
   dispKeyDown _      s = pure ()
 
   displayEv : DrawEvent -> DrawState -> Act ()
-  displayEv Focus            s = focusCurrentApp
-  displayEv Blur             s = blur (moleculeCanvas pre)
+  displayEv Focus            s = focus (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active True)
+  displayEv Blur             s = blur (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active False)
   displayEv (KeyDown k)      s = dispKeyDown k s
-  displayEv (KeyUp _)        s = adjustRightBar s
+  displayEv (KeyUp _)        s = adjustBars s
   displayEv (SetElem _)      s = adjustBars s
   displayEv (SelAbbr _)      s = adjustBars s
-  displayEv  EnableAbbr      s = adjustBars s
   displayEv (SetBond _)      s = adjustBars s
   displayEv (SetTempl _)     s = adjustBars s
   displayEv (Load _)         s = adjustBars s
   displayEv SelectMode       s = adjustBars s
   displayEv EraseMode        s = adjustBars s
-  displayEv (ChgElem _)      s = adjustRightBar s
+  displayEv (ChgElem _)      s = adjustBars s
   displayEv (Move _ _)       s = selectCursor s
   displayEv MiddleDown       s = selectCursor s
   displayEv MiddleUp         s = selectCursor s
-  displayEv LeftUp           s = adjustBars s >> adjustRightBar s
+  displayEv LeftUp           s = adjustBars s
   displayEv Undo             s = adjustBars s
   displayEv Redo             s = adjustBars s
   displayEv (ZoomIn _)       s = adjustBars s
@@ -578,14 +537,11 @@ molEdit getDS sd =
         |> P.mapOutput (Valid . toMolfile . mol)
 
    where
-     doact :
-          {auto ds : DrawSettings}
-       -> {auto se : Sink DrawEvent}
-       -> (pre     : String)
-       -> DrawState
-       -> DrawEvent
-       -> Act DrawState
-     doact pre s e = let s2 := update e s in displaySketcher pre e s2 $> s2
+     doact : Sink DrawEvent => String -> DrawState -> DrawEvent -> Act DrawState
+     doact pre s e = Prelude.do
+       ds <- getDS
+       let s2 := update e s
+       displaySketcher pre e s2 $> s2
 
 ||| The default `Extension`
 export %hint

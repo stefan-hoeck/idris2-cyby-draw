@@ -6,12 +6,13 @@ brief   = "A drawing tool for molecules running in the browser"
 version = 0.1.0
 sourcedir = "src"
 depends = base        >= 0.7.0
-        , chem
-        , async-dom
-        , containers
-        , svg
         , array
+        , async-dom
+        , chem
+        , containers
+        , cyby-css
         , pretty-show
+        , svg
 
 modules = CyBy.Draw
 

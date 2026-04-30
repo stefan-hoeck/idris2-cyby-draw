@@ -13,6 +13,17 @@ type    = "local"
 path    = "word-addin"
 ipkg    = "cyby-draw-word-addin.ipkg"
 
+[custom.all.cyby-css]
+type    = "local"
+path    = "cyby-css"
+ipkg    = "cyby-css.ipkg"
+
+[custom.all.css]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-css"
+commit = "latest:main"
+ipkg   = "css.ipkg"
+
 [custom.all.async-dom]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-async-dom"

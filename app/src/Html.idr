@@ -1,17 +1,16 @@
 module Html
 
 import CyBy.Draw
+import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite
 import Data.List
 import Data.List1
 import Geom.Gen2D.Debug
 import Text.CSS.Color
-import Text.HTML.DomID
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
-import Web.Async
 import Web.Async.Confirm as C
 import Web.Internal.Types
 
@@ -28,29 +27,11 @@ fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 -- Logging
 --------------------------------------------------------------------------------
 
-AppLog : DomID
-AppLog = "app-log"
+App : String
+App = "app"
 
 Content : Ref Tag.Body
 Content = Id "content"
-
-lvl : LogLevel -> Class
-lvl l = C "cyby-draw-loglvl-\{l}"
-
-logNode : LogLevel -> List String -> HTMLNode
-logNode l msgs =
-  div [class "cyby-draw-log-row"]
-    [ div [class $ lvl l] [Text $ "[\{l}]"]
-    , div [class "cyby-draw-log-msg"] $ intersperse (br []) (map Text msgs)
-    ]
-
-printErr : JSErr -> JS [] ()
-printErr x = putStrLn "Error: \{dispErr x}"
-
-uilog : LogLevel -> Logger JS
-uilog x =
-  MkLogger $ \l,ml => Prelude.do
-    when (l >= x) $ handle [printErr] (prepend (elemRef AppLog) $ logNode l ml)
 
 parameters {auto lg : Logger JS}
   Loggable JS DrawMsg where
@@ -85,14 +66,15 @@ parameters {auto st  : IORef AppST}
     AST c <- readref ast 
     pure
       [ expBtn "Save..." s
-      , label [forID LoadIn, class "cyby-draw-button"] ["Load..."]
+      , label [forID LoadIn, class widget] ["Load..."]
       , input
           [ ref LoadIn
+          , class hidden
           , type File
           , onFileIn LoadMol
           , acceptAll [".mol",".smi",".svg"]
           ]
-      , selectFromList values (Just c) show SetColor [class "cyby-draw-select"]
+      , selectFromList values (Just c) show SetColor [class widget]
       ]
 
   ext : Extension
@@ -107,7 +89,7 @@ parameters {auto st  : IORef AppST}
   drawEv s e = Prelude.do
     ds <- drawSettings <$> readref ast
     let s2 := update e s
-    displaySketcher {ex = ext} "app" e s2
+    displaySketcher {ex = ext} App e s2
     pure s2
 
   loadFile : FileEv -> Act ()
@@ -138,15 +120,18 @@ parameters {auto st  : IORef AppST}
 ui : JSStream Void
 ui = Prelude.do
   let lg := uilog Info
-  E dms <- exec $ event {fs = [JSErr]} DrawMsg
-  E aes <- exec $ event {fs = [JSErr]} AppEvent
-  E des <- exec $ eventFrom {fs = [JSErr]} (KeyDown "Escape")
-  r     <- exec $ castElementByRef Content >>= getClientRect
-  ast   <- newref (AST CyBy)
+  E dms  <- exec $ event {fs = [JSErr]} DrawMsg
+  E aes  <- exec $ event {fs = [JSErr]} AppEvent
+  E des  <- exec $ event {fs = [JSErr]} DrawEvent
+  r      <- exec $ castElementByRef Content >>= getClientRect
+  ast    <- newref (AST CyBy)
   let ds   := drawSettings (AST CyBy)
       dims := SD (cast $ r.width - 350) (cast $ r.height - 100)
       st   := init dims Init ""
-  dst   <- newref {s = World} st
+  dst    <- newref {s = World} st
+  topadd <- exec (buttons (ext ast dst) (DE App) st)
+  exec $ child Content (sketcher App topadd st)
+  exec $ append (sketcherDiv App) appLog
   merge
     [ foreach logLoggable dms
     , foreach (appEv ast dst) aes

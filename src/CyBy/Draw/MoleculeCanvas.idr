@@ -110,8 +110,7 @@ record DrawState where
   mode       : Mode
   modifier   : Modifier
   bond       : MolBond
-  abbr       : Maybe Abbreviation
-  hasFocus   : Bool
+  isActive   : Bool
   ptable     : Maybe Elem
 
   ||| Current SVG scene rendered to a string
@@ -242,7 +241,7 @@ s.posMol = convert s.curPos
 -- in the drawing mode.
 nextMol : DrawSettings => DrawState -> CDGraph
 nextMol s =
-  case s.hasFocus of
+  case s.isActive of
     False => s.mol
     True  => case s.mode of
       Select           => s.mol
@@ -355,8 +354,7 @@ initST sd sm g =
     , mode       = Draw
     , modifier   = NoMod
     , bond       = MkBond False Single NoBondStereo
-    , abbr       = initAbbr
-    , hasFocus   = False
+    , isActive   = False
     , ptable     = Nothing
     , curSVG     = ""
     , prevSVG    = ""
@@ -621,12 +619,6 @@ onKeyUp "Control"      s = {modifier $= reset Ctrl, mode $= stopTemplRot s} s
 onKeyUp "Meta"         s = {modifier $= reset Ctrl, mode $= stopTemplRot s} s
 onKeyUp _              s = s
 
-enableAbbr : DrawState -> DrawState
-enableAbbr s =
-  case s.abbr of
-    Nothing => s
-    Just a => {mode := SetAbbr a, mol $= clear} s
-
 setMassNr : Maybe MassNr -> MolAtomAT -> MolAtomAT
 setMassNr m a = let MkI e _ := a.elem in {elem := MkI e m} a
 
@@ -639,7 +631,7 @@ erase s =
 -- prevent unwanted resizes from events that might slightly affect the
 -- canvas dims
 trulyDifferent : SceneDims -> SceneDims -> Bool
-trulyDifferent (SD w1 h1) (SD w2 h2) = abs (w1-w2) >= 5 || abs (h1-h2) >= 5 
+trulyDifferent (SD w1 h1) (SD w2 h2) = abs (w1-w2) >= 1 || abs (h1-h2) >= 1
 
 endResize : (h,w : Double) -> DrawState -> DrawState
 endResize h w s =
@@ -667,13 +659,12 @@ upd SelectMode    s = {mode := Select} s
 upd (KeyDown x)   s = onKeyDown x s
 upd (KeyUp x)     s = onKeyUp x s
 upd EraseMode     s = erase s
-upd Focus         s = {hasFocus := True} s
-upd Blur          s = {hasFocus := False} s
+upd Focus         s = {isActive := True} s
+upd Blur          s = {isActive := False} s
 upd Clear         s = setMol (G 0 empty) s
 upd Expand        s = updateMol expand s
 upd Center        s = reset s
-upd EnableAbbr    s = enableAbbr s
-upd (SelAbbr a)   s = {mode := SetAbbr a, abbr := Just a, mol $= clear} s
+upd (SelAbbr a)   s = {mode := SetAbbr a, mol $= clear} s
 upd (Resize h w)  s = endResize h w s
 upd StartPSE      s = {mode := PTable Nothing} s
 upd SVG           s = s
@@ -718,8 +709,6 @@ display :
 display s m c =
   svg
     [ xmlns_2000
-    , width 100.perc
-    , height 100.perc
     , viewBox 0.u 0.u s.dims.swidth.u s.dims.sheight.u
     ] $ if m then [scene True s, metadata s c] else [scene False s]
 

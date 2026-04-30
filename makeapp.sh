@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
-curl https://raw.githubusercontent.com/sindresorhus/modern-normalize/refs/heads/main/modern-normalize.css > css/app.css
-cat css/cyby-draw.css >> css/app.css
+APP_CSS="css/app.css"
+curl https://cdn.jsdelivr.net/npm/modern-normalize/modern-normalize.min.css > "$APP_CSS"
+pack --log-level silence exec cyby-css/src/CyBy/UI/CSS/Rules.idr >> "$APP_CSS"
 pack build cyby-draw-app
