@@ -537,14 +537,11 @@ molEdit getDS sd =
         |> P.mapOutput (Valid . toMolfile . mol)
 
    where
-     doact :
-          {auto ds : DrawSettings}
-       -> {auto se : Sink DrawEvent}
-       -> (pre     : String)
-       -> DrawState
-       -> DrawEvent
-       -> Act DrawState
-     doact pre s e = let s2 := update e s in displaySketcher pre e s2 $> s2
+     doact : Sink DrawEvent => String -> DrawState -> DrawEvent -> Act DrawState
+     doact pre s e = Prelude.do
+       ds <- getDS
+       let s2 := update e s
+       displaySketcher pre e s2 $> s2
 
 ||| The default `Extension`
 export %hint

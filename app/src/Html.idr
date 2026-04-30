@@ -1,18 +1,16 @@
 module Html
 
 import CyBy.Draw
-import CyBy.UI.CSS.Classes
+import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite
 import Data.List
 import Data.List1
 import Geom.Gen2D.Debug
 import Text.CSS.Color
-import Text.HTML.DomID
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
-import Web.Async
 import Web.Async.Confirm as C
 import Web.Internal.Types
 
@@ -32,26 +30,8 @@ fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 App : String
 App = "app"
 
-AppLog : DomID
-AppLog = "app-log"
-
 Content : Ref Tag.Body
 Content = Id "content"
-
-logNode : LogLevel -> List String -> HTMLNode
-logNode l msgs =
-  div [class formRow]
-    [ div [classes [formLabel, level l]] [Text $ "[\{l}]"]
-    , div [class formValue] $ intersperse (br []) (map Text msgs)
-    ]
-
-printErr : JSErr -> JS [] ()
-printErr x = putStrLn "Error: \{dispErr x}"
-
-uilog : LogLevel -> Logger JS
-uilog x =
-  MkLogger $ \l,ml => Prelude.do
-    when (l >= x) $ handle [printErr] (prepend (elemRef AppLog) $ logNode l ml)
 
 parameters {auto lg : Logger JS}
   Loggable JS DrawMsg where
@@ -136,14 +116,6 @@ parameters {auto st  : IORef AppST}
   appEv : AppEvent -> Act ()
   appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
   appEv (LoadMol ev) = loadFile ev
-
-appLog : HTMLNode
-appLog =
-  div
-    [ class drawLog ]
-    [ div [class compTitle] ["Log"]
-    , div [ref AppLog, classes [compList]] []
-    ]
 
 ui : JSStream Void
 ui = Prelude.do

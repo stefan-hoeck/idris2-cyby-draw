@@ -1,7 +1,11 @@
 module CyBy.UI.HTML
 
+import Data.List
+import IO.Async.Logging
+
 import public CyBy.UI.CSS.Classes
 import public Text.HTML
+import public Text.HTML.DomID
 
 %default total
 
@@ -20,6 +24,31 @@ hbarSep = div [class hbarsep] []
 export
 vbarSep : HTMLNode
 vbarSep = div [class vbarsep] []
+
+--------------------------------------------------------------------------------
+-- Logging
+--------------------------------------------------------------------------------
+
+export
+CyByLog : DomID
+CyByLog = "cyby-log"
+
+export
+logNode : LogLevel -> List String -> HTMLNode
+logNode l msgs =
+  div [class formRow]
+    [ div [classes [formLabel, level l]] [Text $ "[\{l}]"]
+    , div [class formValue] $ intersperse (br []) (map Text msgs)
+    ]
+
+export
+appLog : HTMLNode
+appLog =
+  div
+    [ class drawLog ]
+    [ div [class compTitle] ["Log"]
+    , div [ref CyByLog, classes [compList]] []
+    ]
 
 --------------------------------------------------------------------------------
 -- Icons

@@ -14,3 +14,4 @@ modules = CyBy.UI.CSS.Classes
         , CyBy.UI.CSS.Rules
         , CyBy.UI.CSS.Vars
         , CyBy.UI.HTML
+        , CyBy.UI.JS
