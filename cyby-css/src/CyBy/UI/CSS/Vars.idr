@@ -56,7 +56,8 @@ record Vars where
   cornerRad           : BorderRadius -- preferred border radius
   narrowBW            : BorderWidth  -- narrow border width
   fatBW               : BorderWidth  -- broader border for major elements
-  paddingH            : Length
+  padding             : Length
+  largePadding        : Length
 
 export %hint
 defaultVars : Vars
@@ -104,7 +105,8 @@ defaultVars =
   , cornerRad           = 0.25.em
   , narrowBW            = 1.px
   , fatBW               = 2.px
-  , paddingH            = 0.4.em
+  , padding             = 0.4.em
+  , largePadding        = 0.6.em
   }
 
 --------------------------------------------------------------------------------

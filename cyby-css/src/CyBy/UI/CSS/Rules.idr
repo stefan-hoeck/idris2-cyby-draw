@@ -31,46 +31,37 @@ set f =
 parameters {auto v : Vars}
 
   export
-  gridGaps : List Declaration
+  gridGaps : Declarations
   gridGaps = [rowGap v.gap, columnGap v.gap]
 
   export
   hpadded : Declaration
-  hpadded = padding (VH 0.px v.paddingH)
+  hpadded = padding (VH 0.px v.padding)
 
   export
   padded : Declaration
-  padded = padding (All v.paddingH)
+  padded = padding (All v.padding)
 
   ||| Flex container with a default gap between components that
   ||| arranges components horizontally.
   export
-  flexRow : List Declaration
+  flexRow : Declarations
   flexRow = [display Flex, flexDirection Row, columnGap v.gap]
 
   ||| Flex container with a default gap between components that
   ||| arranges components vertically.
   export
-  flexColumn : List Declaration
+  flexColumn : Declarations
   flexColumn = [display Flex, flexDirection Column, rowGap v.gap]
-
-  ||| Solid, narrow border of the given color.
-  export
-  solidBorder : Color -> List Declaration
-  solidBorder c =
-    [ borderStyle (All Solid)
-    , borderWidth  (All v.narrowBW)
-    , borderColor (All c)
-    ]
 
   ||| `solidBorder` with rounded corners using the default corner radius.
   export
-  roundedBorder : Color -> List Declaration
-  roundedBorder c = borderRadius v.cornerRad :: solidBorder c
+  roundedBorder : Color -> Declarations
+  roundedBorder c = roundedBorder v.narrowBW c v.cornerRad
 
   ||| Regular widget with default colors for font, background, and border.
   export
-  wregular : List Declaration
+  wregular : Declarations
   wregular =
     backgroundColor widgetBG
     :: color widgetFG
@@ -81,7 +72,7 @@ parameters {auto v : Vars}
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
   export
-  wactive : List Declaration
+  wactive : Declarations
   wactive =
     [ backgroundColor activeBG
     , color activeFG
@@ -91,7 +82,7 @@ parameters {auto v : Vars}
 
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
-  whovered : List Declaration
+  whovered : Declarations
   whovered =
     [ backgroundColor widgetBG
     , color activeFG
@@ -101,7 +92,7 @@ parameters {auto v : Vars}
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
-  wdisabled : List Declaration
+  wdisabled : Declarations
   wdisabled =
     color disabledFG
     :: backgroundColor disabledBG
@@ -110,14 +101,14 @@ parameters {auto v : Vars}
 
   ||| Outline and border of a cyby-draw component.
   export
-  drawCompBorder : List Declaration
+  drawCompBorder : Declarations
   drawCompBorder =
     outlineStyle Solid
     :: outlineWidth v.narrowBW
     :: outlineColor v.gray80
     :: roundedBorder bg
 
-  drawTitle : List Declaration
+  drawTitle : Declarations
   drawTitle =
        width 100.perc
     :: display Flex
@@ -126,19 +117,19 @@ parameters {auto v : Vars}
     :: backgroundColor widgetFG
     :: color v.primary10
     :: hpadded
-    :: margin 0.px
+    :: noMargin
     :: fontSize 1.em
     :: roundedBorder widgetFG
 
-  drawList : List Declaration
-  drawList = flex "1" :: overflowY Scroll :: padded :: flexColumn
+  drawList : Declarations
+  drawList = [flex1, overflowY Scroll, margin 0.px, padded] ++ flexColumn
 
   export
-  vsep : List Declaration
+  vsep : Declarations
   vsep = [width 100.perc, height v.barSepwidth]
 
   export
-  hsep : List Declaration
+  hsep : Declarations
   hsep = [height 100.perc, width v.barSepwidth]
 
 --------------------------------------------------------------------------------
@@ -157,7 +148,7 @@ parameters {auto v : Vars}
         , width 100.perc
         , backgroundColor bg
         , color fg
-        , padding 1.em
+        , padding (All v.largePadding)
         , containerType Size
         ]
 
@@ -218,13 +209,13 @@ parameters {auto v : Vars}
 
     -- CyBy Draw details
     , class drawDetails $
-        [containerType Size, flex "2"] ++ flexColumn ++ drawCompBorder
+        [containerType Size, flex2] ++ flexColumn ++ drawCompBorder
     , sel (class drawDetails > elem H1) drawTitle
     , sel (class drawDetails > elem Ul) drawList
 
     -- logging
     , class drawLog $
-           [fontSize v.smallFont, containerType Size, flex "1"]
+           [fontSize v.smallFont, containerType Size, flex1]
         ++ flexColumn
         ++ drawCompBorder
 
@@ -245,7 +236,7 @@ parameters {auto v : Vars}
   forms =
     [ class listEntry $ alignItems Stretch :: flexRow
     , sel (class listEntry > elem Label) [width v.formLblWidth]
-    , Sel [class listEntryValue, class listEntry > class widget] [flex "1"]
+    , Sel [class listEntryValue, class listEntry > class widget] [flex1]
     , Container "width < 300px"
         [ class listEntry $ alignItems Start :: flexColumn
         , sel (class listEntry > elem Label) [width 100.perc]
@@ -264,7 +255,7 @@ parameters {auto v : Vars}
     , sel [Class widget, set active] wactive
     , sel [Class widget, Disabled] wdisabled
   
-    , classes [widget, icon] [padding 0.px, aspectRatio 1]
+    , classes [widget, icon] [noPadding, aspectRatio 1]
   
     , class (elemText B)  [fontWeight Bold, color v.boron]
     , class (elemText C)  [fontWeight Bold, color v.carbon]
