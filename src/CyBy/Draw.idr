@@ -259,21 +259,21 @@ parameters {auto de : Sink DrawEvent}
       [ icon [] SelectMode (s.mode == Select) "select" select
       , icon [] EraseMode (s.mode == Erase) "erase" erase
       , icon [] Clear False "clear" trash
-      , vbarSep
+      , nodeSep
       , disable (s.undos == []) $ icon [] Undo False "undo" undo
       , disable (s.redos == []) $ icon [] Redo False "redo" redo
-      , vbarSep
+      , nodeSep
       , icon [] Center False "center" center
       , disable (maxZoom s.transform) $ icon [] (ZoomIn False) False "zoom in" zoomIn
       , disable (minZoom s.transform) $ icon [] (ZoomOut False) False "zoom out" zoomOut
-      , vbarSep
+      , nodeSep
       , bondIcon (cast Single) "single bond" s single
       , bondIcon (fromStereo Up) "single bond up" s bondUp
       , bondIcon (fromStereo Down) "single bond down" s bondDown
       , bondIcon (fromStereo Either) "single bond up or down" s bondEither
       , bondIcon (cast Types.Dbl) "double bond" s double
       , bondIcon (cast Triple) "triple bond" s triple
-      , vbarSep
+      , nodeSep
       ] ++ topadd
 
   template : CDGraph -> String -> DrawState -> HTMLNode -> HTMLNode
@@ -294,7 +294,7 @@ parameters {auto de : Sink DrawEvent}
       , elemIcon s "Sulfur" S
       , elemIcon s "Chlorine" Cl
       , elemIcon s "Bromine" Br
-      , hbarSep
+      , nodeSep
       , icon [] StartPSE (pse s.mode) "PSE" "PSE"
       ]
 
@@ -307,11 +307,11 @@ parameters {auto de : Sink DrawEvent}
             [x,y,_] := atm.position
             cx      := dispCoordShort x
             cy      := dispCoordShort y
-         in [ detail "Element"  $ elements atm, formSep
-            , detail "Isotope"  $ massNrs atm, formSep
-            , detail "Charge"   $ charges atm, formSep
-            , detail "Type"     $ div [class listEntryValue] [Text tpe], formSep
-            , detail "x-Coord." $ div [class listEntryValue] [Text cx], formSep
+         in [ detail "Element"  $ elements atm
+            , detail "Isotope"  $ massNrs atm
+            , detail "Charge"   $ charges atm
+            , detail "Type"     $ div [class listEntryValue] [Text tpe]
+            , detail "x-Coord." $ div [class listEntryValue] [Text cx]
             , detail "y-Coord." $ div [class listEntryValue] [Text cy]
             ]
       _   => case selectedEdges s.imol of
@@ -321,7 +321,7 @@ parameters {auto de : Sink DrawEvent}
               d  := printDouble 3 $ distance px py
               a  := angleOrZero (px - py)
               a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a
-           in [ detail "Length"   $ div [class listEntryValue] [Text "\{d} Å"], formSep
+           in [ detail "Length"   $ div [class listEntryValue] [Text "\{d} Å"]
               , detail "Angle"    $ div [class listEntryValue] [Text "\{a'}°"]
               ]
         _       => []
@@ -331,7 +331,7 @@ parameters {auto de : Sink DrawEvent}
     div
       [ Id $ detailsID pre, class drawDetails ]
       [ h1 [] ["Details"]
-      , ul [] (detailItems pre s)
+      , ul [] (separate $ detailItems pre s)
       ]
 
   templates : DrawSettings => (pre : String) -> DrawState -> HTMLNode
@@ -345,7 +345,7 @@ parameters {auto de : Sink DrawEvent}
       , template (ring 4) "cyclobutane" s cyclobutane
       , template (ring 7) "cycloheptane" s cycloheptane
       , template (ring 8) "cyclooctane" s cyclooctane
-      , vbarSep
+      , nodeSep
       , abbrs pre s
       ]
 

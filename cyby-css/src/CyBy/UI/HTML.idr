@@ -13,17 +13,13 @@ import public Text.HTML.DomID
 -- Utilities
 --------------------------------------------------------------------------------
 
-export
-formSep : HTMLNode
-formSep = div [class formsep] []
+export %inline
+nodeSep : HTMLNode
+nodeSep = div [class sep] []
 
-export
-hbarSep : HTMLNode
-hbarSep = div [class hbarsep] []
-
-export
-vbarSep : HTMLNode
-vbarSep = div [class vbarsep] []
+export %inline
+separate : HTMLNodes -> HTMLNodes
+separate = intersperse nodeSep
 
 --------------------------------------------------------------------------------
 -- Logging
