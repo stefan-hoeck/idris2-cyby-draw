@@ -21,9 +21,16 @@ public export
 0 Rules : Type
 Rules = List (Rule 1)
 
-data Tag = Top | Bot | Left | Details | Log | Draw | Dot
+data Tag = Top | Bot | Left | Details | Draw | Dot
 
 %runElab derive "Tag" [Show,Eq]
+
+export
+set : ({0 k : Type} -> {0 t : k} ->  Bool -> Attribute t) -> Selector 
+set f =
+  case f {t = ()} True of
+    Bool name _ => Attr name Set
+    _           => Attr "" Set
 
 --------------------------------------------------------------------------------
 -- Reusable
@@ -129,7 +136,7 @@ parameters {auto v : Vars}
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
   
-    , class hidden [display None]
+    , sel {n = 1} (set hidden) [display None]
   
     , class quadratic [aspectRatio 1]
   
@@ -148,11 +155,10 @@ parameters {auto v : Vars}
   components =
     [ class sketcherDiv $
         area
-          [cast v.bardim, 2.fr, 1.fr, cast v.bardim]
+          [cast v.bardim, 1.fr, cast v.bardim]
           [cast v.bardim, 4.fr, 1.fr]
           [ [Dot,  Top,  Top]
           , [Left, Draw, Details]
-          , [Left, Draw, Log]
           , [Dot,  Bot,  Bot]
           ]
         :: width 100.perc
@@ -171,8 +177,11 @@ parameters {auto v : Vars}
         ++ flexColumn
         ++ drawCompBorder
 
+    , class drawDetails $
+        [containerType Size, flex "2"] ++ flexColumn ++ drawCompBorder
+
     , class drawLog $
-           [fontSize v.smallFont, containerType Size, gridArea Rules.Log]
+           [fontSize v.smallFont, containerType Size, flex "1"]
         ++ flexColumn
         ++ drawCompBorder
 
@@ -196,7 +205,7 @@ parameters {auto v : Vars}
         :: gridArea Draw
         :: drawCompBorder
   
-    , sel [class moleculeCanvas, attribute "data-active"]
+    , sel [class moleculeCanvas, set active]
         [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
     , classes [moleculeCanvas,dragging] [cursor [Move]]
     , classes [moleculeCanvas,rotating]
@@ -231,7 +240,7 @@ parameters {auto v : Vars}
     [ class widget $ alignSelf Stretch :: hpadded :: wregular
     , sel [Class widget, Hover] whovered
     , sel [Class widget, Active] wactive
-    , sel [Class widget, attribute "data-active"] wactive
+    , sel [Class widget, set active] wactive
     , sel [Class widget, Disabled] wdisabled
   
     , classes [widget, icon] [padding 0.px]

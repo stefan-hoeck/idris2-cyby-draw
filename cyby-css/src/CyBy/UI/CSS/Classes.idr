@@ -25,10 +25,6 @@ invalid = Bool "data-invalid"
 --------------------------------------------------------------------------------
 
 export %inline
-hidden : Class
-hidden = "hidden"
-
-export %inline
 quadratic : Class
 quadratic = "cyby-quadratic"
 
@@ -71,6 +67,10 @@ toolbarRight = "cyby-draw-toolbar-right"
 export %inline
 toolbarBottom : Class
 toolbarBottom = "cyby-draw-toolbar-bottom"
+
+export %inline
+drawDetails : Class
+drawDetails = "cyby-draw-details"
 
 export %inline
 drawLog : Class

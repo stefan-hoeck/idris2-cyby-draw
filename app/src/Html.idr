@@ -69,7 +69,7 @@ parameters {auto st  : IORef AppST}
       , label [forID LoadIn, class widget] ["Load..."]
       , input
           [ ref LoadIn
-          , class hidden
+          , hidden True
           , type File
           , onFileIn LoadMol
           , acceptAll [".mol",".smi",".svg"]
@@ -131,7 +131,7 @@ ui = Prelude.do
   dst    <- newref {s = World} st
   topadd <- exec (buttons (ext ast dst) (DE App) st)
   exec $ child Content (sketcher App topadd st)
-  exec $ append (sketcherDiv App) appLog
+  exec $ append (rightBarID App) appLog
   merge
     [ foreach logLoggable dms
     , foreach (appEv ast dst) aes
