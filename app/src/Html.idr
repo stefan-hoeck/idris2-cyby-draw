@@ -131,7 +131,7 @@ ui = Prelude.do
   dst    <- newref {s = World} st
   topadd <- exec (buttons (ext ast dst) (DE App) st)
   exec $ child Content (sketcher App topadd st)
-  exec $ append (rightBarID App) appLog
+  exec $ append (infoID App) appLog
   merge
     [ foreach logLoggable dms
     , foreach (appEv ast dst) aes
