@@ -25,14 +25,6 @@ invalid = Bool "data-invalid"
 --------------------------------------------------------------------------------
 
 export %inline
-quadratic : Class
-quadratic = "cyby-quadratic"
-
-export %inline
-smallText : Class
-smallText = "cyby-small-text"
-
-export %inline
 formsep : Class
 formsep = "cyby-form-sep"
 
@@ -49,24 +41,24 @@ vbarsep = "cyby-vbar-sep"
 --------------------------------------------------------------------------------
 
 export %inline
-sketcherDiv : Class
-sketcherDiv = "cyby-draw-sketcher-div"
+sketcher : Class
+sketcher = "cyby-draw-sketcher"
 
 export %inline
-toolbarTop : Class
-toolbarTop = "cyby-draw-toolbar-top"
+drawUtils : Class
+drawUtils = "cyby-draw-utils"
 
 export %inline
-toolbarLeft : Class
-toolbarLeft = "cyby-draw-toolbar-left"
+drawElems : Class
+drawElems = "cyby-draw-elems"
 
 export %inline
-toolbarRight : Class
-toolbarRight = "cyby-draw-toolbar-right"
+drawInfo : Class
+drawInfo = "cyby-draw-info"
 
 export %inline
-toolbarBottom : Class
-toolbarBottom = "cyby-draw-toolbar-bottom"
+drawTemplates : Class
+drawTemplates = "cyby-draw-templates"
 
 export %inline
 drawDetails : Class
@@ -75,14 +67,6 @@ drawDetails = "cyby-draw-details"
 export %inline
 drawLog : Class
 drawLog = "cyby-draw-log"
-
-export %inline
-compList : Class
-compList = "cyby-comp-list"
-
-export %inline
-compTitle : Class
-compTitle = "cyby-comp-title"
 
 export %inline
 moleculeCanvas : Class
@@ -97,16 +81,12 @@ dragging : Class
 dragging = "cyby-draw-dragging"
 
 export %inline
-formRow : Class
-formRow = "cyby-form-row"
+listEntry : Class
+listEntry = "cyby-list-entry"
 
 export %inline
-formLabel : Class
-formLabel = "cyby-form-label"
-
-export %inline
-formValue : Class
-formValue = "cyby-form-value"
+listEntryValue : Class
+listEntryValue = "cyby-list-entry-value"
 
 export
 level : LogLevel -> Class

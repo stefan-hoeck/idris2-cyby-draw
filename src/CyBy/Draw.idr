@@ -131,41 +131,27 @@ wheel wi =
 --          IDs
 --------------------------------------------------------------------------------
 
-export
 moleculeCanvas : String -> Ref Div
 moleculeCanvas pre = Id "\{pre}-molecule-canvas"
 
-export
 sketcherDiv : String -> Ref Div
 sketcherDiv pre = Id "\{pre}-sketcher-div"
 
-export
-molReader : String -> Ref Div
-molReader pre = Id "\{pre}-mol-reader"
+elemsID : String -> Ref Div
+elemsID pre = Id "\{pre}-elems"
 
 export
-molInput : String -> Ref TextArea
-molInput pre = Id "\{pre}-mol-input"
+infoID : String -> Ref Div
+infoID pre = Id "\{pre}-draw-info"
 
-export
-leftBarID : String -> Ref Div
-leftBarID pre = Id "\{pre}-left-bar"
-
-export
 detailsID : String -> Ref Div
 detailsID pre = Id "\{pre}-draw-details"
 
-export
-rightBarID : String -> Ref Div
-rightBarID pre = Id "\{pre}-right-bar"
+utilsID : String -> Ref Div
+utilsID pre = Id "\{pre}-utils"
 
-export
-topBarID : String -> Ref Div
-topBarID pre = Id "\{pre}-top-bar"
-
-export
-bottomBarID : String -> Ref Div
-bottomBarID pre = Id "\{pre}-bottom-bar"
+templatesID : String -> Ref Div
+templatesID pre = Id "\{pre}-templates"
 
 export
 expButton : String -> Ref Tag.Button
@@ -207,7 +193,7 @@ pse (SetAtom i) = all (i.elem /=) (the (List Elem) [C,O,N,F,P,S,Cl,Br])
 pse _           = False
 
 detail : String -> HTMLNode -> HTMLNode
-detail ttl n = div [class formRow] [label [class formLabel] [Text ttl], n]
+detail ttl n = div [class listEntry] [label [] [Text ttl], n]
 
 currAbbr : Mode -> Maybe String
 currAbbr (SetAbbr a) = Just a.label
@@ -215,15 +201,15 @@ currAbbr _           = Nothing
 
 parameters {auto de : Sink DrawEvent}
 
-  elems : MolAtomAT -> HTMLNode
-  elems a =
+  elements : MolAtomAT -> HTMLNode
+  elements a =
     selectFromListBy values (a.elem.elem ==) symbol ChgElem
-      [ classes [widget,formValue], title "set element" ]
+      [class widget, title "set element"]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
     selectFromListBy chs (a.charge ==) (show . value) ChgCharge
-      [ classes [widget,formValue], title "set charge" ]
+      [class widget, title "set charge"]
     where
       chs : List Charge
       chs = mapMaybe refineCharge [(-8) .. 8]
@@ -231,12 +217,12 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [ classes [widget,formValue], title "set charge" ]
+      [class widget, title "set charge"]
     where
       dispMass : Maybe MassNr -> String
       dispMass Nothing  = "Mix"
       dispMass (Just m) = show m.value
-  
+
   icon :
        Classes
     -> DrawEvent
@@ -246,7 +232,7 @@ parameters {auto de : Sink DrawEvent}
     -> HTMLNode
   icon cs ev a ttl child =
     button
-      [classes (widget::icon::quadratic::cs),active a,onClick ev,title ttl]
+      [classes (widget::icon::cs),active a,onClick ev,title ttl]
       [child]
 
   abbrs : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
@@ -261,15 +247,15 @@ parameters {auto de : Sink DrawEvent}
   bondIcon : MolBond -> String -> DrawState -> HTMLNode -> HTMLNode
   bondIcon b title s = icon [] (SetBond b) (drawing b s) title
 
-  topBar :
+  utils :
        {auto ds : DrawSettings}
     -> (pre     : String)
     -> (topadd  : HTMLNodes)
     -> DrawState
     -> HTMLNode
-  topBar {ds} pre topadd s =
+  utils {ds} pre topadd s =
     div
-      [ Id $ topBarID pre, class toolbarTop ] $
+      [ Id $ utilsID pre, class drawUtils ] $
       [ icon [] SelectMode (s.mode == Select) "select" select
       , icon [] EraseMode (s.mode == Erase) "erase" erase
       , icon [] Clear False "clear" trash
@@ -296,9 +282,9 @@ parameters {auto de : Sink DrawEvent}
   elemIcon : DrawState -> String -> Elem -> HTMLNode
   elemIcon s t e = icon [elemText e] (SetElem e) (setting e s) t (Text $ symbol e)
 
-  leftBar pre s =
+  elems pre s =
     div
-      [ Id $ leftBarID pre, class toolbarLeft ]
+      [ Id $ elemsID pre, class drawElems ]
       [ elemIcon s "Boron" B
       , elemIcon s "Carbon" C
       , elemIcon s "Oxygen" O
@@ -321,12 +307,12 @@ parameters {auto de : Sink DrawEvent}
             [x,y,_] := atm.position
             cx      := dispCoordShort x
             cy      := dispCoordShort y
-         in [ detail "Element"  $ elems atm, formSep
+         in [ detail "Element"  $ elements atm, formSep
             , detail "Isotope"  $ massNrs atm, formSep
             , detail "Charge"   $ charges atm, formSep
-            , detail "Type"     $ div [class formValue] [Text tpe], formSep
-            , detail "x-Coord." $ div [class formValue] [Text cx], formSep
-            , detail "y-Coord." $ div [class formValue] [Text cy]
+            , detail "Type"     $ div [class listEntryValue] [Text tpe], formSep
+            , detail "x-Coord." $ div [class listEntryValue] [Text cx], formSep
+            , detail "y-Coord." $ div [class listEntryValue] [Text cy]
             ]
       _   => case selectedEdges s.imol of
         [(x,y)] =>
@@ -335,8 +321,8 @@ parameters {auto de : Sink DrawEvent}
               d  := printDouble 3 $ distance px py
               a  := angleOrZero (px - py)
               a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a
-           in [ detail "Length"   $ div [class formValue] [Text "\{d} Å"], formSep
-              , detail "Angle"    $ div [class formValue] [Text "\{a'}°"]
+           in [ detail "Length"   $ div [class listEntryValue] [Text "\{d} Å"], formSep
+              , detail "Angle"    $ div [class listEntryValue] [Text "\{a'}°"]
               ]
         _       => []
 
@@ -344,14 +330,14 @@ parameters {auto de : Sink DrawEvent}
   details pre s =
     div
       [ Id $ detailsID pre, class drawDetails ]
-      [ div [class compTitle] ["Details"]
-      , div [class compList] (detailItems pre s)
+      [ h1 [] ["Details"]
+      , ul [] (detailItems pre s)
       ]
 
-  bottomBar : DrawSettings => (pre : String) -> DrawState -> HTMLNode
-  bottomBar pre s =
+  templates : DrawSettings => (pre : String) -> DrawState -> HTMLNode
+  templates pre s =
     div
-      [ Id $ bottomBarID pre, class toolbarBottom ]
+      [ Id $ templatesID pre, class drawTemplates ]
       [ template phenyl "benzene" s benzene
       , template (ring 6) "cyclohexane" s cyclohexane
       , template (ring 5) "cyclopentane" s cyclopentane
@@ -372,10 +358,10 @@ parameters {auto de : Sink DrawEvent}
     -> HTMLNode
   sketcher pre topadd s =
     div
-      [ class sketcherDiv, Id $ sketcherDiv pre ]
-      [ topBar pre topadd s
-      , leftBar pre s
-      , div [Id $ rightBarID pre, class toolbarRight] [details pre s]
+      [ class sketcher, Id $ sketcherDiv pre ]
+      [ utils pre topadd s
+      , elems pre s
+      , div [class drawInfo, Id $ infoID pre] [details pre s]
       , div
           [ class moleculeCanvas
           , Id $ moleculeCanvas pre
@@ -393,7 +379,7 @@ parameters {auto de : Sink DrawEvent}
           , active s.isActive
           ]
           [Raw s.curSVG]
-      , bottomBar pre s
+      , templates pre s
       ]
 
 export
@@ -445,9 +431,9 @@ parameters {auto ds : DrawSettings}
   adjustBars : DrawState -> Act ()
   adjustBars s = Prelude.do
     topadd <- ex.buttons (DE pre) s
-    replace (topBarID pre) (topBar pre topadd s)
-    replace (bottomBarID pre) (bottomBar pre s)
-    replace (leftBarID pre) (leftBar pre s)
+    replace (utilsID pre) (utils pre topadd s)
+    replace (templatesID pre) (templates pre s)
+    replace (elemsID pre) (elems pre s)
     replace (detailsID pre) (details pre s)
 
   dispKeyDown : String -> DrawState -> Act ()

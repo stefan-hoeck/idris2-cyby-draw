@@ -13,15 +13,7 @@ import Text.HTML.Tag
 %default total
 %language ElabReflection
 
-public export
-0 Rules0 : Type
-Rules0 = List (Rule 0)
-
-public export
-0 Rules : Type
-Rules = List (Rule 1)
-
-data Tag = Top | Bot | Left | Details | Draw | Dot
+data Tag = Util | Templates | Elems | Info | Draw | Dot
 
 %runElab derive "Tag" [Show,Eq]
 
@@ -50,14 +42,19 @@ parameters {auto v : Vars}
   padded : Declaration
   padded = padding (All v.paddingH)
 
+  ||| Flex container with a default gap between components that
+  ||| arranges components horizontally.
   export
   flexRow : List Declaration
   flexRow = [display Flex, flexDirection Row, columnGap v.gap]
 
+  ||| Flex container with a default gap between components that
+  ||| arranges components vertically.
   export
   flexColumn : List Declaration
   flexColumn = [display Flex, flexDirection Column, rowGap v.gap]
 
+  ||| Solid, narrow border of the given color.
   export
   solidBorder : Color -> List Declaration
   solidBorder c =
@@ -66,10 +63,12 @@ parameters {auto v : Vars}
     , borderColor (All c)
     ]
 
+  ||| `solidBorder` with rounded corners using the default corner radius.
   export
   roundedBorder : Color -> List Declaration
   roundedBorder c = borderRadius v.cornerRad :: solidBorder c
 
+  ||| Regular widget with default colors for font, background, and border.
   export
   wregular : List Declaration
   wregular =
@@ -79,6 +78,8 @@ parameters {auto v : Vars}
     :: outlineStyle None
     :: roundedBorder Current
 
+  ||| Widget that has either the `data-active` attribute set, or
+  ||| is in an `active` state (has the `:active` pseudoclass).
   export
   wactive : List Declaration
   wactive =
@@ -88,6 +89,7 @@ parameters {auto v : Vars}
     , outlineWidth v.narrowBW
     ]
 
+  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
   whovered : List Declaration
   whovered =
@@ -97,6 +99,7 @@ parameters {auto v : Vars}
     , outlineWidth v.narrowBW
     ]
 
+  ||| Disabled widget (has the `:disabled` pseudoclass).
   export
   wdisabled : List Declaration
   wdisabled =
@@ -105,6 +108,7 @@ parameters {auto v : Vars}
     :: outlineStyle None
     :: roundedBorder disabledBG
 
+  ||| Outline and border of a cyby-draw component.
   export
   drawCompBorder : List Declaration
   drawCompBorder =
@@ -112,6 +116,22 @@ parameters {auto v : Vars}
     :: outlineWidth v.narrowBW
     :: outlineColor v.gray80
     :: roundedBorder bg
+
+  drawTitle : List Declaration
+  drawTitle =
+       width 100.perc
+    :: display Flex
+    :: alignItems Center
+    :: height v.titleHeight
+    :: backgroundColor widgetFG
+    :: color v.primary10
+    :: hpadded
+    :: margin 0.px
+    :: fontSize 1.em
+    :: roundedBorder widgetFG
+
+  drawList : List Declaration
+  drawList = flex "1" :: overflowY Scroll :: padded :: flexColumn
 
 --------------------------------------------------------------------------------
 -- General
@@ -132,18 +152,12 @@ parameters {auto v : Vars}
         , padding 1.em
         , containerType Size
         ]
-  
+
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
-  
-    , sel {n = 1} (set hidden) [display None]
-  
-    , class quadratic [aspectRatio 1]
-  
-    , class smallText [fontSize Small]
 
     , class hbarsep [backgroundColor bar, width 100.perc, height v.barSepwidth]
-
+ 
     , class vbarsep [backgroundColor bar, height 100.perc, width v.barSepwidth]
 
     , class formsep [backgroundColor bar, width 100.perc, height v.formSepwidth]
@@ -153,63 +167,62 @@ parameters {auto v : Vars}
   export
   components : Rules
   components =
-    [ class sketcherDiv $
+    [ class sketcher $
         area
           [cast v.bardim, 1.fr, cast v.bardim]
           [cast v.bardim, 4.fr, 1.fr]
-          [ [Dot,  Top,  Top]
-          , [Left, Draw, Details]
-          , [Dot,  Bot,  Bot]
+          [ [Dot,   Util,      Util     ]
+          , [Elems, Draw,      Info     ]
+          , [Dot,   Templates, Templates]
           ]
         :: width 100.perc
         :: height 100.perc
         :: gridGaps
 
-    , Container "width < 1440px" [class sketcherDiv [fontSize v.smallFont]]
-    , Container "width < 1024px" [class sketcherDiv [fontSize v.xsmallFont]]
-    , Container "width < 768px"  [class sketcherDiv [fontSize v.xxsmallFont]]
-  
-    , class toolbarTop    $ gridArea Rules.Top   :: flexRow
-    , class toolbarBottom $ gridArea Rules.Bot   :: flexRow
-    , class toolbarLeft   $ gridArea Rules.Left  :: flexColumn
-    , class toolbarRight  $
-           [containerType Size, gridArea Rules.Details]
-        ++ flexColumn
-        ++ drawCompBorder
+    -- the following rules make for a responsive design:
+    -- by reducing the font size of the sketcher, the dimensions of
+    -- all other components as well as paddings and corners are
+    -- adjusted as well.
+    , Container "width < 1440px" [class sketcher [fontSize v.smallFont]]
+    , Container "width < 1024px" [class sketcher [fontSize v.xsmallFont]]
+    , Container "width < 768px"  [class sketcher [fontSize v.xxsmallFont]]
 
-    , class drawDetails $
-        [containerType Size, flex "2"] ++ flexColumn ++ drawCompBorder
-
-    , class drawLog $
-           [fontSize v.smallFont, containerType Size, flex "1"]
-        ++ flexColumn
-        ++ drawCompBorder
-
-    , class compList $ flex "1" :: overflowY Scroll :: padded :: flexColumn
-
-    , class compTitle $
-           width 100.perc
-        :: display Flex
-        :: alignItems Center
-        :: height v.titleHeight
-        :: backgroundColor widgetFG
-        :: color v.primary10
-        :: hpadded
-        :: roundedBorder widgetFG
-  
+    -- the drawing canvas
     , class moleculeCanvas $
            width 100.perc
         :: height 100.perc
-        :: minWidth 0.px
-        :: minHeight 0.px
+        :: minWidth 0.px    -- necessary to resize this when parent is resized
+        :: minHeight 0.px   -- necessary to resize this when parent is resized
         :: gridArea Draw
         :: drawCompBorder
-  
+
+    -- drawing canvas: special states
     , sel [class moleculeCanvas, set active]
         [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
     , classes [moleculeCanvas,dragging] [cursor [Move]]
     , classes [moleculeCanvas,rotating]
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
+
+    -- CyBy Draw toolbars
+    , class drawUtils $ gridArea Util :: flexRow
+    , class drawTemplates $ gridArea Templates :: flexRow
+    , class drawElems $ gridArea Elems :: flexColumn
+    , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ flexColumn
+
+    -- CyBy Draw details
+    , class drawDetails $
+        [containerType Size, flex "2"] ++ flexColumn ++ drawCompBorder
+    , sel (class drawDetails > elem H1) drawTitle
+    , sel (class drawDetails > elem Ul) drawList
+
+    -- logging
+    , class drawLog $
+           [fontSize v.smallFont, containerType Size, flex "1"]
+        ++ flexColumn
+        ++ drawCompBorder
+
+    , sel (class drawLog > elem H1) drawTitle
+    , sel (class drawLog > elem Ul) drawList
 
     , class (level Fatal) [color red]
     , class (level Error) [color red]
@@ -223,16 +236,17 @@ parameters {auto v : Vars}
   export
   forms : Rules
   forms =
-    [ class formRow $ alignItems Stretch :: flexRow
-    , class formLabel [width v.formLblWidth]
-    , class formValue [flex "1"]
+    [ class listEntry $ alignItems Stretch :: flexRow
+    , sel (class listEntry > elem Label) [width v.formLblWidth]
+    , Sel [class listEntryValue, class listEntry > class widget] [flex "1"]
     , Container "width < 300px"
-        [class formRow $ alignItems Start :: flexColumn
-        ,class formLabel [width 100.perc]
-        ,class formValue [flex "0 0 auto", margin (Left v.gap)]
+        [ class listEntry $ alignItems Start :: flexColumn
+        , sel (class listEntry > elem Label) [width 100.perc]
+        , Sel [class listEntryValue, class listEntry > class widget]
+            [flex "0 0 auto", margin (Left v.gap)]
         ]
     ]
-  
+
   ||| Rules for interactive UI elements
   export
   widgets : Rules
@@ -243,7 +257,7 @@ parameters {auto v : Vars}
     , sel [Class widget, set active] wactive
     , sel [Class widget, Disabled] wdisabled
   
-    , classes [widget, icon] [padding 0.px]
+    , classes [widget, icon] [padding 0.px, aspectRatio 1]
   
     , class (elemText B)  [fontWeight Bold, color v.boron]
     , class (elemText C)  [fontWeight Bold, color v.carbon]

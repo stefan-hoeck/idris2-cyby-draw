@@ -36,19 +36,14 @@ CyByLog = "cyby-log"
 export
 logNode : LogLevel -> List String -> HTMLNode
 logNode l msgs =
-  div [class formRow]
-    [ div [classes [formLabel, level l]] [Text $ "[\{l}]"]
-    , div [class formValue] $ intersperse (br []) (map Text msgs)
+  li [class listEntry]
+    [ div [class $ level l] [Text $ "[\{l}]"]
+    , div [class listEntryValue] $ intersperse (br []) (map Text msgs)
     ]
 
 export
 appLog : HTMLNode
-appLog =
-  div
-    [ class drawLog ]
-    [ div [class compTitle] ["Log"]
-    , div [ref CyByLog, classes [compList]] []
-    ]
+appLog = div [class drawLog] [h1 [] ["Log"], ul [ref CyByLog] []]
 
 --------------------------------------------------------------------------------
 -- Icons
