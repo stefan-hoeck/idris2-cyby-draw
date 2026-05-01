@@ -134,12 +134,12 @@ parameters {auto v : Vars}
   drawList = flex "1" :: overflowY Scroll :: padded :: flexColumn
 
   export
-  hsep : List Declaration
-  hsep = [width 100.perc, height v.barSepwidth]
+  vsep : List Declaration
+  vsep = [width 100.perc, height v.barSepwidth]
 
   export
-  vsep : List Declaration
-  vsep = [height 100.perc, width v.barSepwidth]
+  hsep : List Declaration
+  hsep = [height 100.perc, width v.barSepwidth]
 
 --------------------------------------------------------------------------------
 -- General
