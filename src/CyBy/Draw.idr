@@ -5,6 +5,7 @@ import CyBy.Draw.Internal.Label
 import CyBy.UI.CSS.Classes
 import CyBy.UI.HTML
 import Data.Finite
+
 import Data.List
 import Geom
 import Geom.Gen2D.Debug
@@ -149,6 +150,10 @@ molInput pre = Id "\{pre}-mol-input"
 export
 leftBarID : String -> Ref Div
 leftBarID pre = Id "\{pre}-left-bar"
+
+export
+detailsID : String -> Ref Div
+detailsID pre = Id "\{pre}-draw-details"
 
 export
 rightBarID : String -> Ref Div
@@ -307,8 +312,8 @@ parameters {auto de : Sink DrawEvent}
       , icon [] StartPSE (pse s.mode) "PSE" "PSE"
       ]
 
-  rightBarItems : (pre : String) -> DrawState -> HTMLNodes
-  rightBarItems pre s =
+  detailItems : (pre : String) -> DrawState -> HTMLNodes
+  detailItems pre s =
     case selectedNodes s.imol False of
       [n] =>
         let atm     := atom $ lab s.imol n
@@ -335,12 +340,12 @@ parameters {auto de : Sink DrawEvent}
               ]
         _       => []
 
-  rightBar : (pre : String) -> DrawState -> HTMLNode
-  rightBar pre s =
+  details : (pre : String) -> DrawState -> HTMLNode
+  details pre s =
     div
-      [ Id $ rightBarID pre, class toolbarRight ]
+      [ Id $ detailsID pre, class drawDetails ]
       [ div [class compTitle] ["Details"]
-      , div [class compList] (rightBarItems pre s)
+      , div [class compList] (detailItems pre s)
       ]
 
   bottomBar : DrawSettings => (pre : String) -> DrawState -> HTMLNode
@@ -370,7 +375,7 @@ parameters {auto de : Sink DrawEvent}
       [ class sketcherDiv, Id $ sketcherDiv pre ]
       [ topBar pre topadd s
       , leftBar pre s
-      , rightBar pre s
+      , div [Id $ rightBarID pre, class toolbarRight] [details pre s]
       , div
           [ class moleculeCanvas
           , Id $ moleculeCanvas pre
@@ -443,7 +448,7 @@ parameters {auto ds : DrawSettings}
     replace (topBarID pre) (topBar pre topadd s)
     replace (bottomBarID pre) (bottomBar pre s)
     replace (leftBarID pre) (leftBar pre s)
-    replace (rightBarID pre) (rightBar pre s)
+    replace (detailsID pre) (details pre s)
 
   dispKeyDown : String -> DrawState -> Act ()
   dispKeyDown "Escape" s = adjustBars s
