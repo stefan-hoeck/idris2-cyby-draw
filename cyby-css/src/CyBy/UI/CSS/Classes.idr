@@ -25,16 +25,8 @@ invalid = Bool "data-invalid"
 --------------------------------------------------------------------------------
 
 export %inline
-formsep : Class
-formsep = "cyby-form-sep"
-
-export %inline
-hbarsep : Class
-hbarsep = "cyby-hbar-sep"
-
-export %inline
-vbarsep : Class
-vbarsep = "cyby-vbar-sep"
+sep : Class
+sep = "cyby-sep"
 
 --------------------------------------------------------------------------------
 -- Components

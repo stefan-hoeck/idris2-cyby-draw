@@ -133,6 +133,14 @@ parameters {auto v : Vars}
   drawList : List Declaration
   drawList = flex "1" :: overflowY Scroll :: padded :: flexColumn
 
+  export
+  hsep : List Declaration
+  hsep = [width 100.perc, height v.barSepwidth]
+
+  export
+  vsep : List Declaration
+  vsep = [height 100.perc, width v.barSepwidth]
+
 --------------------------------------------------------------------------------
 -- General
 --------------------------------------------------------------------------------
@@ -156,11 +164,7 @@ parameters {auto v : Vars}
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
 
-    , class hbarsep [backgroundColor bar, width 100.perc, height v.barSepwidth]
- 
-    , class vbarsep [backgroundColor bar, height 100.perc, width v.barSepwidth]
-
-    , class formsep [backgroundColor bar, width 100.perc, height v.formSepwidth]
+    , class sep [backgroundColor bar, width 100.perc, height v.formSepwidth]
     ]
 
   ||| Rules the main UI components
@@ -208,6 +212,9 @@ parameters {auto v : Vars}
     , class drawTemplates $ gridArea Templates :: flexRow
     , class drawElems $ gridArea Elems :: flexColumn
     , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ flexColumn
+    , sel (class drawUtils > class sep) hsep
+    , sel (class drawElems > class sep) vsep
+    , sel (class drawTemplates > class sep) hsep
 
     -- CyBy Draw details
     , class drawDetails $
