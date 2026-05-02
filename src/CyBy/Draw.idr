@@ -400,26 +400,14 @@ parameters {auto ds : DrawSettings}
            {auto ex : Extension}
            (pre : String)
 
-  canvasCls : List Class -> Act ()
-  canvasCls = attr (moleculeCanvas pre) . classes . (moleculeCanvas ::)
-
-  rotating : Act ()
-  rotating = canvasCls [rotating]
-
-  dragging : Act ()
-  dragging = canvasCls [dragging]
-
-  normal : Act ()
-  normal = canvasCls []
-
   selectCursor : DrawState -> Act ()
   selectCursor s =
-    case s.mode of
-      Dragging _    => dragging
-      Rotating _    => rotating
-      RotTempl _ _  => rotating
-      Translating _ => dragging
-      _             => applyWhenSel s dragging rotating normal
+    attr (moleculeCanvas pre) $ dragMode $ case s.mode of
+      Dragging _    => Dragging
+      Rotating _    => Rotating
+      RotTempl _ _  => Rotating
+      Translating _ => Dragging
+      _             => applyWhenSel s Dragging Rotating None
 
   displayST : (force : Bool) -> DrawState -> Act ()
   displayST force s = Prelude.do
