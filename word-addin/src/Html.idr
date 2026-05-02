@@ -2,34 +2,20 @@ module Html
 
 import CyBy.Draw
 import CyBy.Draw.Word
+import CyBy.UI.JS
 import Data.List
-import Text.Molfile
-import Text.HTML.DomID
 import Text.CSS.Color
+import Text.HTML.DomID
+import Text.Molfile
+import Text.SVG
 import Web.Async.Util
 import Web.Async.View
-import Text.SVG
 
 %default total
 
-messages : DomID
-messages = "log-msg"
-
-toLogRow : LogLevel -> String -> HTMLNode
-toLogRow lvl x = li [ class "long-row" ] [Text "[ \{toLower $ show lvl} ] \{x}"]
-
-printErr : HSum [JSErr] -> JS [] ()
-printErr (Here x) = putStrLn "Error: \{dispErr x}"
-
-%hint
-logger : Logger JS
-logger =
-  filter Info $ MkLogger $ \lvl,ms =>
-    let logRows  := map (toLogRow lvl) ms
-     in handleErrors printErr $ traverse_ (prepend $ elemRef messages) logRows
-
 parameters {auto ds : DrawSettings}
            {auto de : Sink DrawEvent}
+           {auto lg : Logger JS}
 
   wordDisp : DrawState -> DrawEvent -> Act DrawState
   wordDisp s e =
@@ -50,6 +36,7 @@ ui : DrawSettings => AsyncStream JS [] Void
 ui = do
   E des <- exec $ event {fs = []} DrawEvent
   E dms <- exec $ event {fs = []} DrawMsg
+  let lg := uilog Info
 
   merge
     [ foreach logLoggable dms
