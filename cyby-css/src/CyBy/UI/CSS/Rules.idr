@@ -24,6 +24,19 @@ set f =
     Bool name _ => Attr name Set
     _           => Attr "" Set
 
+export
+formValues : List Selector
+formValues =
+  [ class listEntryValue
+  , class listEntry > class widget
+  , class listEntry > elem Input
+  , class listEntry > elem Select
+  ]
+
+export
+widgetSelectors : List Selector
+widgetSelectors = [Elem Button, Elem Input, Elem Select, Class widget]
+
 --------------------------------------------------------------------------------
 -- Reusable
 --------------------------------------------------------------------------------
@@ -137,6 +150,17 @@ parameters {auto v : Vars}
 --------------------------------------------------------------------------------
 
 parameters {auto v : Vars}
+
+  export
+  widgetRules : Selector -> Rules
+  widgetRules s =
+    [ sel s $ alignSelf Stretch :: hpadded :: wregular
+    , sel [s, Hover] whovered
+    , sel [s, Active] wactive
+    , sel [s, set active] wactive
+    , sel [s, Disabled] wdisabled
+    ]
+
   export
   general : Rules
   general =
@@ -236,12 +260,11 @@ parameters {auto v : Vars}
   forms =
     [ class listEntry $ alignItems Stretch :: flexRow
     , sel (class listEntry > elem Label) [width v.formLblWidth]
-    , Sel [class listEntryValue, class listEntry > class widget] [flex1]
+    , Sel formValues [flex1]
     , Container "width < 300px"
         [ class listEntry $ alignItems Start :: flexColumn
         , sel (class listEntry > elem Label) [width 100.perc]
-        , Sel [class listEntryValue, class listEntry > class widget]
-            [flex "0 0 auto", margin (Left v.gap)]
+        , Sel formValues [noflex, margin (Left v.gap)]
         ]
     ]
 
@@ -249,24 +272,18 @@ parameters {auto v : Vars}
   export
   widgets : Rules
   widgets =
-    [ class widget $ alignSelf Stretch :: hpadded :: wregular
-    , sel [Class widget, Hover] whovered
-    , sel [Class widget, Active] wactive
-    , sel [Class widget, set active] wactive
-    , sel [Class widget, Disabled] wdisabled
-  
-    , classes [widget, icon] [noPadding, aspectRatio 1]
-  
-    , class (elemText B)  [fontWeight Bold, color v.boron]
-    , class (elemText C)  [fontWeight Bold, color v.carbon]
-    , class (elemText F)  [fontWeight Bold, color v.fluorine]
-    , class (elemText S)  [fontWeight Bold, color v.sulfur]
-    , class (elemText O)  [fontWeight Bold, color v.oxygen]
-    , class (elemText N)  [fontWeight Bold, color v.nitrogen]
-    , class (elemText P)  [fontWeight Bold, color v.phosphorous]
-    , class (elemText Br) [fontWeight Bold, color v.bromine]
-    , class (elemText Cl) [fontWeight Bold, color v.chlorine]
-    ]
+       (widgetSelectors >>= widgetRules)
+    ++ [ class icon [noPadding, aspectRatio 1]
+       , class (elemText B)  [fontWeight Bold, color v.boron]
+       , class (elemText C)  [fontWeight Bold, color v.carbon]
+       , class (elemText F)  [fontWeight Bold, color v.fluorine]
+       , class (elemText S)  [fontWeight Bold, color v.sulfur]
+       , class (elemText O)  [fontWeight Bold, color v.oxygen]
+       , class (elemText N)  [fontWeight Bold, color v.nitrogen]
+       , class (elemText P)  [fontWeight Bold, color v.phosphorous]
+       , class (elemText Br) [fontWeight Bold, color v.bromine]
+       , class (elemText Cl) [fontWeight Bold, color v.chlorine]
+       ]
 
 export
 all : Rules

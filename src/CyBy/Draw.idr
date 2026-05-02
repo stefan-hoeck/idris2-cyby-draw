@@ -203,13 +203,12 @@ parameters {auto de : Sink DrawEvent}
 
   elements : MolAtomAT -> HTMLNode
   elements a =
-    selectFromListBy values (a.elem.elem ==) symbol ChgElem
-      [class widget, title "set element"]
+    selectFromListBy values (a.elem.elem ==) symbol ChgElem [title "set element"]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
     selectFromListBy chs (a.charge ==) (show . value) ChgCharge
-      [class widget, title "set charge"]
+      [title "set charge"]
     where
       chs : List Charge
       chs = mapMaybe refineCharge [(-8) .. 8]
@@ -217,7 +216,7 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [class widget, title "set charge"]
+      [title "set charge"]
     where
       dispMass : Maybe MassNr -> String
       dispMass Nothing  = "Mix"
@@ -232,7 +231,7 @@ parameters {auto de : Sink DrawEvent}
     -> HTMLNode
   icon cs ev a ttl child =
     button
-      [classes (widget::icon::cs),active a,onClick ev,title ttl]
+      [classes (icon::cs),active a,onClick ev,title ttl]
       [child]
 
   abbrs : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
@@ -242,7 +241,7 @@ parameters {auto de : Sink DrawEvent}
       (\v => currAbbr s.mode == map label v)
       (maybe "--abbreviation--" label)
       (maybe Redraw SelAbbr)
-      [class widget, abbrActive s]
+      [abbrActive s]
 
   bondIcon : MolBond -> String -> DrawState -> HTMLNode -> HTMLNode
   bondIcon b title s = icon [] (SetBond b) (drawing b s) title
@@ -384,7 +383,7 @@ parameters {auto de : Sink DrawEvent}
 
 export
 cybyDrawBtn : Sink e => String -> e -> Attributes Tag.Button -> HTMLNode
-cybyDrawBtn s e as = button (class widget :: onClick e :: as) [Text s]
+cybyDrawBtn s e as = button (onClick e :: as) [Text s]
 
 export
 expBtn : DrawEnv => String -> DrawState -> HTMLNode
