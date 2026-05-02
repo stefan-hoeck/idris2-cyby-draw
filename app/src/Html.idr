@@ -38,6 +38,15 @@ parameters {auto lg : Logger JS}
     logLoggable Copied      = info "Structure copied to clipboard"
     logLoggable (ReadErr s) = error "Error when pasting structure: \{s}"
 
+  Loggable JS DrawEvent where
+    logLoggable x =
+      case x of
+        SelAbbr {}  => trace "DrawEvent: \{show x}"
+        SetTempl {} => trace "DrawEvent: \{show x}"
+        Load {}     => trace "DrawEvent: \{show x}"
+        Move {}     => trace "DrawEvent: \{show x}"
+        _           => debug "DrawEvent: \{show x}"
+
 --------------------------------------------------------------------------------
 -- App
 --------------------------------------------------------------------------------
@@ -87,6 +96,7 @@ parameters {auto st  : IORef AppST}
 
   drawEv : DrawState -> DrawEvent -> Act DrawState
   drawEv s e = Prelude.do
+    logLoggable e
     ds <- drawSettings <$> readref ast
     let s2 := update e s
     displaySketcher {ex = ext} App e s2
@@ -119,15 +129,14 @@ parameters {auto st  : IORef AppST}
 
 ui : JSStream Void
 ui = Prelude.do
-  let lg := uilog Info
+  let lg := uilog Debug
   E dms  <- exec $ event {fs = [JSErr]} DrawMsg
   E aes  <- exec $ event {fs = [JSErr]} AppEvent
   E des  <- exec $ event {fs = [JSErr]} DrawEvent
   r      <- exec $ castElementByRef Content >>= getClientRect
   ast    <- newref (AST CyBy)
   let ds   := drawSettings (AST CyBy)
-      dims := SD (cast $ r.width - 350) (cast $ r.height - 100)
-      st   := init dims Init ""
+      st   := init (SD 300 200) Init ""
   dst    <- newref {s = World} st
   topadd <- exec (buttons (ext ast dst) (DE App) st)
   exec $ child Content (sketcher App topadd st)
