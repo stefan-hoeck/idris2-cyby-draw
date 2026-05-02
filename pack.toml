@@ -30,11 +30,11 @@ url    = "https://github.com/stefan-hoeck/idris2-async-dom"
 commit = "latest:main"
 ipkg   = "async-dom.ipkg"
 
-[custom.all.array]
+[custom.all.ref1]
 type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-array"
+url    = "https://github.com/stefan-hoeck/idris2-ref1"
 commit = "latest:main"
-ipkg   = "array.ipkg"
+ipkg   = "ref1.ipkg"
 
 [custom.all.indexed-graph]
 type   = "git"

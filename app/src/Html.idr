@@ -4,6 +4,7 @@ import CyBy.Draw
 import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite
+import Data.Linear.Sink
 import Data.List
 import Data.List1
 import Geom.Gen2D.Debug
@@ -127,21 +128,22 @@ parameters {auto st  : IORef AppST}
   appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
   appEv (LoadMol ev) = loadFile ev
 
-ui : JSStream Void
+ui : Act (JSStream Void)
 ui = Prelude.do
-  let lg := uilog Debug
-  E dms  <- exec $ event {fs = [JSErr]} DrawMsg
-  E aes  <- exec $ event {fs = [JSErr]} AppEvent
-  E des  <- exec $ event {fs = [JSErr]} DrawEvent
-  r      <- exec $ castElementByRef Content >>= getClientRect
+  lvl    <- newref Info
+  let lg := uilog
+  E dms  <- event {fs = [JSErr]} DrawMsg
+  E aes  <- event {fs = [JSErr]} AppEvent
+  E des  <- event {fs = [JSErr]} DrawEvent
+  r      <- castElementByRef Content >>= getClientRect
   ast    <- newref (AST CyBy)
   let ds   := drawSettings (AST CyBy)
       st   := init (SD 300 200) Init ""
   dst    <- newref {s = World} st
-  topadd <- exec (buttons (ext ast dst) (DE App) st)
-  exec $ child Content (sketcher App topadd st)
-  exec $ append (infoID App) appLog
-  merge
+  topadd <- buttons (ext ast dst) (DE App) st
+  child Content (sketcher App topadd st)
+  append (infoID App) (appLog @{refSink lvl})
+  pure $ merge
     [ foreach logLoggable dms
     , foreach (appEv ast dst) aes
     , P.evalScans1 st (drawEv ast dst) des |> foreach (writeref dst)
@@ -149,4 +151,4 @@ ui = Prelude.do
 
 export covering
 app : IO ()
-app = runProg ui
+app = runProg (join $ exec ui)
