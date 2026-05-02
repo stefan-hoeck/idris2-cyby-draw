@@ -18,9 +18,15 @@ data Tag = Util | Templates | Elems | Info | Draw | Dot
 %runElab derive "Tag" [Show,Eq]
 
 export
-set : ({0 k : Type} -> {0 t : k} ->  Bool -> Attribute t) -> Selector 
-set f =
-  case f {t = ()} True of
+attr : Attribute () -> Selector 
+attr (Str  n v) = Attr n $ Equals v
+attr (Bool n _) = Attr n Set
+attr _          = []
+
+export
+boolAttr : (Bool -> Attribute ()) -> Selector 
+boolAttr f =
+  case f True of
     Bool name _ => Attr name Set
     _           => Attr "" Set
 
@@ -157,7 +163,7 @@ parameters {auto v : Vars}
     [ sel s $ alignSelf Stretch :: hpadded :: wregular
     , sel [s, Hover] whovered
     , sel [s, Active] wactive
-    , sel [s, set active] wactive
+    , sel [s, boolAttr active] wactive
     , sel [s, Disabled] wdisabled
     ]
 
@@ -216,10 +222,10 @@ parameters {auto v : Vars}
         :: drawCompBorder
 
     -- drawing canvas: special states
-    , sel [class moleculeCanvas, set active]
+    , sel [class moleculeCanvas, boolAttr active]
         [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
-    , classes [moleculeCanvas,dragging] [cursor [Move]]
-    , classes [moleculeCanvas,rotating]
+    , sel (attr $ dragMode Dragging) [cursor [Move]]
+    , sel (attr $ dragMode Rotating)
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
 
     -- CyBy Draw toolbars

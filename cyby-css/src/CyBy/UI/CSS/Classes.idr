@@ -1,16 +1,27 @@
 module CyBy.UI.CSS.Classes
 
 import Chem.Elem
+import Derive.Prelude
 import Data.String
 import IO.Async.Logging
 import Text.HTML.Attribute
 import public Text.CSS.Class
 
 %default total
+%language ElabReflection
 
 --------------------------------------------------------------------------------
 -- Attributes
 --------------------------------------------------------------------------------
+
+public export
+data DragMode = None | Rotating | Dragging
+
+%runElab derive "DragMode" [Show,Eq]
+
+export %inline
+dragMode : DragMode -> Attribute t
+dragMode = Str "data-dragmode" . toLower . show
 
 export %inline
 active : Bool -> Attribute t
@@ -63,14 +74,6 @@ drawLog = "cyby-draw-log"
 export %inline
 moleculeCanvas : Class
 moleculeCanvas = "cyby-draw-molecule-canvas"
-
-export %inline
-rotating : Class
-rotating = "cyby-draw-rotating"
-
-export %inline
-dragging : Class
-dragging = "cyby-draw-dragging"
 
 export %inline
 listEntry : Class
