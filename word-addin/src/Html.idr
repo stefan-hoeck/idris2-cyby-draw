@@ -2,6 +2,7 @@ module Html
 
 import CyBy.Draw
 import CyBy.Draw.Word
+import CyBy.Draw.Word.I18n.EN
 import CyBy.UI.JS
 import Data.List
 import Text.CSS.Color

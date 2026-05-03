@@ -53,11 +53,11 @@ public export
 record Logger where
   constructor L
   node   : HTMLNode
-  stream : JSStream Void
+  stream : AsyncStream JS [] Void
   logger : Logger JS
 
-onev : (ref : IORef LogLevel) => LogEv -> Act ()
-onev Clear   = children (elemRef CyByLog) []
+onev : (ref : IORef LogLevel) => LogEv -> Async JS [] ()
+onev Clear   = handle [printErr] $ children (elemRef CyByLog) []
 onev (Lvl x) = writeref ref x
 
 export

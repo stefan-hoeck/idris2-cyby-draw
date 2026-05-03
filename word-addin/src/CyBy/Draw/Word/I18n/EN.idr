@@ -12,6 +12,7 @@ parameters {auto log : Logger JS}
     emptyMol          = Caught "no or empty molecule"
     emptySel          = Caught "no or empty selection"
     emptySelection    = debug "no selection or no SVG image found: inserting new image"
+    fromWord          = "from Word"
     imageReplaced     = debug "image replaced"
     insertingImage    = debug "inserting image"
     loadErr s         = Caught "error when reading molecule: \{s}"
@@ -20,3 +21,4 @@ parameters {auto log : Logger JS}
     molLoaded         = debug "molecule loaded"
     newInserted       = debug "new image inserted"
     noMolfile         = Caught "no .mol data found in selected image"
+    toWord            = "to Word"

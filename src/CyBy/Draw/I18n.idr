@@ -30,7 +30,6 @@ interface DrawLocal where
   element       : String
   eraseTxt      : String
   fluorine      : String
-  fromWord      : String
   isotope       : String
   length        : String
   loadTxt       : String
@@ -51,7 +50,6 @@ interface DrawLocal where
   singleEither  : String
   singleUp      : String
   sulfur        : String
-  toWord        : String
   tripleBond    : String
   undoTxt       : String
   xcoord        : String
@@ -64,6 +62,9 @@ interface DrawLocal where
 
   logJSErr      : JSErr -> JS es ()
   logDrawEvent  : DrawEvent -> JS es ()
+  logOpened     : String -> JS es ()
+  noMetadata    : String -> JS es ()
+  wrongFileType : String -> JS es ()
 
 export %inline
 DrawLocal => Loggable JS JSErr where logLoggable = logJSErr

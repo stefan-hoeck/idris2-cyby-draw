@@ -29,7 +29,6 @@ parameters {auto log : Logger JS}
     element       = "Element"
     eraseTxt      = "erase"
     fluorine      = "fluorine"
-    fromWord      = "from Word"
     isotope       = "Isotope"
     length        = "Length"
     loadTxt       = "Load..."
@@ -50,7 +49,6 @@ parameters {auto log : Logger JS}
     singleEither  = "single bond up or down"
     singleUp      = "single bond up"
     sulfur        = "sulfur"
-    toWord        = "to Word"
     tripleBond    = "triple bond"
     undoTxt       = "undo"
     xcoord        = "x-Coord."
@@ -69,6 +67,11 @@ parameters {auto log : Logger JS}
         
         Error details: \{dispErr x}
         """
+
+    logOpened p     = info "file opened: \{p}"
+    noMetadata p    = error "File \{p} does not contain any CyBy metadata. It might have been created or edited by another program."
+    wrongFileType p = error "unsupported file type: \{p}"
+
 
     logDrawEvent x =
       case x of

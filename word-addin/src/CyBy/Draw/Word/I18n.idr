@@ -10,6 +10,7 @@ interface DrawLocal => WordLocal where
   emptyMol       : JSErr
   emptySel       : JSErr
   emptySelection : JS es ()
+  fromWord       : String
   imageReplaced  : JS es ()
   insertingImage : JS es ()
   loadErr        : String -> JSErr
@@ -18,3 +19,4 @@ interface DrawLocal => WordLocal where
   molLoaded      : JS es ()
   newInserted    : JS es ()
   noMolfile      : JSErr
+  toWord         : String
