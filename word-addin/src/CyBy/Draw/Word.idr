@@ -41,89 +41,89 @@ import Text.CSS.Class
 -- for. As the RegEx is non-greedy, only the first SVG
 -- occurrence is relevant.
 
-exportImgEmptSel :
-     {auto _ : Logger JS}
-  -> Context
-  -> Selection
-  -> (svg : String)
-  -> (w,h : EMU)
-  -> Act ()
-exportImgEmptSel c s svg w h = do
-  debug "Selection is empty or no svg is present for replacing the structure"
-  -- encode and insert the image to Word
-  -- the JS API creates an xml entry, where the graph is stored
-  -- in the svg reference for later use
-  insertInlinePicture s svg
-
-  selOoxml <- getSelectionOoxml c s
-
-  debug "New width: \{w}, new height: \{h}"
-
-  -- replace the size of the Word generated values with the
-  -- newly calculated values
-  replaceOoxml s (replaceSvgAndSize selOoxml svg w h)
-  debug "exportImage succcesfull"
-
-exportImage : Logger JS => (svg : String) -> (w,h : EMU) -> Act ()
-exportImage svg w h =
-  use1 wordContext $ \c => Prelude.do
-    debug "Begin of function `exportImage`"
-    -- replace the selected svg (or the first in the selection)
-    -- with the updated structure and adjust the size accordingly
-    -- if an svg is selected
-    -- if the selection is empty or does not include an svg,
-    -- insert the new structure after the selection / cursor
-    s <- getSelection c
-
-    -- if the selection is empty, insert the svg as a new image
-    False <- isEmpty s | True => exportImgEmptSel c s svg w h
-
-    -- load the selection as xml
-    ooxml <- getSelectionOoxml c s
-
-    -- check if only one CyBy-Draw generated image is selected
-    checkSingleSelection ooxml
-
-    -- replace the first occurring svg with the updated one
-    -- and replace the new sizes
-    replaceOoxml s (replaceSvgAndSize ooxml svg w h)
-    debug "Function `exportImage` successful"
-
-exportImageToWord : Logger JS => DrawSettings => DrawState -> Act ()
-exportImageToWord s =
-  -- throw an error if the canvas is empty
-  if s.mol == G 0 empty
-     then throw (Caught "No molecule to export!")
-     else do
-       timeStampUTC <- liftIO $ clockTime UTC
-       let ts            := toNano timeStampUTC
-       let (SD w h, svg) := exportSVGPair True ("Timestamp: \{show ts}") s
-       exportImage svg (cast w) (cast h)
-
-export
-importImage : Logger JS => Act CDGraph
-importImage =
-  use1 wordContext $ \c => Prelude.do
-    debug "Begin of function `importImage`"
-
-    s <- getSelection c
-    False <- isEmpty s | True => throw (Caught "Selection is empty")
-
-    -- load the whole selection as xml
-    ooxml <- getSelectionOoxml c s
-
-    -- check if only one CyBy-Draw generated image is selected
-    checkSingleSelection ooxml
-
-    -- extracting the MOL file directly from the xml structure
-    -- of the current selection
-    -- if there are several cyby-draw generated structures, the
-    -- first in the selection is imported
-    case extractMol ooxml of
-      Nothing => throw (Caught "No MOL-File found")
-      Just bs => case readMolfileE (toString bs) of
-        Left e  => throw (Caught "Error when pasting structure: \{e}")
-        Right m => debug "Function `importImage` succcesful" $> m
+-- exportImgEmptSel :
+--      {auto _ : Logger JS}
+--   -> Context
+--   -> Selection
+--   -> (svg : String)
+--   -> (w,h : EMU)
+--   -> Act ()
+-- exportImgEmptSel c s svg w h = do
+--   debug "Selection is empty or no svg is present for replacing the structure"
+--   -- encode and insert the image to Word
+--   -- the JS API creates an xml entry, where the graph is stored
+--   -- in the svg reference for later use
+--   insertInlinePicture s svg
+-- 
+--   selOoxml <- getSelectionOoxml c s
+-- 
+--   debug "New width: \{w}, new height: \{h}"
+-- 
+--   -- replace the size of the Word generated values with the
+--   -- newly calculated values
+--   replaceOoxml s (replaceSvgAndSize selOoxml svg w h)
+--   debug "exportImage succcesfull"
+-- 
+-- exportImage : Logger JS => (svg : String) -> (w,h : EMU) -> Act ()
+-- exportImage svg w h =
+--   use1 wordContext $ \c => Prelude.do
+--     debug "Begin of function `exportImage`"
+--     -- replace the selected svg (or the first in the selection)
+--     -- with the updated structure and adjust the size accordingly
+--     -- if an svg is selected
+--     -- if the selection is empty or does not include an svg,
+--     -- insert the new structure after the selection / cursor
+--     s <- getSelection c
+-- 
+--     -- if the selection is empty, insert the svg as a new image
+--     False <- isEmpty s | True => exportImgEmptSel c s svg w h
+-- 
+--     -- load the selection as xml
+--     ooxml <- getSelectionOoxml c s
+-- 
+--     -- check if only one CyBy-Draw generated image is selected
+--     checkSingleSelection ooxml
+-- 
+--     -- replace the first occurring svg with the updated one
+--     -- and replace the new sizes
+--     replaceOoxml s (replaceSvgAndSize ooxml svg w h)
+--     debug "Function `exportImage` successful"
+-- 
+-- exportImageToWord : Logger JS => DrawSettings => DrawState -> Act ()
+-- exportImageToWord s =
+--   -- throw an error if the canvas is empty
+--   if s.mol == G 0 empty
+--      then throw (Caught "No molecule to export!")
+--      else do
+--        timeStampUTC <- liftIO $ clockTime UTC
+--        let ts            := toNano timeStampUTC
+--        let (SD w h, svg) := exportSVGPair True ("Timestamp: \{show ts}") s
+--        exportImage svg (cast w) (cast h)
+-- 
+-- export
+-- importImage : Logger JS => Act CDGraph
+-- importImage =
+--   use1 wordContext $ \c => Prelude.do
+--     debug "Begin of function `importImage`"
+-- 
+--     s <- getSelection c
+--     False <- isEmpty s | True => throw (Caught "Selection is empty")
+-- 
+--     -- load the whole selection as xml
+--     ooxml <- getSelectionOoxml c s
+-- 
+--     -- check if only one CyBy-Draw generated image is selected
+--     checkSingleSelection ooxml
+-- 
+--     -- extracting the MOL file directly from the xml structure
+--     -- of the current selection
+--     -- if there are several cyby-draw generated structures, the
+--     -- first in the selection is imported
+--     case extractMol ooxml of
+--       Nothing => throw (Caught "No MOL-File found")
+--       Just bs => case readMolfileE (toString bs) of
+--         Left e  => throw (Caught "Error when pasting structure: \{e}")
+--         Right m => debug "Function `importImage` succcesful" $> m
 
 wordButtons : DrawEnv => DrawState -> HTMLNodes
 wordButtons @{DE pre} s =
@@ -131,21 +131,11 @@ wordButtons @{DE pre} s =
   , expBtn @{DE pre} "to Word" s
   ]
 
-parameters {auto log : Logger JS}
-  export
-  Loggable JS JSErr where
-    logLoggable err = error $ dispErr err
-
-  export
-  Loggable JS DrawMsg where
-    logLoggable Copied        = info "Structure copied to clipboard"
-    logLoggable (ReadErr str) = error "Error when pasting structure: \{str}"
-
 export
-WordExt : Logger JS => Extension
-WordExt =
-  E
-    { doExport     = exportImageToWord
-    , buttons      = \_ => pure . wordButtons
-    , adjust       = \_,_,s => disableExport s
-    }
+WordExt : DrawLocal => Extension
+-- WordExt =
+--   E
+--     { doExport     = exportImageToWord
+--     , buttons      = \_ => pure . wordButtons
+--     , adjust       = \_,_,s => disableExport s
+--     }

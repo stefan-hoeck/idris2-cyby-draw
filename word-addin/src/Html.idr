@@ -13,24 +13,24 @@ import Web.Async.View
 
 %default total
 
-parameters {auto ds : DrawSettings}
-           {auto de : Sink DrawEvent}
-           {auto lg : Logger JS}
-
-  wordDisp : DrawState -> DrawEvent -> Act DrawState
-  wordDisp s e =
-   let s2 := update e s
-    in displaySketcher {ex = WordExt} "app" e s2 $> s2
-
-  logAndDisplay : DrawState -> DrawEvent -> Act DrawState
-  logAndDisplay s SVGimp = importImage >>= wordDisp s . Load
-  logAndDisplay s e      = wordDisp s e
-  
-  handled : DrawState -> DrawEvent -> JS [] DrawState
-  handled s e =
-    attempt (logAndDisplay s e) >>= \case
-      Left (Here x) => logLoggable x $> s
-      Right res     => pure res
+-- parameters {auto ds : DrawSettings}
+--            {auto de : Sink DrawEvent}
+--            {auto lg : Logger JS}
+-- 
+--   wordDisp : DrawState -> DrawEvent -> Act DrawState
+--   wordDisp s e =
+--    let s2 := update e s
+--     in displaySketcher {ex = WordExt} "app" e s2 $> s2
+-- 
+--   logAndDisplay : DrawState -> DrawEvent -> Act DrawState
+--   logAndDisplay s SVGimp = importImage >>= wordDisp s . Load
+--   logAndDisplay s e      = wordDisp s e
+--   
+--   handled : DrawState -> DrawEvent -> JS [] DrawState
+--   handled s e =
+--     attempt (logAndDisplay s e) >>= \case
+--       Left (Here x) => logLoggable x $> s
+--       Right res     => pure res
 
 ui : DrawSettings => AsyncStream JS [] Void
 -- ui = do
@@ -48,4 +48,4 @@ ui : DrawSettings => AsyncStream JS [] Void
 
 export covering
 app : IO ()
-app = runProg $ weakenErrors $ ui @{defaultSettings abbreviations}
+-- app = runProg $ weakenErrors $ ui @{defaultSettings abbreviations}
