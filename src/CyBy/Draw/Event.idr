@@ -39,21 +39,6 @@ export
 reset : (mod, current : Modifier) -> Modifier
 reset m c = if m == c then NoMod else c
 
-||| A data type for logging messages.
-|||
-||| Typically, these will not be handled by cyby-draw directly but
-||| by applications embedding our drawing canvas into their own
-||| UI.
-public export
-data DrawMsg : Type where
-  ||| Data was copied to clipboard
-  Copied  : DrawMsg
-  
-  ||| Invalid data was read from clipboard
-  ReadErr : String -> DrawMsg
-
-%runElab derive "DrawMsg" [Show, Eq]
-
 public export
 data DrawEvent : Type where
   ZoomIn           : (atPos : Bool) -> DrawEvent

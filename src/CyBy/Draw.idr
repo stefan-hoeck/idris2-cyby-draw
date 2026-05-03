@@ -18,6 +18,7 @@ import Web.Internal.Types
 
 import public CyBy.Draw.Draw
 import public CyBy.Draw.Event
+import public CyBy.Draw.I18n as I
 import public CyBy.Draw.Internal.Abbreviations
 import public CyBy.Draw.Internal.Atom
 import public CyBy.Draw.Internal.CoreDims
@@ -51,12 +52,12 @@ color PyMol  = pymolColor
 molToClipboard : HasIO io => CDGraph -> io ()
 molToClipboard = toClipboard . writeMolfile . toMolfile
 
-fromClipboard : Sink DrawEvent => Loggable JS DrawMsg => Act ()
+fromClipboard : Sink DrawEvent => DrawLocal => Act ()
 fromClipboard =
   readFromClipboard >>= \s =>
     case readMolfileE s of
       Left x  => case smilesToMol s of
-        Left  _ => logLoggable (ReadErr x)
+        Left  _ => readErr x
         Right m => sink (Event.SetTempl $ initGraph m.graph)
       Right g => sink (Event.SetTempl g)
 
@@ -201,15 +202,16 @@ currAbbr (SetAbbr a) = Just a.label
 currAbbr _           = Nothing
 
 parameters {auto de : Sink DrawEvent}
+           {auto lc : DrawLocal}
 
   elements : MolAtomAT -> HTMLNode
   elements a =
-    selectFromListBy values (a.elem.elem ==) symbol ChgElem [title "set element"]
+    selectFromListBy values (a.elem.elem ==) symbol ChgElem [title setElement]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
     selectFromListBy chs (a.charge ==) (show . value) ChgCharge
-      [title "set charge"]
+      [title setCharge]
     where
       chs : List Charge
       chs = mapMaybe refineCharge [(-8) .. 8]
@@ -217,10 +219,10 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [title "set charge"]
+      [title setMass]
     where
       dispMass : Maybe MassNr -> String
-      dispMass Nothing  = "Mix"
+      dispMass Nothing  = mix
       dispMass (Just m) = show m.value
 
   icon :
@@ -240,7 +242,7 @@ parameters {auto de : Sink DrawEvent}
     selectFromListBy
       (Nothing :: map Just ds.abbreviations)
       (\v => currAbbr s.mode == map label v)
-      (maybe "--abbreviation--" label)
+      (maybe abbreviations label)
       (maybe Redraw SelAbbr)
       [abbrActive s]
 
@@ -256,28 +258,28 @@ parameters {auto de : Sink DrawEvent}
   utils {ds} pre topadd s =
     div
       [ Id $ utilsID pre, class drawUtils ] $
-      [ icon [] SelectMode (s.mode == Select) "select" select
-      , icon [] EraseMode (s.mode == Erase) "erase" erase
-      , icon [] Clear False "clear" trash
+      [ icon [] SelectMode (s.mode == Select) selectTxt select
+      , icon [] EraseMode (s.mode == Erase) eraseTxt erase
+      , icon [] Clear False clearTxt trash
       , nodeSep
-      , disable (s.undos == []) $ icon [] Undo False "undo" undo
-      , disable (s.redos == []) $ icon [] Redo False "redo" redo
+      , disable (s.undos == []) $ icon [] Undo False undoTxt undo
+      , disable (s.redos == []) $ icon [] Redo False redoTxt redo
       , nodeSep
-      , icon [] Center False "center" center
-      , disable (maxZoom s.transform) $ icon [] (ZoomIn False) False "zoom in" zoomIn
-      , disable (minZoom s.transform) $ icon [] (ZoomOut False) False "zoom out" zoomOut
+      , icon [] Center False centerTxt center
+      , disable (maxZoom s.transform) $ icon [] (ZoomIn False) False zoomInTxt zoomIn
+      , disable (minZoom s.transform) $ icon [] (ZoomOut False) False zoomOutTxt zoomOut
       , nodeSep
-      , bondIcon (cast Single) "single bond" s single
-      , bondIcon (fromStereo Up) "single bond up" s bondUp
-      , bondIcon (fromStereo Down) "single bond down" s bondDown
-      , bondIcon (fromStereo Either) "single bond up or down" s bondEither
-      , bondIcon (cast Types.Dbl) "double bond" s double
-      , bondIcon (cast Triple) "triple bond" s triple
+      , bondIcon (cast Single) singleBnd s single
+      , bondIcon (fromStereo Up) singleUp s bondUp
+      , bondIcon (fromStereo Down) singleDown s bondDown
+      , bondIcon (fromStereo Either) singleEither s bondEither
+      , bondIcon (cast Types.Dbl) doubleBond s double
+      , bondIcon (cast Triple) tripleBond s triple
       , nodeSep
       ] ++ topadd
 
   template : CDGraph -> String -> DrawState -> HTMLNode -> HTMLNode
-  template g nm s = icon [] (SetTempl g) (s.mode == SetTempl g) "template \{nm}"
+  template g nm s = icon [] (SetTempl g) (s.mode == SetTempl g) nm 
 
   elemIcon : DrawState -> String -> Elem -> HTMLNode
   elemIcon s t e = icon [elemText e] (SetElem e) (setting e s) t (Text $ symbol e)
@@ -285,17 +287,17 @@ parameters {auto de : Sink DrawEvent}
   elems pre s =
     div
       [ Id $ elemsID pre, class drawElems ]
-      [ elemIcon s "Boron" B
-      , elemIcon s "Carbon" C
-      , elemIcon s "Oxygen" O
-      , elemIcon s "Nitrogen" N
-      , elemIcon s "Fluorine" F
-      , elemIcon s "Phosphorous" P
-      , elemIcon s "Sulfur" S
-      , elemIcon s "Chlorine" Cl
-      , elemIcon s "Bromine" Br
+      [ elemIcon s boron B
+      , elemIcon s carbon C
+      , elemIcon s oxygen O
+      , elemIcon s nitrogen N
+      , elemIcon s fluorine F
+      , elemIcon s phosphorous P
+      , elemIcon s sulfur S
+      , elemIcon s chlorine Cl
+      , elemIcon s bromine Br
       , nodeSep
-      , icon [] StartPSE (pse s.mode) "PSE" "PSE"
+      , icon [] StartPSE (pse s.mode) pseLong (Text pse)
       ]
 
   detailItems : (pre : String) -> DrawState -> HTMLNodes
@@ -307,12 +309,12 @@ parameters {auto de : Sink DrawEvent}
             [x,y,_] := atm.position
             cx      := dispCoordShort x
             cy      := dispCoordShort y
-         in [ detail "Element"  $ elements atm
-            , detail "Isotope"  $ massNrs atm
-            , detail "Charge"   $ charges atm
-            , detail "Type"     $ div [class listEntryValue] [Text tpe]
-            , detail "x-Coord." $ div [class listEntryValue] [Text cx]
-            , detail "y-Coord." $ div [class listEntryValue] [Text cy]
+         in [ detail element  $ elements atm
+            , detail isotope  $ massNrs atm
+            , detail charge   $ charges atm
+            , detail atomType $ div [class listEntryValue] [Text tpe]
+            , detail xcoord   $ div [class listEntryValue] [Text cx]
+            , detail ycoord   $ div [class listEntryValue] [Text cy]
             ]
       _   => case selectedEdges s.imol of
         [(x,y)] =>
@@ -330,7 +332,7 @@ parameters {auto de : Sink DrawEvent}
   details pre s =
     div
       [ Id $ detailsID pre, class drawDetails ]
-      [ h1 [] ["Details"]
+      [ h1 [] [Text detailsTxt]
       , ul [] (separate $ detailItems pre s)
       ]
 
@@ -338,13 +340,13 @@ parameters {auto de : Sink DrawEvent}
   templates pre s =
     div
       [ Id $ templatesID pre, class drawTemplates ]
-      [ template phenyl "benzene" s benzene
-      , template (ring 6) "cyclohexane" s cyclohexane
-      , template (ring 5) "cyclopentane" s cyclopentane
-      , template (ring 3) "cyclopropane" s cyclopropane
-      , template (ring 4) "cyclobutane" s cyclobutane
-      , template (ring 7) "cycloheptane" s cycloheptane
-      , template (ring 8) "cyclooctane" s cyclooctane
+      [ template phenyl benzene s benzene
+      , template (ring 6) I.cyclohexane s cyclohexane
+      , template (ring 5) I.cyclopentane s cyclopentane
+      , template (ring 3) I.cyclopropane s cyclopropane
+      , template (ring 4) I.cyclobutane s cyclobutane
+      , template (ring 7) I.cycloheptane s cycloheptane
+      , template (ring 8) I.cyclooctane s cyclooctane
       , nodeSep
       , abbrs pre s
       ]
@@ -397,7 +399,7 @@ expBtn @{DE pre} txt s =
 
 parameters {auto ds : DrawSettings}
            {auto se : Sink DrawEvent}
-           {auto lm : Loggable JS DrawMsg}
+           {auto lc : DrawLocal}
            {auto ex : Extension}
            (pre : String)
 
@@ -429,11 +431,11 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "c" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph True s.mol
-       in when (g.order > 0) (molToClipboard g >> logLoggable Copied)
+       in when (g.order > 0) (molToClipboard g >> copied)
   dispKeyDown "x" s =
     when (s.modifier == Ctrl) $
       let g := selectedSubgraph False s.mol
-       in when (g.order > 0) (molToClipboard g >> logLoggable Copied)
+       in when (g.order > 0) (molToClipboard g >> copied)
   dispKeyDown "v"    s =
     -- we need to read from the clipboard in a new fiber, because the result
     -- will be written to the sink of `DrawEvent`s, which we are currently
@@ -442,9 +444,19 @@ parameters {auto ds : DrawSettings}
   dispKeyDown "Ctrl" s = selectCursor s
   dispKeyDown _      s = pure ()
 
+  %inline
+  doFocus : Act ()
+  doFocus =
+    focus (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active True)
+
+  %inline
+  doBlur : Act ()
+  doBlur =
+    blur (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active False)
+
   displayEv : DrawEvent -> DrawState -> Act ()
-  displayEv Focus            s = focus (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active True)
-  displayEv Blur             s = blur (moleculeCanvas pre) >> attr (moleculeCanvas pre) (active False)
+  displayEv Focus            s = doFocus
+  displayEv Blur             s = doBlur
   displayEv (KeyDown k)      s = dispKeyDown k s
   displayEv (KeyUp _)        s = adjustBars s
   displayEv (SetElem _)      s = adjustBars s
@@ -495,8 +507,7 @@ displayMol sd g m =
    in Raw . curSVG $ initMol sd Fill False "" $ G o mg
 
 parameters {auto ex : Extension}
-           {auto lg : Loggable JS DrawMsg}
-           {auto le : Loggable JS DrawEvent}
+           {auto lc : DrawLocal}
            (getDS   : Act DrawSettings)
 
   doact : Sink DrawEvent => String -> DrawState -> DrawEvent -> Act DrawState
@@ -527,11 +538,11 @@ parameters {auto ex : Extension}
       map (Valid . toMolfile . mol) <$> molWidget ui sd m
 
 ||| The default `Extension`
-export %hint
-NoExt : Extension
+export
+NoExt : DrawLocal => Extension
 NoExt =
   E
     { doExport = storeSVG . exportSVG
-    , buttons  = \_,s => pure [expBtn "Save..." s]
+    , buttons  = \_,s => pure [expBtn saveTxt s]
     , adjust   = \_,_,s => disableExport s
     }

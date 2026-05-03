@@ -1,6 +1,7 @@
 module Html
 
 import CyBy.Draw
+import CyBy.Draw.I18n.EN
 import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite
@@ -34,20 +35,6 @@ App = "app"
 Content : Ref Tag.Body
 Content = Id "content"
 
-parameters {auto lg : Logger JS}
-  Loggable JS DrawMsg where
-    logLoggable Copied      = info "Structure copied to clipboard"
-    logLoggable (ReadErr s) = error "Error when pasting structure: \{s}"
-
-  Loggable JS DrawEvent where
-    logLoggable x =
-      case x of
-        SelAbbr {}  => trace "DrawEvent: \{show x}"
-        SetTempl {} => trace "DrawEvent: \{show x}"
-        Load {}     => trace "DrawEvent: \{show x}"
-        Move {}     => trace "DrawEvent: \{show x}"
-        _           => debug "DrawEvent: \{show x}"
-
 --------------------------------------------------------------------------------
 -- App
 --------------------------------------------------------------------------------
@@ -56,28 +43,24 @@ data AppEvent : Type where
   SetColor : Sink DrawEvent => ColorScheme -> AppEvent
   LoadMol  : Sink DrawEvent => FileEv -> AppEvent
 
-record AppST where
-  constructor AST
-  scheme : ColorScheme
-
-getDS : (r : IORef AppST) => Act DrawSettings
+getDS : (r : IORef ColorScheme) => JS es DrawSettings
 getDS =
   map
-    (\(AST s) => {elemColor := color s} (defaultSettings abbreviations))
+    (\s => {elemColor := color s} (defaultSettings abbreviations))
     (readref r)
 
-parameters {auto st  : IORef AppST}
+parameters {auto st  : IORef ColorScheme}
            {auto sae : Sink AppEvent}
-           {auto lg  : Logger JS}
-           (ast      : IORef AppST)
+           {auto loc : DrawLocal}
+           (ast      : IORef ColorScheme)
            (dst      : IORef DrawState)
 
-  btns : DrawEnv -> DrawState -> Act HTMLNodes
+  btns : DrawEnv -> DrawState -> JS es HTMLNodes
   btns de@(DE {}) s = Prelude.do
-    AST c <- readref ast 
+    c <- readref ast 
     pure
-      [ expBtn "Save..." s
-      , label [forID LoadIn, class widget] ["Load..."]
+      [ expBtn saveTxt s
+      , label [forID LoadIn, class widget] [Text loadTxt]
       , input
           [ ref LoadIn
           , hidden True
@@ -98,46 +81,46 @@ parameters {auto st  : IORef AppST}
 
   loadFile : Sink DrawEvent => FileEv -> Act ()
   loadFile (FE f p) = Prelude.do
-    info "file opened: \{p}"
+    logOpened p
     bs <- blobBytes (up f)
     case [<] <>< forget (String.split ('.' ==) p) of
       _:<"mol" =>
         case readMolfileE (cast bs) of
-          Left x  => logLoggable (ReadErr x)
+          Left x  => readErr x
           Right g => sink (Event.Load g)
       _:<"smi" =>
         case smilesToMol (cast bs) of
-          Left x  => logLoggable (ReadErr x)
+          Left x  => readErr x
           Right m => sink (Event.Load $ initGraph m.graph)
       _:<"svg" =>
         case between "<metadata>" "</metadata>" (cast bs) of
-          Nothing  => logLoggable (ReadErr ".svg file does not contain required metadata")
+          Nothing  => noMetadata p
           Just bs2 => case readMolfileE (toString bs2) of
-            Left x  => logLoggable (ReadErr x)
+            Left x  => readErr x
             Right g => sink (Event.Load g)
-      _ => logLoggable (ReadErr "unsupported file type")
+      _ => wrongFileType p
 
-  appEv : AppEvent -> Act ()
-  appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
-  appEv (LoadMol ev) = loadFile ev
+  appEv : AppEvent -> Async JS [] ()
+  appEv (SetColor x) = writeref ast x >> sink Redraw
+  appEv (LoadMol ev) = logErrs $ loadFile ev
 
-ui : Act (JSStream Void)
+ui : Act (AsyncStream JS [] Void)
 ui = Prelude.do
   L ln ls lg <- logger Info
-  E aes      <- event {fs = [JSErr]} AppEvent
-  ast        <- newref (AST CyBy)
+  E aes      <- event {fs = []} AppEvent
+  ast        <- newref CyBy
   ds         <- getDS
   dst        <- newref {s = World} $ fromMol (SD 0 0) Init (G 0 empty)
   W mn ss    <- molWidget {ex = ext ast dst} getDS App (SD 300 200) Nothing
 
   child Content mn
   append (infoID App) ln
-  pure $ merge
+  pure $ Concurrent.merge
     [ foreach (appEv ast dst) aes
-    , foreach (writeref dst) ss
+    , tryStream ss |> foreach (writeref dst)
     , ls
     ]
 
 export covering
 app : IO ()
-app = runProg (join $ exec ui)
+app = runProg (exec ui >>= weakenErrors)
