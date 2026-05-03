@@ -14,39 +14,29 @@ import Web.Async.View
 
 %default total
 
--- parameters {auto ds : DrawSettings}
---            {auto de : Sink DrawEvent}
---            {auto lg : Logger JS}
--- 
---   wordDisp : DrawState -> DrawEvent -> Act DrawState
---   wordDisp s e =
---    let s2 := update e s
---     in displaySketcher {ex = WordExt} "app" e s2 $> s2
--- 
---   logAndDisplay : DrawState -> DrawEvent -> Act DrawState
---   logAndDisplay s SVGimp = importImage >>= wordDisp s . Load
---   logAndDisplay s e      = wordDisp s e
---   
---   handled : DrawState -> DrawEvent -> JS [] DrawState
---   handled s e =
---     attempt (logAndDisplay s e) >>= \case
---       Left (Here x) => logLoggable x $> s
---       Right res     => pure res
+App : String
+App = "app"
 
-ui : DrawSettings => AsyncStream JS [] Void
--- ui = do
---   E des      <- exec $ event {fs = []} DrawEvent
---   E dms      <- exec $ event {fs = []} DrawMsg
---   L ln ls lg <- exec $ logger Info
--- 
---   merge
---     [ foreach logLoggable dms
---     , ls
---     , P.cons (KeyDown "Escape") des
---         |> P.evalScans1 (init (SD 400 266) Init "") handled
---         |> drain
---     ]
+Content : Ref Tag.Body
+Content = Id "content"
+
+getDS : (r : IORef ColorScheme) => JS es DrawSettings
+getDS =
+  map
+    (\s => {elemColor := color s} (defaultSettings abbreviations))
+    (readref r)
+
+ui : Act (AsyncStream JS [] Void)
+ui = do
+  ast        <- newref CyBy
+  L ln ls lg <- logger Info
+  W mn ss    <- molWidget {ex = WordExt} getDS App (SD 300 200) Nothing
+
+  child Content mn
+  append (infoID App) ln
+
+  pure $ Concurrent.merge [ls, tryStream (drain ss)]
 
 export covering
 app : IO ()
--- app = runProg $ weakenErrors $ ui @{defaultSettings abbreviations}
+app = runProg $ exec ui >>= weakenErrors

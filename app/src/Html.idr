@@ -43,25 +43,21 @@ data AppEvent : Type where
   SetColor : Sink DrawEvent => ColorScheme -> AppEvent
   LoadMol  : Sink DrawEvent => FileEv -> AppEvent
 
-record AppST where
-  constructor AST
-  scheme : ColorScheme
-
-getDS : (r : IORef AppST) => JS es DrawSettings
+getDS : (r : IORef ColorScheme) => JS es DrawSettings
 getDS =
   map
-    (\(AST s) => {elemColor := color s} (defaultSettings abbreviations))
+    (\s => {elemColor := color s} (defaultSettings abbreviations))
     (readref r)
 
-parameters {auto st  : IORef AppST}
+parameters {auto st  : IORef ColorScheme}
            {auto sae : Sink AppEvent}
            {auto loc : DrawLocal}
-           (ast      : IORef AppST)
+           (ast      : IORef ColorScheme)
            (dst      : IORef DrawState)
 
   btns : DrawEnv -> DrawState -> JS es HTMLNodes
   btns de@(DE {}) s = Prelude.do
-    AST c <- readref ast 
+    c <- readref ast 
     pure
       [ expBtn saveTxt s
       , label [forID LoadIn, class widget] [Text loadTxt]
@@ -105,14 +101,14 @@ parameters {auto st  : IORef AppST}
       _ => wrongFileType p
 
   appEv : AppEvent -> Async JS [] ()
-  appEv (SetColor x) = mod ast {scheme := x} >> sink Redraw
+  appEv (SetColor x) = writeref ast x >> sink Redraw
   appEv (LoadMol ev) = logErrs $ loadFile ev
 
 ui : Act (AsyncStream JS [] Void)
 ui = Prelude.do
   L ln ls lg <- logger Info
   E aes      <- event {fs = []} AppEvent
-  ast        <- newref (AST CyBy)
+  ast        <- newref CyBy
   ds         <- getDS
   dst        <- newref {s = World} $ fromMol (SD 0 0) Init (G 0 empty)
   W mn ss    <- molWidget {ex = ext ast dst} getDS App (SD 300 200) Nothing
