@@ -130,23 +130,23 @@ parameters {auto st  : IORef AppST}
 
 ui : Act (JSStream Void)
 ui = Prelude.do
-  lvl    <- newref Info
-  let lg := uilog
-  E dms  <- event {fs = [JSErr]} DrawMsg
-  E aes  <- event {fs = [JSErr]} AppEvent
-  E des  <- event {fs = [JSErr]} DrawEvent
-  r      <- castElementByRef Content >>= getClientRect
-  ast    <- newref (AST CyBy)
-  let ds   := drawSettings (AST CyBy)
-      st   := init (SD 300 200) Init ""
-  dst    <- newref {s = World} st
-  topadd <- buttons (ext ast dst) (DE App) st
+  L ln ls lg <- logger Info
+  E dms      <- event {fs = [JSErr]} DrawMsg
+  E aes      <- event {fs = [JSErr]} AppEvent
+  E des      <- event {fs = [JSErr]} DrawEvent
+  r          <- castElementByRef Content >>= getClientRect
+  ast        <- newref (AST CyBy)
+  let ds     := drawSettings (AST CyBy)
+      st     := init (SD 300 200) Init ""
+  dst        <- newref {s = World} st
+  topadd     <- buttons (ext ast dst) (DE App) st
   child Content (sketcher App topadd st)
-  append (infoID App) (appLog @{refSink lvl})
+  append (infoID App) ln
   pure $ merge
     [ foreach logLoggable dms
     , foreach (appEv ast dst) aes
     , P.evalScans1 st (drawEv ast dst) des |> foreach (writeref dst)
+    , ls
     ]
 
 export covering

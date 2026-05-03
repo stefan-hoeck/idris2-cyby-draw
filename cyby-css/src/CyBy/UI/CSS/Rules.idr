@@ -186,6 +186,7 @@ parameters {auto v : Vars}
     , elem Label [display Flex , alignItems Center]
 
     , class sep [backgroundColor bar, width 100.perc, height v.formSepwidth]
+    , class spacer [flex1]
     ]
 
   ||| Rules the main UI components

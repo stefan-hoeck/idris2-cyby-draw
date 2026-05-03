@@ -1,9 +1,7 @@
 module CyBy.UI.HTML
 
-import Data.Linear.Sink
 import Data.List
 import IO.Async.Logging
-import Text.HTML.Select
 
 import public CyBy.UI.CSS.Classes
 import public Text.HTML
@@ -20,36 +18,12 @@ nodeSep : HTMLNode
 nodeSep = div [class sep] []
 
 export %inline
+spacer : HTMLNode
+spacer = div [class spacer] []
+
+export %inline
 separate : HTMLNodes -> HTMLNodes
 separate = intersperse nodeSep
-
---------------------------------------------------------------------------------
--- Logging
---------------------------------------------------------------------------------
-
-levels : List LogLevel
-levels = [Trace,Debug,Info,Warn,Error,Fatal]
-
-export
-CyByLog : DomID
-CyByLog = "cyby-log"
-
-export
-logNode : LogLevel -> List String -> HTMLNode
-logNode l msgs =
-  li [class listEntry]
-    [ div [class $ level l] [Text $ "[\{l}]"]
-    , div [class listEntryValue] $ intersperse (br []) (map Text msgs)
-    ]
-
-export
-appLog : Sink LogLevel => HTMLNode
-appLog =
-  div
-    [ class drawLog ]
-    [ h1 [] ["Log", selectFromList levels (Just Info) show id []]
-    , ul [ref CyByLog] []
-    ]
 
 --------------------------------------------------------------------------------
 -- Icons

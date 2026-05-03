@@ -33,17 +33,18 @@ parameters {auto ds : DrawSettings}
       Right res     => pure res
 
 ui : DrawSettings => AsyncStream JS [] Void
-ui = do
-  E des <- exec $ event {fs = []} DrawEvent
-  E dms <- exec $ event {fs = []} DrawMsg
-  let lg := uilog Info
-
-  merge
-    [ foreach logLoggable dms
-    , P.cons (KeyDown "Escape") des
-        |> P.evalScans1 (init (SD 400 266) Init "") handled
-        |> drain
-    ]
+-- ui = do
+--   E des      <- exec $ event {fs = []} DrawEvent
+--   E dms      <- exec $ event {fs = []} DrawMsg
+--   L ln ls lg <- exec $ logger Info
+-- 
+--   merge
+--     [ foreach logLoggable dms
+--     , ls
+--     , P.cons (KeyDown "Escape") des
+--         |> P.evalScans1 (init (SD 400 266) Init "") handled
+--         |> drain
+--     ]
 
 export covering
 app : IO ()
