@@ -58,10 +58,10 @@ parameters {auto log : Logger JS}
     zoomInTxt     = "zoom in"
     zoomOutTxt    = "zoom out"
 
-    copied    = info "structure copied to clipboard"
-    readErr x = error "error when reading structure: \{x}"
+    copied        = info "structure copied to clipboard"
+    readErr x     = error "error when reading structure: \{x}"
 
-    logJSErr x =
+    logJSErr x    =
       error
         """
         An error occurred in the user interface. This is a CyBy bug. Please
