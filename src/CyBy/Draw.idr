@@ -30,6 +30,7 @@ import public CyBy.Draw.PeriodicTableCanvas
 import public Text.Molfile
 
 %default total
+%hide Data.Linear.(.)
 %hide Text.SVG.Types.Path.t
 
 --------------------------------------------------------------------------------
@@ -493,33 +494,37 @@ displayMol sd g m =
       G o mg := maybe cdg (\ns => highlight ns cdg) m
    in Raw . curSVG $ initMol sd Fill False "" $ G o mg
 
-||| An editor for molecules.
-export
-molEdit :
-     {auto ex : Extension}
-  -> {auto lg : Loggable JS DrawMsg}
-  -> Act DrawSettings
-  -> SceneDims
-  -> Editor MolfileAT
-molEdit getDS sd =
-  E $ \m => Prelude.do
-   ui     <- map interpolate uniqueID
-   ds     <- getDS
-   E es   <- event DrawEvent
-   let st := fromMol sd Init (maybe (G 0 empty) graph m)
-   topadd <- ex.buttons (DE ui) st
-   let nd := sketcher ui topadd st
-   pure $ Widget.W nd $
-     es |> P.evalScans1 st (doact ui)
-        |> (\x => cons st x)
-        |> P.mapOutput (Valid . toMolfile . mol)
+parameters {auto ex : Extension}
+           {auto lg : Loggable JS DrawMsg}
+           {auto le : Loggable JS DrawEvent}
+           (getDS   : Act DrawSettings)
 
-   where
-     doact : Sink DrawEvent => String -> DrawState -> DrawEvent -> Act DrawState
-     doact pre s e = Prelude.do
-       ds <- getDS
-       let s2 := update e s
-       displaySketcher pre e s2 $> s2
+  doact : Sink DrawEvent => String -> DrawState -> DrawEvent -> Act DrawState
+  doact pre s e = Prelude.do
+    logLoggable e
+    ds <- getDS
+    let s2 := update e s
+    displaySketcher pre e s2 $> s2
+
+  ||| An editor for molecules.
+  export
+  molWidget : String -> SceneDims -> Maybe MolfileAT -> Act (Widget DrawState)
+  molWidget pre sd m = Prelude.do
+    ds     <- getDS
+    E es   <- event DrawEvent
+    let st := fromMol sd Init (maybe (G 0 empty) graph m)
+    topadd <- ex.buttons (DE pre) st
+    let nd := sketcher pre topadd st
+    pure $ Widget.W nd $
+      P.evalScans1 st (doact pre) es |> (\x => cons st x)
+
+  ||| An editor for molecules.
+  export
+  molEdit : SceneDims -> Editor MolfileAT
+  molEdit sd =
+    E $ \m => Prelude.do
+      ui <- map interpolate uniqueID
+      map (Valid . toMolfile . mol) <$> molWidget ui sd m
 
 ||| The default `Extension`
 export %hint

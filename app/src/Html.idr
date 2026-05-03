@@ -53,26 +53,27 @@ parameters {auto lg : Logger JS}
 --------------------------------------------------------------------------------
 
 data AppEvent : Type where
-  SetColor : ColorScheme -> AppEvent
-  LoadMol  : FileEv -> AppEvent
+  SetColor : Sink DrawEvent => ColorScheme -> AppEvent
+  LoadMol  : Sink DrawEvent => FileEv -> AppEvent
 
 record AppST where
   constructor AST
   scheme : ColorScheme
 
-drawSettings : AppST -> DrawSettings
-drawSettings (AST s) = {elemColor := color s} (defaultSettings abbreviations)
+getDS : (r : IORef AppST) => Act DrawSettings
+getDS =
+  map
+    (\(AST s) => {elemColor := color s} (defaultSettings abbreviations))
+    (readref r)
 
 parameters {auto st  : IORef AppST}
-           {auto sde : Sink DrawEvent}
-           {auto sdm : Sink DrawMsg}
            {auto sae : Sink AppEvent}
            {auto lg  : Logger JS}
            (ast      : IORef AppST)
            (dst      : IORef DrawState)
 
   btns : DrawEnv -> DrawState -> Act HTMLNodes
-  btns _ s = Prelude.do
+  btns de@(DE {}) s = Prelude.do
     AST c <- readref ast 
     pure
       [ expBtn "Save..." s
@@ -95,15 +96,7 @@ parameters {auto st  : IORef AppST}
       , adjust   = \_,_,s => disableExport s
       }
 
-  drawEv : DrawState -> DrawEvent -> Act DrawState
-  drawEv s e = Prelude.do
-    logLoggable e
-    ds <- drawSettings <$> readref ast
-    let s2 := update e s
-    displaySketcher {ex = ext} App e s2
-    pure s2
-
-  loadFile : FileEv -> Act ()
+  loadFile : Sink DrawEvent => FileEv -> Act ()
   loadFile (FE f p) = Prelude.do
     info "file opened: \{p}"
     bs <- blobBytes (up f)
@@ -131,21 +124,17 @@ parameters {auto st  : IORef AppST}
 ui : Act (JSStream Void)
 ui = Prelude.do
   L ln ls lg <- logger Info
-  E dms      <- event {fs = [JSErr]} DrawMsg
   E aes      <- event {fs = [JSErr]} AppEvent
-  E des      <- event {fs = [JSErr]} DrawEvent
-  r          <- castElementByRef Content >>= getClientRect
   ast        <- newref (AST CyBy)
-  let ds     := drawSettings (AST CyBy)
-      st     := init (SD 300 200) Init ""
-  dst        <- newref {s = World} st
-  topadd     <- buttons (ext ast dst) (DE App) st
-  child Content (sketcher App topadd st)
+  ds         <- getDS
+  dst        <- newref {s = World} $ fromMol (SD 0 0) Init (G 0 empty)
+  W mn ss    <- molWidget {ex = ext ast dst} getDS App (SD 300 200) Nothing
+
+  child Content mn
   append (infoID App) ln
   pure $ merge
-    [ foreach logLoggable dms
-    , foreach (appEv ast dst) aes
-    , P.evalScans1 st (drawEv ast dst) des |> foreach (writeref dst)
+    [ foreach (appEv ast dst) aes
+    , foreach (writeref dst) ss
     , ls
     ]
 
