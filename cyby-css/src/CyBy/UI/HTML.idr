@@ -18,28 +18,12 @@ nodeSep : HTMLNode
 nodeSep = div [class sep] []
 
 export %inline
+spacer : HTMLNode
+spacer = div [class spacer] []
+
+export %inline
 separate : HTMLNodes -> HTMLNodes
 separate = intersperse nodeSep
-
---------------------------------------------------------------------------------
--- Logging
---------------------------------------------------------------------------------
-
-export
-CyByLog : DomID
-CyByLog = "cyby-log"
-
-export
-logNode : LogLevel -> List String -> HTMLNode
-logNode l msgs =
-  li [class listEntry]
-    [ div [class $ level l] [Text $ "[\{l}]"]
-    , div [class listEntryValue] $ intersperse (br []) (map Text msgs)
-    ]
-
-export
-appLog : HTMLNode
-appLog = div [class drawLog] [h1 [] ["Log"], ul [ref CyByLog] []]
 
 --------------------------------------------------------------------------------
 -- Icons
