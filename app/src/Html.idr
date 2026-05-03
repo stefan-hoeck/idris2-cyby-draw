@@ -1,6 +1,7 @@
 module Html
 
 import CyBy.Draw
+import CyBy.Draw.I18n.EN
 import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite
@@ -33,20 +34,6 @@ App = "app"
 
 Content : Ref Tag.Body
 Content = Id "content"
-
-parameters {auto lg : Logger JS}
-  Loggable JS DrawMsg where
-    logLoggable Copied      = info "Structure copied to clipboard"
-    logLoggable (ReadErr s) = error "Error when pasting structure: \{s}"
-
-  Loggable JS DrawEvent where
-    logLoggable x =
-      case x of
-        SelAbbr {}  => trace "DrawEvent: \{show x}"
-        SetTempl {} => trace "DrawEvent: \{show x}"
-        Load {}     => trace "DrawEvent: \{show x}"
-        Move {}     => trace "DrawEvent: \{show x}"
-        _           => debug "DrawEvent: \{show x}"
 
 --------------------------------------------------------------------------------
 -- App

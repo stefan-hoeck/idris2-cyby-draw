@@ -35,4 +35,7 @@ modules = CyBy.Draw
         , CyBy.Draw.PeriodicTableCanvas
         , CyBy.Draw.Residue
 
+        , CyBy.Draw.I18n
+        , CyBy.Draw.I18n.EN
+
         , Text.Measure

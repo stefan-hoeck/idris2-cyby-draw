@@ -18,6 +18,7 @@ import Web.Internal.Types
 
 import public CyBy.Draw.Draw
 import public CyBy.Draw.Event
+import public CyBy.Draw.I18n
 import public CyBy.Draw.Internal.Abbreviations
 import public CyBy.Draw.Internal.Atom
 import public CyBy.Draw.Internal.CoreDims
@@ -217,7 +218,7 @@ parameters {auto de : Sink DrawEvent}
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
     selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
-      [title "set charge"]
+      [title "set mass number"]
     where
       dispMass : Maybe MassNr -> String
       dispMass Nothing  = "Mix"
@@ -495,8 +496,7 @@ displayMol sd g m =
    in Raw . curSVG $ initMol sd Fill False "" $ G o mg
 
 parameters {auto ex : Extension}
-           {auto lg : Loggable JS DrawMsg}
-           {auto le : Loggable JS DrawEvent}
+           {auto lc : DrawLocal}
            (getDS   : Act DrawSettings)
 
   doact : Sink DrawEvent => String -> DrawState -> DrawEvent -> Act DrawState
