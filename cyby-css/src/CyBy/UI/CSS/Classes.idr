@@ -5,6 +5,7 @@ import Derive.Prelude
 import Data.String
 import IO.Async.Logging
 import Text.HTML.Attribute
+import Text.HTML.DomID
 import public Text.CSS.Class
 
 %default total
@@ -30,6 +31,14 @@ active = Bool "data-active"
 export %inline
 invalid : Bool -> Attribute t
 invalid = Bool "data-invalid"
+
+--------------------------------------------------------------------------------
+-- IDs
+--------------------------------------------------------------------------------
+
+export
+CyByLog : DomID
+CyByLog = "cyby-log"
 
 --------------------------------------------------------------------------------
 -- Utility Classes
