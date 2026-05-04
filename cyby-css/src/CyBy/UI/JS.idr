@@ -14,12 +14,14 @@ import public Web.Async
 
 data LogEv = Clear | Lvl LogLevel
 
+export
 CyByLog : DomID
 CyByLog = "cyby-log"
 
 printErr : JSErr -> JS [] ()
 printErr x = putStrLn "Error: \{dispErr x}"
 
+export
 logNode : LogLevel -> List String -> HTMLNode
 logNode l msgs =
   li [class listEntry]
@@ -27,6 +29,7 @@ logNode l msgs =
     , div [class listEntryValue] $ intersperse (br []) (map Text msgs)
     ]
 
+export
 uilog : IORef LogLevel => Logger JS
 uilog @{ref} =
   MkLogger $ \l,ml => Prelude.do
