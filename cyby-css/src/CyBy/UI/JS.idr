@@ -14,10 +14,6 @@ import public Web.Async
 
 data LogEv = Clear | Lvl LogLevel
 
-export
-CyByLog : DomID
-CyByLog = "cyby-log"
-
 printErr : JSErr -> JS [] ()
 printErr x = putStrLn "Error: \{dispErr x}"
 
