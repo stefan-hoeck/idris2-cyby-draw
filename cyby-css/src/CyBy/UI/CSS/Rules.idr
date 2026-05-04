@@ -265,7 +265,7 @@ parameters {auto v : Vars}
   export
   forms : Rules
   forms =
-    [ class listEntry $ alignItems Stretch :: flexRow
+    [ class listEntry $ alignItems Start :: flexRow
     , sel (class listEntry > elem Label) [width v.formLblWidth]
     , Sel formValues [flex1]
     , Container "width < 300px"
