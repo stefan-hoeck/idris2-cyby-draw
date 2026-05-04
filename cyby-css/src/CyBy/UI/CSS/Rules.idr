@@ -241,7 +241,7 @@ parameters {auto v : Vars}
     -- CyBy Draw details
     , class drawDetails $
         [containerType Size, flex2] ++ flexColumn ++ drawCompBorder
-    , sel (class drawDetails > elem H1) drawTitle
+    , sel (class drawDetails > elem Header) drawTitle
     , sel (class drawDetails > elem Ul) drawList
 
     -- logging
@@ -250,7 +250,7 @@ parameters {auto v : Vars}
         ++ flexColumn
         ++ drawCompBorder
 
-    , sel (class drawLog > elem H1) drawTitle
+    , sel (class drawLog > elem Header) drawTitle
     , sel (class drawLog > elem Ul) drawList
 
     , class (level Fatal) [color red]

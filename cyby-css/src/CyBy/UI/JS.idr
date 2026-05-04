@@ -40,8 +40,8 @@ appLog : Sink LogEv => HTMLNode
 appLog =
   div
     [ class drawLog ]
-    [ h1 []
-        [ p [] ["Log"]
+    [ header []
+        [ Text "Log"
         , spacer
         , button [onClick Clear] ["Clear"]
         , selectFromList levels (Just Info) show Lvl []
