@@ -59,7 +59,7 @@ record Vars where
   padding             : Length
   largePadding        : Length
 
-export %hint
+export
 defaultVars : Vars
 defaultVars =
   V {
