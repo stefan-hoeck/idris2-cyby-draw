@@ -7,6 +7,7 @@ import CyBy.UI.HTML
 import Derive.Prelude
 import IO.Async.Logging
 import Text.CSS.Cursor
+import Text.HTML.DomID
 import Text.HTML.Ref
 import Text.HTML.Tag
 
@@ -22,6 +23,14 @@ attr : Attribute () -> Selector
 attr (Str  n v) = Attr n $ Equals v
 attr (Bool n _) = Attr n Set
 attr _          = []
+
+export %inline
+domID : DomID -> Declarations -> Rule n
+domID = id . value
+
+export %inline
+attribute : Attribute () -> Declarations -> Rule n
+attribute = sel . attr
 
 export
 boolAttr : (Bool -> Attribute ()) -> Selector 
@@ -225,8 +234,8 @@ parameters {auto v : Vars}
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
         [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
-    , sel (attr $ dragMode Dragging) [cursor [Move]]
-    , sel (attr $ dragMode Rotating)
+    , attribute (dragMode Dragging) [cursor [Move]]
+    , attribute (dragMode Rotating)
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
 
     -- CyBy Draw toolbars
