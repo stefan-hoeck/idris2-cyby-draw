@@ -57,7 +57,6 @@ widgetSelectors = [Elem Button, Elem Input, Elem Select, Class widget]
 --------------------------------------------------------------------------------
 
 parameters {auto v : Vars}
-
   export
   gridGaps : Declarations
   gridGaps = [rowGap v.gap, columnGap v.gap]
@@ -112,7 +111,7 @@ parameters {auto v : Vars}
   export
   whovered : Declarations
   whovered =
-    [ backgroundColor widgetBG
+    [ backgroundColor activeBG
     , color activeFG
     , outlineStyle Solid
     , outlineWidth v.narrowBW
@@ -133,21 +132,21 @@ parameters {auto v : Vars}
   drawCompBorder =
     outlineStyle Solid
     :: outlineWidth v.narrowBW
-    :: outlineColor v.gray80
+    :: outlineColor compBorder
     :: roundedBorder bg
 
   drawTitle : Declarations
   drawTitle =
        width 100.perc
-    :: display Flex
     :: alignItems Center
     :: height v.titleHeight
-    :: backgroundColor widgetFG
-    :: color v.primary10
-    :: hpadded
+    :: backgroundColor headerBG
+    :: color headerFG
+    :: padding (VH v.smallPadding v.padding)
     :: noMargin
     :: fontSize 1.em
     :: roundedBorder widgetFG
+    ++ flexRow
 
   drawList : Declarations
   drawList = [flex1, overflowY Scroll, margin 0.px, padded] ++ flexColumn
@@ -233,7 +232,7 @@ parameters {auto v : Vars}
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
-        [backgroundColor white, outlineWidth v.fatBW, outlineColor activeFG]
+        [backgroundColor white, outlineWidth v.fatBW, outlineColor activeBG, borderColor (All activeBG)]
     , attribute (dragMode Dragging) [cursor [Move]]
     , attribute (dragMode Rotating)
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
