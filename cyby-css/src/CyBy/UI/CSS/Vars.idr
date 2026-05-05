@@ -15,16 +15,6 @@ record Vars where
   primary             : TailwindColor
   secondary           : TailwindColor
 
-  boron               : Color
-  bromine             : Color
-  carbon              : Color
-  chlorine            : Color
-  fluorine            : Color
-  nitrogen            : Color
-  oxygen              : Color
-  phosphorous         : Color
-  sulfur              : Color
-
   --    containers --
   gap                 : Length       -- preferred gap in grids and flex boxes
   bardim              : Length       -- height of a horizontal toolbar
@@ -53,16 +43,6 @@ defaultVars =
     gray                = twNeutral
   , primary             = twEmerald
   , secondary           = twYellow
-
-  , boron               = rgb 0xff 0xb5 0xb5
-  , carbon              = dimgray
-  , fluorine            = limegreen
-  , sulfur              = rgb 0xE6 0xC6 0x40
-  , oxygen              = rgb 0xFF 0x0D 0x0D
-  , nitrogen            = rgb 0x30 0x50 0xF8
-  , chlorine            = rgb 0x1F 0xF0 0x1F
-  , bromine             = rgb 0xA6 0x29 0x29
-  , phosphorous         = rgb 0xFF 0x80 0x00
 
   , gap                 = 0.4.em
   , bardim              = 2.0.em
