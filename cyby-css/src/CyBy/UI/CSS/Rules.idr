@@ -292,9 +292,9 @@ parameters {auto v : Vars}
        , class (elemText Cl) [fontWeight Bold, color v.chlorine]
        ]
 
-export
-all : Rules
-all = general ++ components ++ forms ++ widgets
+  export
+  all : Rules
+  all = general ++ components ++ forms ++ widgets
 
 main : IO ()
-main = traverse_ (putStrLn . interpolate) all
+main = traverse_ (putStrLn . interpolate) (all @{defaultVars})
