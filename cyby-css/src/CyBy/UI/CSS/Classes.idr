@@ -112,7 +112,3 @@ widget = "cyby-widget"
 export %inline
 icon : Class
 icon = "cyby-icon"
-
-export %inline
-elemText : Elem -> Class
-elemText el = C "cyby-elem-text-\{toLower $ symbol el}"

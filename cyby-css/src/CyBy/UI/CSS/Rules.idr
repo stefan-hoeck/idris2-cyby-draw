@@ -83,6 +83,11 @@ parameters {auto v : Vars}
 
   ||| `solidBorder` with rounded corners using the default corner radius.
   export
+  solidBorder : Color -> Declarations
+  solidBorder c = solidBorder v.narrowBW c
+
+  ||| `solidBorder` with rounded corners using the default corner radius.
+  export
   roundedBorder : Color -> Declarations
   roundedBorder c = roundedBorder v.narrowBW c v.cornerRad
 
@@ -133,7 +138,7 @@ parameters {auto v : Vars}
     outlineStyle Solid
     :: outlineWidth v.narrowBW
     :: outlineColor compBorder
-    :: roundedBorder bg
+    :: roundedBorder compBorder
 
   drawTitle : Declarations
   drawTitle =
@@ -145,7 +150,7 @@ parameters {auto v : Vars}
     :: padding (VH v.smallPadding v.padding)
     :: noMargin
     :: fontSize 1.em
-    :: roundedBorder widgetFG
+    :: solidBorder headerBG
     ++ flexRow
 
   drawList : Declarations
@@ -232,7 +237,11 @@ parameters {auto v : Vars}
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
-        [backgroundColor white, outlineWidth v.fatBW, outlineColor activeBG, borderColor (All activeBG)]
+        [ backgroundColor widgetBG
+        , outlineWidth v.fatBW
+        , outlineColor activeBG
+        , borderColor (All activeBG)
+        ]
     , attribute (dragMode Dragging) [cursor [Move]]
     , attribute (dragMode Rotating)
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
@@ -288,17 +297,7 @@ parameters {auto v : Vars}
   widgets : Rules
   widgets =
        (widgetSelectors >>= widgetRules)
-    ++ [ class icon [noPadding, aspectRatio 1]
-       , class (elemText B)  [fontWeight Bold, color v.boron]
-       , class (elemText C)  [fontWeight Bold, color v.carbon]
-       , class (elemText F)  [fontWeight Bold, color v.fluorine]
-       , class (elemText S)  [fontWeight Bold, color v.sulfur]
-       , class (elemText O)  [fontWeight Bold, color v.oxygen]
-       , class (elemText N)  [fontWeight Bold, color v.nitrogen]
-       , class (elemText P)  [fontWeight Bold, color v.phosphorous]
-       , class (elemText Br) [fontWeight Bold, color v.bromine]
-       , class (elemText Cl) [fontWeight Bold, color v.chlorine]
-       ]
+    ++ [class icon [noPadding, aspectRatio 1]]
 
   export
   all : Rules
