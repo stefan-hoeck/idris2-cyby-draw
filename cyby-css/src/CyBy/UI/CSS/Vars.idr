@@ -14,6 +14,19 @@ record Vars where
   gray                : TailwindColor
   primary             : TailwindColor
   secondary           : TailwindColor
+  errorColor          : Color
+  warnColor           : Color
+  infoColor           : Color
+  debugColor          : Color
+  traceColor          : Color
+
+  --    Fontsizes --
+  smallFont           : FontSize
+  xsmallFont          : FontSize
+  xxsmallFont         : FontSize
+
+  --    Logging --
+  levelWidth          : Width
 
   --    containers --
   gap                 : Length       -- preferred gap in grids and flex boxes
@@ -22,11 +35,6 @@ record Vars where
   formLblWidth        : Width        -- width of a label in a form
   barSepwidth         : Width        -- width of a separator in a toolbar
   formSepwidth        : Width        -- width of field separator in a form
-
-  --    Fontsizes --
-  smallFont           : FontSize
-  xsmallFont          : FontSize
-  xxsmallFont         : FontSize
 
   --    widgets --
   cornerRad           : BorderRadius -- preferred border radius
@@ -43,6 +51,17 @@ defaultVars =
     gray                = twNeutral
   , primary             = twEmerald
   , secondary           = twYellow
+  , errorColor          = twRed.c700
+  , warnColor           = twYellow.c700
+  , infoColor           = twEmerald.c700
+  , debugColor          = twSky.c700
+  , traceColor          = twNeutral.c500
+
+  , smallFont           = 0.89.em
+  , xsmallFont          = 0.75.em
+  , xxsmallFont         = 0.60.em
+
+  , levelWidth          = 5.em
 
   , gap                 = 0.4.em
   , bardim              = 2.0.em
@@ -50,10 +69,6 @@ defaultVars =
   , formLblWidth        = 6.em
   , barSepwidth         = 3.px
   , formSepwidth        = 1.px
-
-  , smallFont           = 0.89.em
-  , xsmallFont          = 0.75.em
-  , xxsmallFont         = 0.60.em
 
   , cornerRad           = 0.25.em
   , narrowBW            = 1.px
