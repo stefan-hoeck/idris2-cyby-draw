@@ -146,7 +146,7 @@ export
 infoID : String -> Ref Div
 infoID pre = Id "\{pre}-draw-info"
 
-detailsID : String -> Ref Div
+detailsID : String -> Ref Section
 detailsID pre = Id "\{pre}-draw-details"
 
 utilsID : String -> Ref Div
@@ -330,7 +330,7 @@ parameters {auto de : Sink DrawEvent}
 
   details : (pre : String) -> DrawState -> HTMLNode
   details pre s =
-    div
+    section
       [ Id $ detailsID pre, class drawDetails ]
       [ header [] [Text detailsTxt]
       , ul [] (separate $ detailItems pre s)

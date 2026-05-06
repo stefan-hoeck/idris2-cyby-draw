@@ -37,7 +37,7 @@ levels = [Trace,Debug,Info,Warn,Error,Fatal]
 
 appLog : Sink LogEv => HTMLNode
 appLog =
-  div
+  section
     [ class drawLog ]
     [ header []
         [ Text "Log"
