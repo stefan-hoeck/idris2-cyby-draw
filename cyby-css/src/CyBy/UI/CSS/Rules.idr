@@ -164,6 +164,9 @@ parameters {auto v : Vars}
   hsep : Declarations
   hsep = [height 100.perc, width v.barSepwidth]
 
+  levelRule : LogLevel -> Color -> Rule n
+  levelRule l c = class (level l) [color c, width v.levelWidth]
+
 --------------------------------------------------------------------------------
 -- General
 --------------------------------------------------------------------------------
@@ -273,12 +276,12 @@ parameters {auto v : Vars}
     , sel (class drawLog > elem Header) drawTitle
     , sel (class drawLog > elem Ul) drawList
 
-    , class (level Fatal) [color red]
-    , class (level Error) [color red]
-    , class (level Warn)  [color $ rgb 255 165 0]
-    , class (level Info)  [color $ rgb 0 128 0]
-    , class (level Debug) [color $ gray]
-    , class (level Trace) [color $ gray]
+    , levelRule Fatal v.errorColor
+    , levelRule Error v.errorColor
+    , levelRule Warn  v.warnColor
+    , levelRule Info  v.infoColor
+    , levelRule Debug v.debugColor
+    , levelRule Trace v.traceColor
     ]
 
   ||| Rules for form-like lists (label plus description/widget)
