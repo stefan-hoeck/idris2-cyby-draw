@@ -133,36 +133,32 @@ parameters {auto v : Vars}
 
   ||| Outline and border of a cyby-draw component.
   export
-  drawCompBorder : Declarations
-  drawCompBorder =
-    outlineStyle Solid
-    :: outlineWidth v.narrowBW
-    :: outlineColor compBorder
-    :: roundedBorder compBorder
+  sectionBorder : Declarations
+  sectionBorder = roundedBorder v.fatBW compBorder v.cornerRad
 
-  drawTitle : Declarations
-  drawTitle =
+  export
+  sectionHeader : Declarations
+  sectionHeader =
        width 100.perc
     :: alignItems Center
     :: height v.titleHeight
     :: backgroundColor headerBG
     :: color headerFG
     :: padding (VH v.smallPadding v.padding)
-    :: noMargin
-    :: fontSize 1.em
     :: solidBorder headerBG
     ++ flexRow
 
-  drawList : Declarations
-  drawList = [flex1, overflowY Scroll, margin 0.px, padded] ++ flexColumn
+  export
+  sectionList : Declarations
+  sectionList = [flex1, overflowY Scroll, padded] ++ flexColumn
 
   export
   vsep : Declarations
-  vsep = [width 100.perc, height v.barSepwidth]
+  vsep = [width 100.perc, height v.barSepWidth]
 
   export
   hsep : Declarations
-  hsep = [height 100.perc, width v.barSepwidth]
+  hsep = [height 100.perc, width v.barSepWidth]
 
   levelRule : LogLevel -> Color -> Rule n
   levelRule l c = class (level l) [color c, width v.levelWidth]
@@ -204,7 +200,7 @@ parameters {auto v : Vars}
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
 
-    , class sep [backgroundColor bar, width 100.perc, height v.formSepwidth]
+    , class sep [backgroundColor bar, width 100.perc, height v.formSepWidth]
     , class spacer [flex1]
     ]
 
@@ -239,7 +235,10 @@ parameters {auto v : Vars}
         :: minWidth 0.px    -- necessary to resize this when parent is resized
         :: minHeight 0.px   -- necessary to resize this when parent is resized
         :: gridArea Draw
-        :: drawCompBorder
+        :: outlineStyle Solid
+        :: outlineWidth v.narrowBW
+        :: outlineColor compBorder
+        :: roundedBorder compBorder
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
@@ -261,21 +260,14 @@ parameters {auto v : Vars}
     , sel (class drawElems > class sep) vsep
     , sel (class drawTemplates > class sep) hsep
 
-    -- CyBy Draw details
-    , class drawDetails $
-        [containerType Size, flex2] ++ flexColumn ++ drawCompBorder
-    , sel (class drawDetails > elem Header) drawTitle
-    , sel (class drawDetails > elem Ul) drawList
+    -- CyBy Sections (Cards)
+    , elem Section $ flexColumn ++ sectionBorder
+    , sel (elem Section > elem Header) sectionHeader
+    , sel (elem Section > elem Ul) sectionList
+    , class drawDetails [containerType Size, flex2]
 
     -- logging
-    , class drawLog $
-           [fontSize v.smallFont, containerType Size, flex1]
-        ++ flexColumn
-        ++ drawCompBorder
-
-    , sel (class drawLog > elem Header) drawTitle
-    , sel (class drawLog > elem Ul) drawList
-
+    , class drawLog [fontSize v.smallFont, containerType Size, flex1]
     , levelRule Fatal v.errorColor
     , levelRule Error v.errorColor
     , levelRule Warn  v.warnColor

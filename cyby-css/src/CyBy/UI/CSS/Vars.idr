@@ -10,7 +10,7 @@ record Vars where
   [noHints]
   constructor V
 
-  -- Colours (lower numbers mean brighter colours)
+  --    Colours
   gray                : TailwindColor
   primary             : TailwindColor
   secondary           : TailwindColor
@@ -20,21 +20,24 @@ record Vars where
   debugColor          : Color
   traceColor          : Color
 
-  --    Fontsizes --
+  --    Font Sizes
   smallFont           : FontSize
   xsmallFont          : FontSize
   xxsmallFont         : FontSize
 
-  --    Logging --
+  --    Logging
   levelWidth          : Width
 
-  --    containers --
+  --    Components
+  titleHeight         : Width        -- height of a component title
+  titleSepWidth       : Width        -- width of a separator component title
+
+  --    containers
   gap                 : Length       -- preferred gap in grids and flex boxes
   bardim              : Length       -- height of a horizontal toolbar
-  titleHeight         : Width        -- height of a component title
   formLblWidth        : Width        -- width of a label in a form
-  barSepwidth         : Width        -- width of a separator in a toolbar
-  formSepwidth        : Width        -- width of field separator in a form
+  barSepWidth         : Width        -- width of a separator in a toolbar
+  formSepWidth        : Width        -- width of field separator in a form
 
   --    widgets --
   cornerRad           : BorderRadius -- preferred border radius
@@ -57,24 +60,26 @@ defaultVars =
   , debugColor          = twSky.c700
   , traceColor          = twNeutral.c500
 
-  , smallFont           = 0.89.em
-  , xsmallFont          = 0.75.em
-  , xxsmallFont         = 0.60.em
+  , smallFont           = 0.875.em  -- 14/16
+  , xsmallFont          = 0.75.em   -- 12/16
+  , xxsmallFont         = 0.625.em  -- 10/16
 
   , levelWidth          = 5.em
 
+  , titleHeight         = 2.5.em
+  , titleSepWidth       = 3.px
+
   , gap                 = 0.4.em
   , bardim              = 2.0.em
-  , titleHeight         = 2.0.em
   , formLblWidth        = 6.em
-  , barSepwidth         = 3.px
-  , formSepwidth        = 1.px
+  , barSepWidth         = 3.px
+  , formSepWidth        = 1.px
 
   , cornerRad           = 0.25.em
   , narrowBW            = 1.px
   , fatBW               = 2.px
-  , padding             = 0.4.em
   , smallPadding        = 0.2.em
+  , padding             = 0.4.em
   , largePadding        = 0.6.em
   }
 
