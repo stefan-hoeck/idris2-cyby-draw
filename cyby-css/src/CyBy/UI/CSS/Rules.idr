@@ -195,6 +195,9 @@ parameters {auto v : Vars}
         , containerType Size
         ]
 
+    , elem Header [noMargin]
+    , elem Ul [noMargin, noPadding, decl "list-style" "none"]
+
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
 

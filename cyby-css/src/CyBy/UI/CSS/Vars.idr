@@ -77,7 +77,7 @@ parameters {auto v : Vars}
   ||| Default text colour
   export %inline
   fg : Color
-  fg = v.gray.c800
+  fg = v.gray.c900
 
   export
   headerFG : Color
