@@ -281,12 +281,12 @@ parameters {auto v : Vars}
   forms : Rules
   forms =
     [ class listEntry $ alignItems Start :: flexRow
-    , sel (class listEntry > elem Label) [width v.formLblWidth]
+    , sel (class listEntry > elem Label) [width v.formLblWidth, fontWeight Bold]
     , Sel formValues [flex1]
     , Container "width < 300px"
         [ class listEntry $ alignItems Start :: flexColumn
         , sel (class listEntry > elem Label) [width 100.perc]
-        , Sel formValues [noflex, margin (Left v.gap)]
+        , Sel formValues [noflex]
         ]
     ]
 
