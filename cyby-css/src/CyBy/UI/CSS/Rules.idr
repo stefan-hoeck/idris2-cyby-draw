@@ -155,8 +155,7 @@ parameters {auto v : Vars}
   export
   sectionHeader : Declarations
   sectionHeader =
-       width 100.perc
-    :: height v.titleHeight
+       height v.titleHeight
     :: backgroundColor headerBG
     :: color headerFG
     :: padding (VH v.smallPadding v.padding)
@@ -169,11 +168,11 @@ parameters {auto v : Vars}
 
   export
   vsep : Declarations
-  vsep = [width 100.perc, height v.barSepWidth]
+  vsep = [margin (VH v.barSepMargin 0.px), height v.barSepWidth]
 
   export
   hsep : Declarations
-  hsep = [height 100.perc, width v.barSepWidth]
+  hsep = [margin (VH 0.px v.barSepMargin), height 100.perc, width v.barSepWidth]
 
   levelRule : LogLevel -> Color -> Rule n
   levelRule l c = class (level l) [color c, width v.levelWidth]
@@ -215,7 +214,7 @@ parameters {auto v : Vars}
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
 
-    , class sep [backgroundColor bar, width 100.perc, height v.formSepWidth]
+    , class sep [backgroundColor bar, height v.formSepWidth]
     , class spacer [flex1]
     ]
 

@@ -332,7 +332,7 @@ parameters {auto de : Sink DrawEvent}
   details pre s =
     section
       [ Id $ detailsID pre, class drawDetails ]
-      [ header [] [Text detailsTxt]
+      [ header [] [label [] [Text detailsTxt]]
       , ul [] (separate $ detailItems pre s)
       ]
 
