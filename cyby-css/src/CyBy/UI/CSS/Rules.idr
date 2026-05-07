@@ -83,15 +83,15 @@ parameters {auto v : Vars}
   stretchRow : Declarations
   stretchRow = alignItems Stretch :: flexRow
 
-  export
-  startColumn : Declarations
-  startColumn = alignItems Start :: flexColumn
-
   ||| Flex container with a default gap between components that
   ||| arranges components vertically.
   export
   flexColumn : Declarations
   flexColumn = [display Flex, flexDirection Column, rowGap v.gap]
+
+  export
+  startColumn : Declarations
+  startColumn = alignItems Start :: flexColumn
 
   export
   stretchColumn : Declarations
