@@ -40,7 +40,7 @@ appLog =
   section
     [ class drawLog ]
     [ header []
-        [ Text "Log"
+        [ label [] [Text "Log"]
         , spacer
         , button [onClick Clear] ["Clear"]
         , selectFromList levels (Just Info) show Lvl []

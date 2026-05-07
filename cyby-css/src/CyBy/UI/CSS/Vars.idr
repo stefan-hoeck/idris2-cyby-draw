@@ -37,6 +37,7 @@ record Vars where
   bardim              : Length       -- height of a horizontal toolbar
   formLblWidth        : Width        -- width of a label in a form
   barSepWidth         : Width        -- width of a separator in a toolbar
+  barSepMargin        : Length       -- cross-axis margin of a separator in a toolbar
   formSepWidth        : Width        -- width of field separator in a form
 
   --    widgets --
@@ -73,6 +74,7 @@ defaultVars =
   , bardim              = 2.0.em
   , formLblWidth        = 6.em
   , barSepWidth         = 3.px
+  , barSepMargin        = 0.4.em
   , formSepWidth        = 1.px
 
   , cornerRad           = 0.25.em
