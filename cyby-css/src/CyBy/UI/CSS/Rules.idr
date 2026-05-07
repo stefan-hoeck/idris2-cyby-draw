@@ -75,11 +75,27 @@ parameters {auto v : Vars}
   flexRow : Declarations
   flexRow = [display Flex, flexDirection Row, columnGap v.gap]
 
+  export
+  startRow : Declarations
+  startRow = alignItems Start :: flexRow
+
+  export
+  stretchRow : Declarations
+  stretchRow = alignItems Stretch :: flexRow
+
+  export
+  startColumn : Declarations
+  startColumn = alignItems Start :: flexColumn
+
   ||| Flex container with a default gap between components that
   ||| arranges components vertically.
   export
   flexColumn : Declarations
   flexColumn = [display Flex, flexDirection Column, rowGap v.gap]
+
+  export
+  stretchColumn : Declarations
+  stretchColumn = alignItems Stretch :: flexColumn
 
   ||| `solidBorder` with rounded corners using the default corner radius.
   export
@@ -140,17 +156,16 @@ parameters {auto v : Vars}
   sectionHeader : Declarations
   sectionHeader =
        width 100.perc
-    :: alignItems Center
     :: height v.titleHeight
     :: backgroundColor headerBG
     :: color headerFG
     :: padding (VH v.smallPadding v.padding)
     :: solidBorder headerBG
-    ++ flexRow
+    ++ stretchRow
 
   export
   sectionList : Declarations
-  sectionList = [flex1, overflowY Scroll, padded] ++ flexColumn
+  sectionList = [flex1, overflowY Scroll, padded] ++ stretchColumn
 
   export
   vsep : Declarations
@@ -172,7 +187,7 @@ parameters {auto v : Vars}
   export
   widgetRules : Selector -> Rules
   widgetRules s =
-    [ sel s $ alignSelf Stretch :: hpadded :: wregular
+    [ sel s $ hpadded :: wregular
     , sel [s, Hover] whovered
     , sel [s, Active] wactive
     , sel [s, boolAttr active] wactive
@@ -252,16 +267,16 @@ parameters {auto v : Vars}
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
 
     -- CyBy Draw toolbars
-    , class drawUtils $ gridArea Util :: flexRow
-    , class drawTemplates $ gridArea Templates :: flexRow
-    , class drawElems $ gridArea Elems :: flexColumn
-    , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ flexColumn
+    , class drawUtils $ gridArea Util :: stretchRow
+    , class drawTemplates $ gridArea Templates :: stretchRow
+    , class drawElems $ gridArea Elems :: stretchColumn
+    , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ stretchColumn
     , sel (class drawUtils > class sep) hsep
     , sel (class drawElems > class sep) vsep
     , sel (class drawTemplates > class sep) hsep
 
     -- CyBy Sections (Cards)
-    , elem Section $ flexColumn ++ sectionBorder
+    , elem Section $ stretchColumn ++ sectionBorder
     , sel (elem Section > elem Header) sectionHeader
     , sel (elem Section > elem Ul) sectionList
     , class drawDetails [containerType Size, flex2]
@@ -280,11 +295,11 @@ parameters {auto v : Vars}
   export
   forms : Rules
   forms =
-    [ class listEntry $ alignItems Start :: flexRow
+    [ class listEntry startRow
     , sel (class listEntry > elem Label) [width v.formLblWidth, fontWeight Bold]
     , Sel formValues [flex1]
     , Container "width < 300px"
-        [ class listEntry $ alignItems Start :: flexColumn
+        [ class listEntry startColumn
         , sel (class listEntry > elem Label) [width 100.perc]
         , Sel formValues [noflex]
         ]
