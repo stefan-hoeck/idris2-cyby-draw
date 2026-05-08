@@ -111,41 +111,54 @@ parameters {auto v : Vars}
   export
   wregular : Declarations
   wregular =
-    backgroundColor widgetBG
-    :: color widgetFG
-    :: outlineColor Current
-    :: outlineStyle None
-    :: roundedBorder Current
+    [ backgroundColor widgetBG
+    , color widgetFG
+    , outlineOffset v.outlineO
+    , outlineWidth v.outlineW
+    , outlineStyle None
+    , borderStyle (All None)
+    , borderRadius v.cornerRad
+    ]
+
+  ||| Regular widget with default colors for font, background, and border.
+  export
+  iregular : Declarations
+  iregular = [backgroundColor widgetFG, color widgetBG]
 
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
   export
   wactive : Declarations
-  wactive =
-    [ backgroundColor activeBG
-    , color activeFG
-    , outlineStyle Solid
-    , outlineWidth v.narrowBW
-    ]
+  wactive = [backgroundColor activeBG, color activeFG]
+
+  export
+  iactive : Declarations
+  iactive = [backgroundColor activeFG, color activeBG]
 
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
   whovered : Declarations
-  whovered =
-    [ backgroundColor activeBG
-    , color activeFG
-    , outlineStyle Solid
-    , outlineWidth v.narrowBW
-    ]
+  whovered = [backgroundColor hoverBG, color hoverFG]
+
+  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
+  export
+  ihovered : Declarations
+  ihovered = [backgroundColor ihoverBG, color ihoverFG]
+
+  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
+  export
+  wfocus : Declarations
+  wfocus = [outlineStyle Solid, outlineColor widgetFG]
+
+  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
+  export
+  ifocus : Declarations
+  ifocus = [outlineColor widgetBG]
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
   wdisabled : Declarations
-  wdisabled =
-    color disabledFG
-    :: backgroundColor disabledBG
-    :: outlineStyle None
-    :: roundedBorder disabledBG
+  wdisabled = [color disabledFG, backgroundColor disabledBG]
 
   ||| Outline and border of a cyby-draw component.
   export
@@ -188,8 +201,13 @@ parameters {auto v : Vars}
   widgetRules s =
     [ sel s $ hpadded :: wregular
     , sel [s, Hover] whovered
+    , sel [s, FocusVisible] wfocus
     , sel [s, Active] wactive
     , sel [s, boolAttr active] wactive
+    , sel (elem Section > (elem Header > s)) iregular
+    , sel (elem Section > (elem Header > [s,Hover])) ihovered
+    , sel (elem Section > (elem Header > [s,Active])) iactive
+    , sel (elem Section > (elem Header > [s,boolAttr active])) iactive
     , sel [s, Disabled] wdisabled
     ]
 
@@ -308,8 +326,16 @@ parameters {auto v : Vars}
   export
   widgets : Rules
   widgets =
-       (widgetSelectors >>= widgetRules)
-    ++ [class icon [noPadding, aspectRatio 1]]
+    (widgetSelectors >>= widgetRules) ++
+    [ class icon [noPadding, aspectRatio 1]
+    , class elem [fontWeight Bold]
+    , sel [elem Button, Hover] [cursor [Pointer]]
+    , sel [elem Button, Disabled] [cursor [Default]]
+    , sel [class widget, Hover] [cursor [Pointer]]
+    , sel [class widget, Disabled] [cursor [Default]]
+    , sel [elem Select, Hover] [cursor [Pointer]]
+    , sel [elem Select, Disabled] [cursor [Default]]
+    ]
 
   export
   all : Rules

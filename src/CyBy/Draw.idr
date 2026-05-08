@@ -282,7 +282,7 @@ parameters {auto de : Sink DrawEvent}
   template g nm s = icon [] (SetTempl g) (s.mode == SetTempl g) nm 
 
   elemIcon : DrawState -> String -> Elem -> HTMLNode
-  elemIcon s t e = icon [] (SetElem e) (setting e s) t (Text $ symbol e)
+  elemIcon s t e = icon [elem] (SetElem e) (setting e s) t (Text $ symbol e)
 
   elems pre s =
     div

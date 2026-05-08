@@ -85,6 +85,10 @@ drawLog : Class
 drawLog = "cyby-draw-log"
 
 export %inline
+elem : Class
+elem = "cyby-draw-elem"
+
+export %inline
 moleculeCanvas : Class
 moleculeCanvas = "cyby-draw-molecule-canvas"
 
