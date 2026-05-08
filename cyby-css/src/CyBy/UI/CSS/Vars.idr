@@ -42,6 +42,8 @@ record Vars where
 
   --    widgets --
   cornerRad           : BorderRadius -- preferred border radius
+  outlineW            : BorderWidth  -- width of hovered and active outlines
+  outlineO            : Length       -- width of hovered and active outlines
   narrowBW            : BorderWidth  -- narrow border width
   fatBW               : BorderWidth  -- broader border for major elements
   padding             : Length
@@ -78,6 +80,8 @@ defaultVars =
   , formSepWidth        = 1.px
 
   , cornerRad           = 0.25.em
+  , outlineW            = 2.px
+  , outlineO            = 1.px
   , narrowBW            = 1.px
   , fatBW               = 2.px
   , smallPadding        = 0.2.em
@@ -115,19 +119,35 @@ parameters {auto v : Vars}
 
   export
   widgetFG : Color
-  widgetFG = fg
+  widgetFG = v.primary.c800
 
   export
   widgetBG : Color
-  widgetBG = v.gray.c100
+  widgetBG = bg
 
   export
-  activeFG : Color
-  activeFG = v.gray.c100
+  hoverFG : Color
+  hoverFG = v.primary.c800
+
+  export
+  hoverBG : Color
+  hoverBG = v.gray.c100
+
+  export
+  ihoverBG : Color
+  ihoverBG = v.primary.c950
+
+  export
+  ihoverFG : Color
+  ihoverFG = hoverBG
 
   export
   activeBG : Color
   activeBG = v.secondary.c600
+
+  export
+  activeFG : Color
+  activeFG = v.gray.c100
 
   export
   disabledFG : Color
@@ -139,4 +159,4 @@ parameters {auto v : Vars}
 
   export
   bar : Color
-  bar = v.primary.c800
+  bar = v.gray.c700
