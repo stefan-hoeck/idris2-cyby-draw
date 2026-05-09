@@ -53,7 +53,7 @@ widgetSelectors : List Selector
 widgetSelectors = [Elem Button, Elem Input, Elem Select, Class widget]
 
 --------------------------------------------------------------------------------
--- Reusable
+-- Declarations
 --------------------------------------------------------------------------------
 
 parameters {auto v : Vars}
@@ -161,6 +161,14 @@ parameters {auto v : Vars}
   export
   hsep : Declarations
   hsep = [margin (VH 0.px v.barSepMargin), height 100.perc, width v.barSepWidth]
+
+  export
+  iconDecl : Declarations
+  iconDecl = [noPadding, aspectRatio 1]
+
+  export
+  roundIconDecl : Declarations
+  roundIconDecl = borderRadius 50.perc :: iconDecl
 
   levelRule : LogLevel -> Color -> Rule n
   levelRule l c = class (level l) [color c, width v.levelWidth]
@@ -299,8 +307,8 @@ parameters {auto v : Vars}
   widgets : Rules
   widgets =
     (widgetSelectors >>= widgetRules) ++
-    [ class icon [noPadding, aspectRatio 1]
-    , class roundIcon [noPadding, aspectRatio 1, borderRadius 50.perc]
+    [ class icon iconDecl
+    , class roundIcon roundIconDecl
     , class elem [fontWeight Bold]
     , sel [elem Button, Hover] [cursor [Pointer]]
     , sel [elem Button, Disabled] [cursor [Default]]
