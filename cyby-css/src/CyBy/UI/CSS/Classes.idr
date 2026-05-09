@@ -116,3 +116,8 @@ widget = "cyby-widget"
 export %inline
 icon : Class
 icon = "cyby-icon"
+
+||| A round icon
+export %inline
+roundIcon : Class
+roundIcon = "cyby-round-icon"

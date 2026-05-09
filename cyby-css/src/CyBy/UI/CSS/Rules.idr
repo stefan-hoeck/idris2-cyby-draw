@@ -300,6 +300,7 @@ parameters {auto v : Vars}
   widgets =
     (widgetSelectors >>= widgetRules) ++
     [ class icon [noPadding, aspectRatio 1]
+    , class roundIcon [noPadding, aspectRatio 1, borderRadius 50.perc]
     , class elem [fontWeight Bold]
     , sel [elem Button, Hover] [cursor [Pointer]]
     , sel [elem Button, Disabled] [cursor [Default]]
