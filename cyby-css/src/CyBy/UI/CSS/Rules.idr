@@ -97,27 +97,17 @@ parameters {auto v : Vars}
   stretchColumn : Declarations
   stretchColumn = alignItems Stretch :: flexColumn
 
-  ||| `solidBorder` with rounded corners using the default corner radius.
-  export
-  solidBorder : Color -> Declarations
-  solidBorder c = solidBorder v.narrowBW c
-
-  ||| `solidBorder` with rounded corners using the default corner radius.
-  export
-  roundedBorder : Color -> Declarations
-  roundedBorder c = roundedBorder v.narrowBW c v.cornerRad
-
   ||| Regular widget with default colors for font, background, and border.
   export
-  wregular : Declarations
-  wregular =
+  widgetRegular : Declarations
+  widgetRegular =
     [ backgroundColor widgetBG
     , color widgetFG
     , outlineOffset v.outlineO
     , outlineWidth v.outlineW
     , outlineStyle None
-    , borderStyle (All None)
     , borderRadius v.cornerRad
+    , borderStyle (All None)
     ]
 
   ||| Regular widget with default colors for font, background, and border.
@@ -172,7 +162,7 @@ parameters {auto v : Vars}
     :: backgroundColor headerBG
     :: color headerFG
     :: padding (VH v.smallPadding v.padding)
-    :: solidBorder headerBG
+    :: solidBorder v.narrowBW headerBG
     ++ stretchRow
 
   export
@@ -199,7 +189,7 @@ parameters {auto v : Vars}
   export
   widgetRules : Selector -> Rules
   widgetRules s =
-    [ sel s $ hpadded :: wregular
+    [ sel s $ hpadded :: widgetRegular
     , sel [s, Hover] whovered
     , sel [s, FocusVisible] wfocus
     , sel [s, Active] wactive
@@ -270,11 +260,11 @@ parameters {auto v : Vars}
         :: outlineStyle Solid
         :: outlineWidth v.narrowBW
         :: outlineColor compBorder
-        :: roundedBorder compBorder
+        :: roundedBorder v.narrowBW compBorder v.cornerRad
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
-        [ backgroundColor widgetBG
+        [ backgroundColor v.gray.c100
         , outlineWidth v.fatBW
         , outlineColor activeBG
         , borderColor (All activeBG)

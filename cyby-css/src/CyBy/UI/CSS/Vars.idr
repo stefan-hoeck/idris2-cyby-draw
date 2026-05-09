@@ -119,27 +119,27 @@ parameters {auto v : Vars}
 
   export
   widgetFG : Color
-  widgetFG = v.primary.c800
+  widgetFG = v.gray.c200
 
   export
   widgetBG : Color
-  widgetBG = bg
+  widgetBG = v.primary.c800
 
   export
   hoverFG : Color
-  hoverFG = v.primary.c800
+  hoverFG = widgetFG
 
   export
   hoverBG : Color
-  hoverBG = v.gray.c100
+  hoverBG = v.primary.c600
 
   export
   ihoverBG : Color
-  ihoverBG = v.primary.c950
+  ihoverBG = v.gray.c100
 
   export
   ihoverFG : Color
-  ihoverFG = hoverBG
+  ihoverFG = widgetBG
 
   export
   activeBG : Color
@@ -147,7 +147,7 @@ parameters {auto v : Vars}
 
   export
   activeFG : Color
-  activeFG = v.gray.c100
+  activeFG = v.gray.c200
 
   export
   disabledFG : Color
