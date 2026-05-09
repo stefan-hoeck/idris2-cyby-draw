@@ -69,34 +69,6 @@ parameters {auto v : Vars}
   padded : Declaration
   padded = padding (All v.padding)
 
-  ||| Flex container with a default gap between components that
-  ||| arranges components horizontally.
-  export
-  flexRow : Declarations
-  flexRow = [display Flex, flexDirection Row, columnGap v.gap]
-
-  export
-  startRow : Declarations
-  startRow = alignItems Start :: flexRow
-
-  export
-  stretchRow : Declarations
-  stretchRow = alignItems Stretch :: flexRow
-
-  ||| Flex container with a default gap between components that
-  ||| arranges components vertically.
-  export
-  flexColumn : Declarations
-  flexColumn = [display Flex, flexDirection Column, rowGap v.gap]
-
-  export
-  startColumn : Declarations
-  startColumn = alignItems Start :: flexColumn
-
-  export
-  stretchColumn : Declarations
-  stretchColumn = alignItems Stretch :: flexColumn
-
   ||| Regular widget with default colors for font, background, and border.
   export
   widgetRegular : Declarations
@@ -111,7 +83,8 @@ parameters {auto v : Vars}
     , borderStyle (All Solid)
     , borderWidth (All v.narrowBW)
     , borderColor (All Current)
-    ]
+    , height v.widgetHeight
+    ] ++ centerRow
 
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
@@ -147,9 +120,9 @@ parameters {auto v : Vars}
        height v.titleHeight
     :: backgroundColor headerBG
     :: color headerFG
-    :: padding (VH v.smallPadding v.padding)
+    :: hpadded
     :: solidBorder v.narrowBW headerBG
-    ++ stretchRow
+    ++ centerRow
 
   export
   sectionList : Declarations
@@ -310,13 +283,14 @@ parameters {auto v : Vars}
     (widgetSelectors >>= widgetRules) ++
     [ class icon iconDecl
     , class roundIcon roundIconDecl
-    , class elem [fontWeight Bold]
+    , class elem [fontWeight Bold, justifyContent Center]
     , sel [elem Button, Hover] [cursor [Pointer]]
     , sel [elem Button, Disabled] [cursor [Default]]
     , sel [class widget, Hover] [cursor [Pointer]]
     , sel [class widget, Disabled] [cursor [Default]]
     , sel [elem Select, Hover] [cursor [Pointer]]
     , sel [elem Select, Disabled] [cursor [Default]]
+    , sel [elem Input, attr (type File)] [display None]
     ]
 
   export
