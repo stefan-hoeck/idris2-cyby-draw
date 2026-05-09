@@ -122,9 +122,10 @@ parameters {auto v : Vars}
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
   whovered : Declarations
-  whovered = [backgroundColor hoverBG, color hoverFG]
+  whovered = [backgroundColor hoverBG]
 
-  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
+  ||| Widget that has currently visible focus
+  ||| (has the `:focus-visible` pseudoclass).
   export
   wfocus : Declarations
   wfocus = [outlineStyle Solid]
