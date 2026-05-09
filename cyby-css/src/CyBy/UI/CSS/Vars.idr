@@ -111,43 +111,36 @@ parameters {auto v : Vars}
 
   export
   headerBG : Color
-  headerBG = v.primary.c800
+  headerBG = v.primary.c900
 
   export
   compBorder : Color
-  compBorder = v.primary.c800
+  compBorder = v.primary.c900
 
   export
   widgetFG : Color
-  widgetFG = v.primary.c800
+  widgetFG = v.primary.c900
 
   export
   widgetBG : Color
-  widgetBG = bg
+  widgetBG = v.gray.c200
 
   export
   hoverFG : Color
-  hoverFG = v.primary.c800
+  hoverFG = widgetFG
 
   export
   hoverBG : Color
   hoverBG = v.gray.c100
 
   export
-  ihoverBG : Color
-  ihoverBG = v.primary.c950
-
-  export
-  ihoverFG : Color
-  ihoverFG = hoverBG
+  activeFG : Color
+  activeFG = v.gray.c100
 
   export
   activeBG : Color
   activeBG = v.secondary.c600
 
-  export
-  activeFG : Color
-  activeFG = v.gray.c100
 
   export
   disabledFG : Color

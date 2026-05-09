@@ -97,43 +97,27 @@ parameters {auto v : Vars}
   stretchColumn : Declarations
   stretchColumn = alignItems Stretch :: flexColumn
 
-  ||| `solidBorder` with rounded corners using the default corner radius.
-  export
-  solidBorder : Color -> Declarations
-  solidBorder c = solidBorder v.narrowBW c
-
-  ||| `solidBorder` with rounded corners using the default corner radius.
-  export
-  roundedBorder : Color -> Declarations
-  roundedBorder c = roundedBorder v.narrowBW c v.cornerRad
-
   ||| Regular widget with default colors for font, background, and border.
   export
-  wregular : Declarations
-  wregular =
+  widgetRegular : Declarations
+  widgetRegular =
     [ backgroundColor widgetBG
     , color widgetFG
     , outlineOffset v.outlineO
     , outlineWidth v.outlineW
     , outlineStyle None
-    , borderStyle (All None)
+    , outlineColor widgetFG
     , borderRadius v.cornerRad
+    , borderStyle (All Solid)
+    , borderWidth (All v.narrowBW)
+    , borderColor (All Current)
     ]
-
-  ||| Regular widget with default colors for font, background, and border.
-  export
-  iregular : Declarations
-  iregular = [backgroundColor widgetFG, color widgetBG]
 
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
   export
   wactive : Declarations
   wactive = [backgroundColor activeBG, color activeFG]
-
-  export
-  iactive : Declarations
-  iactive = [backgroundColor activeFG, color activeBG]
 
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
@@ -142,23 +126,14 @@ parameters {auto v : Vars}
 
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
-  ihovered : Declarations
-  ihovered = [backgroundColor ihoverBG, color ihoverFG]
-
-  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
-  export
   wfocus : Declarations
-  wfocus = [outlineStyle Solid, outlineColor widgetFG]
-
-  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
-  export
-  ifocus : Declarations
-  ifocus = [outlineColor widgetBG]
+  wfocus = [outlineStyle Solid]
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
   wdisabled : Declarations
-  wdisabled = [color disabledFG, backgroundColor disabledBG]
+  wdisabled =
+    [color disabledFG, backgroundColor disabledBG, borderStyle (All None)]
 
   ||| Outline and border of a cyby-draw component.
   export
@@ -172,7 +147,7 @@ parameters {auto v : Vars}
     :: backgroundColor headerBG
     :: color headerFG
     :: padding (VH v.smallPadding v.padding)
-    :: solidBorder headerBG
+    :: solidBorder v.narrowBW headerBG
     ++ stretchRow
 
   export
@@ -199,15 +174,12 @@ parameters {auto v : Vars}
   export
   widgetRules : Selector -> Rules
   widgetRules s =
-    [ sel s $ hpadded :: wregular
+    [ sel s $ hpadded :: widgetRegular
     , sel [s, Hover] whovered
     , sel [s, FocusVisible] wfocus
     , sel [s, Active] wactive
     , sel [s, boolAttr active] wactive
-    , sel (elem Section > (elem Header > s)) iregular
-    , sel (elem Section > (elem Header > [s,Hover])) ihovered
-    , sel (elem Section > (elem Header > [s,Active])) iactive
-    , sel (elem Section > (elem Header > [s,boolAttr active])) iactive
+    , sel (elem Section > (elem Header > s)) [outlineColor v.gray.c100]
     , sel [s, Disabled] wdisabled
     ]
 
@@ -270,11 +242,11 @@ parameters {auto v : Vars}
         :: outlineStyle Solid
         :: outlineWidth v.narrowBW
         :: outlineColor compBorder
-        :: roundedBorder compBorder
+        :: roundedBorder v.narrowBW compBorder v.cornerRad
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
-        [ backgroundColor widgetBG
+        [ backgroundColor v.gray.c100
         , outlineWidth v.fatBW
         , outlineColor activeBG
         , borderColor (All activeBG)
