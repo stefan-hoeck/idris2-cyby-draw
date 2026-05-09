@@ -63,7 +63,6 @@ parameters {auto st  : IORef ColorScheme}
       , label [forID LoadIn, class widget] [Text loadTxt]
       , input
           [ ref LoadIn
-          , hidden True
           , type File
           , onFileIn LoadMol
           , acceptAll [".mol",".smi",".svg"]

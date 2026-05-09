@@ -41,6 +41,7 @@ record Vars where
   formSepWidth        : Width        -- width of field separator in a form
 
   --    widgets --
+  widgetHeight        : Width        -- height of a widget
   cornerRad           : BorderRadius -- preferred border radius
   outlineW            : BorderWidth  -- width of hovered and active outlines
   outlineO            : Length       -- width of hovered and active outlines
@@ -72,7 +73,7 @@ defaultVars =
   , titleHeight         = 2.5.em
   , titleSepWidth       = 3.px
 
-  , gap                 = 0.4.em
+  , gap                 = 0.5.em
   , bardim              = 2.0.em
   , formLblWidth        = 6.em
   , barSepWidth         = 3.px
@@ -80,6 +81,7 @@ defaultVars =
   , formSepWidth        = 1.px
 
   , cornerRad           = 0.25.em
+  , widgetHeight        = 2.0.em
   , outlineW            = 2.px
   , outlineO            = 1.px
   , narrowBW            = 1.px
