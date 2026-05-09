@@ -106,24 +106,18 @@ parameters {auto v : Vars}
     , outlineOffset v.outlineO
     , outlineWidth v.outlineW
     , outlineStyle None
+    , outlineColor widgetFG
     , borderRadius v.cornerRad
-    , borderStyle (All None)
+    , borderStyle (All Solid)
+    , borderWidth (All v.narrowBW)
+    , borderColor (All Current)
     ]
-
-  ||| Regular widget with default colors for font, background, and border.
-  export
-  iregular : Declarations
-  iregular = [backgroundColor widgetFG, color widgetBG]
 
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
   export
   wactive : Declarations
   wactive = [backgroundColor activeBG, color activeFG]
-
-  export
-  iactive : Declarations
-  iactive = [backgroundColor activeFG, color activeBG]
 
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
@@ -132,23 +126,14 @@ parameters {auto v : Vars}
 
   ||| Widget that is being hovered over (has the `:hover` pseudoclass).
   export
-  ihovered : Declarations
-  ihovered = [backgroundColor ihoverBG, color ihoverFG]
-
-  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
-  export
   wfocus : Declarations
-  wfocus = [outlineStyle Solid, outlineColor widgetFG]
-
-  ||| Widget that is being hovered over (has the `:hover` pseudoclass).
-  export
-  ifocus : Declarations
-  ifocus = [outlineColor widgetBG]
+  wfocus = [outlineStyle Solid]
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
   wdisabled : Declarations
-  wdisabled = [color disabledFG, backgroundColor disabledBG]
+  wdisabled =
+    [color disabledFG, backgroundColor disabledBG, borderStyle (All None)]
 
   ||| Outline and border of a cyby-draw component.
   export
@@ -194,10 +179,7 @@ parameters {auto v : Vars}
     , sel [s, FocusVisible] wfocus
     , sel [s, Active] wactive
     , sel [s, boolAttr active] wactive
-    , sel (elem Section > (elem Header > s)) iregular
-    , sel (elem Section > (elem Header > [s,Hover])) ihovered
-    , sel (elem Section > (elem Header > [s,Active])) iactive
-    , sel (elem Section > (elem Header > [s,boolAttr active])) iactive
+    , sel (elem Section > (elem Header > s)) [outlineColor v.gray.c100]
     , sel [s, Disabled] wdisabled
     ]
 
