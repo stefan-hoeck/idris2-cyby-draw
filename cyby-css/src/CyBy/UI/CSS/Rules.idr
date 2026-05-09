@@ -153,7 +153,7 @@ parameters {auto v : Vars}
 
   export
   sectionList : Declarations
-  sectionList = [flex1, overflowY Scroll, padded] ++ stretchColumn
+  sectionList = [flex1, overflowY Scroll, hpadded] ++ stretchColumn
 
   export
   vsep : Declarations
