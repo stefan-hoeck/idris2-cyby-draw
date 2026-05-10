@@ -103,11 +103,21 @@ parameters {auto v : Vars}
   wfocus : Declarations
   wfocus = [outlineStyle Solid]
 
+  ||| Widget that has currently visible focus
+  ||| (has the `:focus-visible` pseudoclass).
+  export
+  winvalid : Declarations
+  winvalid =
+    [ color v.errorColor
+    , outlineStyle Solid
+    , outlineColor Current
+    ]
+
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
   wdisabled : Declarations
   wdisabled =
-    [color disabledFG, backgroundColor disabledBG, borderStyle (All None)]
+    [color disabledFG, backgroundColor disabledBG, borderColor (All disabledBG)]
 
   ||| Outline and border of a cyby-draw component.
   export
@@ -163,6 +173,7 @@ parameters {auto v : Vars}
     , sel [s, boolAttr active] wactive
     , sel (elem Section > (elem Header > s)) [outlineColor v.gray.c100]
     , sel [s, Disabled] wdisabled
+    , sel [s, Invalid] winvalid
     ]
 
   export
