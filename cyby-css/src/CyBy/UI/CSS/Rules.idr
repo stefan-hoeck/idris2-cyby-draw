@@ -107,11 +107,7 @@ parameters {auto v : Vars}
   ||| (has the `:focus-visible` pseudoclass).
   export
   winvalid : Declarations
-  winvalid =
-    [ color v.errorColor
-    , outlineStyle Solid
-    , outlineColor Current
-    ]
+  winvalid = [color v.errorColor, outlineColor v.errorColor]
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
