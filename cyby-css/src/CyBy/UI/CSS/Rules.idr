@@ -66,6 +66,10 @@ parameters {auto v : Vars}
   hpadded = padding (VH 0.px v.padding)
 
   export
+  hbpadded : Declaration
+  hbpadded = padding (THB 0.px v.padding v.padding)
+
+  export
   padded : Declaration
   padded = padding (All v.padding)
 
@@ -132,7 +136,7 @@ parameters {auto v : Vars}
 
   export
   sectionList : Declarations
-  sectionList = [flex1, overflowY Scroll, hpadded] ++ stretchColumn
+  sectionList = [flex1, overflowY Scroll, hbpadded] ++ stretchColumn
 
   export
   vsep : Declarations
