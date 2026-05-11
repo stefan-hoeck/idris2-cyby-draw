@@ -75,7 +75,7 @@ defaultVars =
 
   , gap                 = 0.5.em
   , bardim              = 2.0.em
-  , formLblWidth        = 6.em
+  , formLblWidth        = 8.em
   , barSepWidth         = 3.px
   , barSepMargin        = 0.4.em
   , formSepWidth        = 1.px
