@@ -87,8 +87,7 @@ parameters {auto v : Vars}
     , borderStyle (All Solid)
     , borderWidth (All v.narrowBW)
     , borderColor (All Current)
-    , height v.widgetHeight
-    ] ++ centerRow
+    ] ++ exactHeight v.widgetHeight ++ centerRow
 
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
@@ -127,11 +126,11 @@ parameters {auto v : Vars}
   export
   sectionHeader : Declarations
   sectionHeader =
-       height v.titleHeight
-    :: backgroundColor headerBG
+       backgroundColor headerBG
     :: color headerFG
     :: hpadded
     :: solidBorder v.narrowBW headerBG
+    ++ exactHeight v.titleHeight
     ++ centerRow
 
   export
@@ -140,11 +139,14 @@ parameters {auto v : Vars}
 
   export
   vsep : Declarations
-  vsep = [margin (VH v.barSepMargin 0.px), height v.barSepWidth]
+  vsep = margin (VH v.barSepMargin 0.px) :: exactHeight v.barSepWidth
 
   export
   hsep : Declarations
-  hsep = [margin (VH 0.px v.barSepMargin), height 100.perc, width v.barSepWidth]
+  hsep =
+       margin (VH 0.px v.barSepMargin)
+    :: height 100.perc
+    :: exactWidth v.barSepWidth
 
   export
   iconDecl : Declarations
@@ -197,7 +199,7 @@ parameters {auto v : Vars}
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
 
-    , class sep [backgroundColor bar, height v.formSepWidth]
+    , class sep $ backgroundColor bar :: exactHeight v.formSepWidth
     , class spacer [flex1]
     ]
 
