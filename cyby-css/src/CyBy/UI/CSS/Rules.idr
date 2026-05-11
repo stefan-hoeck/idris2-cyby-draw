@@ -199,7 +199,7 @@ parameters {auto v : Vars}
     -- this makes sure that the text in a label is vertically centered
     , elem Label [display Flex , alignItems Center]
 
-    , class sep $ backgroundColor bar :: exactHeight v.formSepWidth
+    , class sep $ [backgroundColor bar, height v.formSepWidth]
     , class spacer [flex1]
     ]
 
