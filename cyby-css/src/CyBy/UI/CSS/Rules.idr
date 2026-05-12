@@ -121,7 +121,12 @@ parameters {auto v : Vars}
   ||| Outline and border of a cyby-draw component.
   export
   sectionBorder : Declarations
-  sectionBorder = roundedBorder v.fatBW compBorder v.cornerRad
+  sectionBorder =
+    [ borderStyle (THB None Solid Solid)
+    , borderWidth  (THB 0.px v.fatBW v.fatBW)
+    , borderColor (All headerBG)
+    , borderRadius v.cornerRad
+    ]
 
   export
   sectionHeader : Declarations
@@ -129,8 +134,7 @@ parameters {auto v : Vars}
        backgroundColor headerBG
     :: color headerFG
     :: hpadded
-    :: solidBorder v.narrowBW headerBG
-    ++ exactHeight v.titleHeight
+    :: exactHeight v.titleHeight
     ++ centerRow
 
   export
