@@ -116,7 +116,11 @@ parameters {auto v : Vars}
   export
   wdisabled : Declarations
   wdisabled =
-    [color disabledFG, backgroundColor disabledBG, borderColor (All disabledBG)]
+    [ color disabledFG
+    , backgroundColor disabledBG
+    , borderColor (All disabledBG)
+    , cursor [NotAllowed]
+    ]
 
   ||| Outline and border of a cyby-draw component.
   export
