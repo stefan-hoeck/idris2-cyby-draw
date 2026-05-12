@@ -302,11 +302,11 @@ parameters {auto v : Vars}
     , class roundIcon roundIconDecl
     , class elem [fontWeight Bold, justifyContent Center]
     , sel [elem Button, Hover] [cursor [Pointer]]
-    , sel [elem Button, Disabled] [cursor [Default]]
+    , sel [elem Button, Disabled] [cursor [NotAllowed]]
     , sel [class widget, Hover] [cursor [Pointer]]
-    , sel [class widget, Disabled] [cursor [Default]]
+    , sel [class widget, Disabled] [cursor [NotAllowed]]
     , sel [elem Select, Hover] [cursor [Pointer]]
-    , sel [elem Select, Disabled] [cursor [Default]]
+    , sel [elem Select, Disabled] [cursor [NotAllowed]]
     , sel [elem Input, attr (type File)] [display None]
     ]
 
