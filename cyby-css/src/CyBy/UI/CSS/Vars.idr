@@ -43,8 +43,6 @@ record Vars where
   --    widgets --
   widgetHeight        : Width        -- height of a widget
   cornerRad           : BorderRadius -- preferred border radius
-  outlineW            : BorderWidth  -- width of hovered and active outlines
-  outlineO            : Length       -- width of hovered and active outlines
   narrowBW            : BorderWidth  -- narrow border width
   fatBW               : BorderWidth  -- broader border for major elements
   padding             : Length
@@ -82,8 +80,6 @@ defaultVars =
 
   , cornerRad           = 0.25.em
   , widgetHeight        = 2.0.em
-  , outlineW            = 2.px
-  , outlineO            = 1.px
   , narrowBW            = 1.px
   , fatBW               = 2.px
   , smallPadding        = 0.2.em
@@ -128,12 +124,20 @@ parameters {auto v : Vars}
   widgetBG = v.gray.c200
 
   export
-  hoverFG : Color
-  hoverFG = widgetFG
+  widgetInvertFG : Color
+  widgetInvertFG = v.gray.c100
+
+  export
+  widgetInvertBG : Color
+  widgetInvertBG = v.gray.c800
 
   export
   hoverBG : Color
   hoverBG = v.gray.c100
+
+  export
+  hoverInvertBG : Color
+  hoverInvertBG = v.gray.c900
 
   export
   activeFG : Color
