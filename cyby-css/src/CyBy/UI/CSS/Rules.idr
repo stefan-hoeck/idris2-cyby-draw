@@ -237,6 +237,8 @@ parameters {auto v : Vars}
         :: minWidth 0.px    -- necessary to resize this when parent is resized
         :: minHeight 0.px   -- necessary to resize this when parent is resized
         :: gridArea Draw
+        :: outlineStyle None
+        :: outlineWidth 0.px
         :: roundedBorder v.narrowBW compBorder v.cornerRad
 
     -- drawing canvas: special states

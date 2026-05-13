@@ -125,7 +125,7 @@ parameters {auto v : Vars}
 
   export
   widgetInvertFG : Color
-  widgetInvertFG = v.primary.c100
+  widgetInvertFG = v.gray.c100
 
   export
   widgetInvertBG : Color
