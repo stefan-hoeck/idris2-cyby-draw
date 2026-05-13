@@ -80,7 +80,8 @@ parameters {auto v : Vars}
     [ backgroundColor widgetBG
     , color widgetFG
     , outlineStyle None
-    , outlineWidth 0.px
+    , outlineWidth 1.px
+    , outlineColor Current
     , borderRadius v.cornerRad
     , borderStyle (All Solid)
     , borderWidth (All v.narrowBW)
@@ -102,7 +103,7 @@ parameters {auto v : Vars}
   ||| (has the `:focus-visible` pseudoclass).
   export
   wfocus : Declarations
-  wfocus = [borderWidth (All v.fatBW)]
+  wfocus = [outlineStyle Solid]
 
   ||| Widget that has currently visible focus
   ||| (has the `:focus-visible` pseudoclass).
