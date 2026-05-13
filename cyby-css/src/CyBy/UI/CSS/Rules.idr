@@ -103,7 +103,7 @@ parameters {auto v : Vars}
   ||| (has the `:focus-visible` pseudoclass).
   export
   wfocus : Declarations
-  wfocus = [outlineStyle Solid]
+  wfocus = [borderWidth $ All v.fatBW]
 
   ||| Widget that has currently visible focus
   ||| (has the `:focus-visible` pseudoclass).
