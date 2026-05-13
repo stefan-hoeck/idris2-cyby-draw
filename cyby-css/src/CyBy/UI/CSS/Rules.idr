@@ -79,10 +79,6 @@ parameters {auto v : Vars}
   widgetRegular =
     [ backgroundColor widgetBG
     , color widgetFG
-    , outlineOffset v.outlineO
-    , outlineWidth v.outlineW
-    , outlineStyle None
-    , outlineColor widgetFG
     , borderRadius v.cornerRad
     , borderStyle (All Solid)
     , borderWidth (All v.narrowBW)
@@ -104,13 +100,13 @@ parameters {auto v : Vars}
   ||| (has the `:focus-visible` pseudoclass).
   export
   wfocus : Declarations
-  wfocus = [outlineStyle Solid]
+  wfocus = [borderWidth (All v.fatBW)]
 
   ||| Widget that has currently visible focus
   ||| (has the `:focus-visible` pseudoclass).
   export
   winvalid : Declarations
-  winvalid = [color v.errorColor, outlineColor v.errorColor]
+  winvalid = [color v.errorColor]
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
@@ -175,9 +171,9 @@ parameters {auto v : Vars}
     [ sel s $ hpadded :: widgetRegular
     , sel [s, Hover] whovered
     , sel [s, FocusVisible] wfocus
-    , sel [s, Active] wactive
     , sel [s, boolAttr active] wactive
-    , sel (elem Section > (elem Header > s)) [outlineColor v.gray.c100]
+    , sel (elem Section > (elem Header > s)) [backgroundColor widgetInvertBG, color widgetInvertFG]
+    , sel (elem Section > (elem Header > [s,Hover])) [backgroundColor hoverInvertBG]
     , sel [s, Disabled] wdisabled
     , sel [s, Invalid] winvalid
     ]
@@ -238,16 +234,11 @@ parameters {auto v : Vars}
         :: minWidth 0.px    -- necessary to resize this when parent is resized
         :: minHeight 0.px   -- necessary to resize this when parent is resized
         :: gridArea Draw
-        :: outlineStyle Solid
-        :: outlineWidth v.narrowBW
-        :: outlineColor compBorder
         :: roundedBorder v.narrowBW compBorder v.cornerRad
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
         [ backgroundColor v.gray.c100
-        , outlineWidth v.fatBW
-        , outlineColor activeBG
         , borderColor (All activeBG)
         ]
     , attribute (dragMode Dragging) [cursor [Move]]
