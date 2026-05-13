@@ -79,6 +79,8 @@ parameters {auto v : Vars}
   widgetRegular =
     [ backgroundColor widgetBG
     , color widgetFG
+    , outlineStyle None
+    , outlineWidth 0.px
     , borderRadius v.cornerRad
     , borderStyle (All Solid)
     , borderWidth (All v.narrowBW)
