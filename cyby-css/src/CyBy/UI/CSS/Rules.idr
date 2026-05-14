@@ -230,7 +230,7 @@ parameters {auto v : Vars}
     , sel (class drawTemplates > class sep) hsep
 
     -- CyBy Sections (Cards)
-    , elem Section $ overflow Hidden :: stretchCol ++ sectionBorder
+    , elem Section $ overflow Hidden :: stretchSepCol ++ sectionBorder
     , sel (elem Section > elem Header) sectionHeader
     , sel (elem Section > elem Ul) sectionList
     , class drawDetails [containerType Size, flex2]
