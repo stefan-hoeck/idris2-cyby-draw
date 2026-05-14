@@ -92,14 +92,6 @@ export %inline
 moleculeCanvas : Class
 moleculeCanvas = "cyby-draw-molecule-canvas"
 
-export %inline
-listEntry : Class
-listEntry = "cyby-list-entry"
-
-export %inline
-listEntryValue : Class
-listEntryValue = "cyby-list-entry-value"
-
 export
 level : LogLevel -> Class
 level l = C "cyby-loglvl-\{l}"
