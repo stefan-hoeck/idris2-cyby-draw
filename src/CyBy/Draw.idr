@@ -195,7 +195,7 @@ pse (SetAtom i) = all (i.elem /=) (the (List Elem) [C,O,N,F,P,S,Cl,Br])
 pse _           = False
 
 detail : String -> HTMLNode -> HTMLNode
-detail ttl n = div [class listEntry] [label [] [Text ttl], n]
+detail ttl n = li [] [label [] [Text ttl], n]
 
 currAbbr : Mode -> Maybe String
 currAbbr (SetAbbr a) = Just a.label
@@ -312,9 +312,9 @@ parameters {auto de : Sink DrawEvent}
          in [ detail element  $ elements atm
             , detail isotope  $ massNrs atm
             , detail charge   $ charges atm
-            , detail atomType $ div [class listEntryValue] [Text tpe]
-            , detail xcoord   $ div [class listEntryValue] [Text cx]
-            , detail ycoord   $ div [class listEntryValue] [Text cy]
+            , detail atomType $ div [] [Text tpe]
+            , detail xcoord   $ div [] [Text cx]
+            , detail ycoord   $ div [] [Text cy]
             ]
       _   => case selectedEdges s.imol of
         [(x,y)] =>
@@ -323,8 +323,8 @@ parameters {auto de : Sink DrawEvent}
               d  := printDouble 3 $ distance px py
               a  := angleOrZero (px - py)
               a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a
-           in [ detail "Length"   $ div [class listEntryValue] [Text "\{d} Å"]
-              , detail "Angle"    $ div [class listEntryValue] [Text "\{a'}°"]
+           in [ detail "Length"   $ div [] [Text "\{d} Å"]
+              , detail "Angle"    $ div [] [Text "\{a'}°"]
               ]
         _       => []
 

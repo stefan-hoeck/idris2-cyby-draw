@@ -20,9 +20,9 @@ printErr x = putStrLn "Error: \{dispErr x}"
 export
 logNode : LogLevel -> List String -> HTMLNode
 logNode l msgs =
-  li [class listEntry]
-    [ div [class $ level l] [Text $ "[\{l}]"]
-    , div [class listEntryValue] $ intersperse (br []) (map Text msgs)
+  li []
+    [ label [class $ level l] [Text $ "[\{l}]"]
+    , div [] $ intersperse (br []) (map Text msgs)
     ]
 
 export

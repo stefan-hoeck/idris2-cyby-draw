@@ -19,33 +19,12 @@ data Tag = Util | Templates | Elems | Info | Draw | Dot
 %runElab derive "Tag" [Show,Eq]
 
 export
-attr : Attribute () -> Selector 
-attr (Str  n v) = Attr n $ Equals v
-attr (Bool n _) = Attr n Set
-attr _          = []
-
-export %inline
-domID : DomID -> Declarations -> Rule n
-domID = id . value
-
-export %inline
-attribute : Attribute () -> Declarations -> Rule n
-attribute = sel . attr
-
-export
-boolAttr : (Bool -> Attribute ()) -> Selector 
-boolAttr f =
-  case f True of
-    Bool name _ => Attr name Set
-    _           => Attr "" Set
-
-export
 formValues : List Selector
 formValues =
-  [ class listEntryValue
-  , class listEntry > class widget
-  , class listEntry > elem Input
-  , class listEntry > elem Select
+  [ elem Li > elem Div
+  , elem Li > class widget
+  , elem Li > elem Input
+  , elem Li > elem Select
   ]
 
 export
@@ -59,7 +38,7 @@ widgetSelectors = [Elem Button, Elem Input, Elem Select, Class widget]
 parameters {auto v : Vars}
   export
   gridGaps : Declarations
-  gridGaps = [rowGap v.gap, columnGap v.gap]
+  gridGaps = [rowGap 0.5.em, columnGap 0.5.em]
 
   export
   hpadded : Declaration
@@ -80,13 +59,8 @@ parameters {auto v : Vars}
     [ backgroundColor widgetBG
     , color widgetFG
     , outlineStyle None
-    , outlineWidth 1.px
-    , outlineColor Current
-    , borderRadius v.cornerRad
-    , borderStyle (All Solid)
-    , borderWidth (All v.narrowBW)
-    , borderColor (All Current)
-    ] ++ exactHeight v.widgetHeight ++ centerRow
+    , round4
+    ] ++ border1 Current ++ exactHeight v.widgetHeight ++ centerRow
 
   ||| Widget that has either the `data-active` attribute set, or
   ||| is in an `active` state (has the `:active` pseudoclass).
@@ -103,7 +77,7 @@ parameters {auto v : Vars}
   ||| (has the `:focus-visible` pseudoclass).
   export
   wfocus : Declarations
-  wfocus = [borderWidth $ All v.fatBW]
+  wfocus = [borderWidth $ All 2.px]
 
   ||| Widget that has currently visible focus
   ||| (has the `:focus-visible` pseudoclass).
@@ -120,12 +94,7 @@ parameters {auto v : Vars}
   ||| Outline and border of a cyby-draw component.
   export
   sectionBorder : Declarations
-  sectionBorder =
-    [ borderStyle (THB None Solid Solid)
-    , borderWidth  (THB 0.px v.fatBW v.fatBW)
-    , borderColor (All headerBG)
-    , borderRadius v.cornerRad
-    ]
+  sectionBorder = round8 :: borderHB1 headerBG
 
   export
   sectionHeader : Declarations
@@ -134,11 +103,12 @@ parameters {auto v : Vars}
     :: color headerFG
     :: hpadded
     :: exactHeight v.titleHeight
-    ++ centerRow
+    ++ centerSepRow
 
   export
   sectionList : Declarations
-  sectionList = [flex1, overflowY Scroll, hbpadded] ++ stretchColumn
+  sectionList =
+    [flex1, overflowY Scroll, hbpadded] ++ stretchSepCol
 
   export
   vsep : Declarations
@@ -157,7 +127,7 @@ parameters {auto v : Vars}
 
   export
   roundIconDecl : Declarations
-  roundIconDecl = borderRadius 50.perc :: iconDecl
+  roundIconDecl = round :: iconDecl
 
   levelRule : LogLevel -> Color -> Rule n
   levelRule l c = class (level l) [color c, width v.levelWidth]
@@ -238,29 +208,29 @@ parameters {auto v : Vars}
         :: minHeight 0.px   -- necessary to resize this when parent is resized
         :: gridArea Draw
         :: outlineStyle None
-        :: outlineWidth 0.px
-        :: roundedBorder v.narrowBW compBorder v.cornerRad
+        :: round4
+        :: border1 compBorder
 
     -- drawing canvas: special states
     , sel [class moleculeCanvas, boolAttr active]
         [ backgroundColor v.gray.c100
         , borderColor (All activeBG)
         ]
-    , attribute (dragMode Dragging) [cursor [Move]]
-    , attribute (dragMode Rotating)
+    , attribute dragMode Dragging [cursor [Move]]
+    , attribute dragMode Rotating
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
 
     -- CyBy Draw toolbars
-    , class drawUtils $ gridArea Util :: stretchRow
-    , class drawTemplates $ gridArea Templates :: stretchRow
-    , class drawElems $ gridArea Elems :: stretchColumn
-    , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ stretchColumn
+    , class drawUtils $ gridArea Util :: stretchSepRow
+    , class drawTemplates $ gridArea Templates :: stretchSepRow
+    , class drawElems $ gridArea Elems :: stretchSepCol
+    , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ stretchSepCol
     , sel (class drawUtils > class sep) hsep
     , sel (class drawElems > class sep) vsep
     , sel (class drawTemplates > class sep) hsep
 
     -- CyBy Sections (Cards)
-    , elem Section $ stretchColumn ++ sectionBorder
+    , elem Section $ overflow Hidden :: stretchCol ++ sectionBorder
     , sel (elem Section > elem Header) sectionHeader
     , sel (elem Section > elem Ul) sectionList
     , class drawDetails [containerType Size, flex2]
@@ -279,12 +249,12 @@ parameters {auto v : Vars}
   export
   forms : Rules
   forms =
-    [ class listEntry startRow
-    , sel (class listEntry > elem Label) [width v.formLblWidth, fontWeight Bold]
+    [ elem Li startRow
+    , sel (elem Li > elem Label) [width v.formLblWidth, fontWeight Bold]
     , Sel formValues [flex1]
     , Container "width < 300px"
-        [ class listEntry startColumn
-        , sel (class listEntry > elem Label) [width 100.perc]
+        [ elem Li startSepCol
+        , sel (elem Li > elem Label) [width 100.perc]
         , Sel formValues [noflex]
         ]
     ]
@@ -303,7 +273,7 @@ parameters {auto v : Vars}
     , sel [class widget, Disabled] [cursor [NotAllowed]]
     , sel [elem Select, Hover] [cursor [Pointer]]
     , sel [elem Select, Disabled] [cursor [NotAllowed]]
-    , sel [elem Input, attr (type File)] [display None]
+    , sel [elem Input, attr type File] [display None]
     ]
 
   export

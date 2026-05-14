@@ -1,6 +1,6 @@
 module CyBy.UI.CSS.Tailwind
 
-import public Text.CSS
+import public Text.CSS.Extra
 
 %default total
 

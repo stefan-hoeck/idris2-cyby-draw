@@ -33,7 +33,6 @@ record Vars where
   titleSepWidth       : Width        -- width of a separator component title
 
   --    containers
-  gap                 : Length       -- preferred gap in grids and flex boxes
   bardim              : Length       -- height of a horizontal toolbar
   formLblWidth        : Width        -- width of a label in a form
   barSepWidth         : Width        -- width of a separator in a toolbar
@@ -42,9 +41,6 @@ record Vars where
 
   --    widgets --
   widgetHeight        : Width        -- height of a widget
-  cornerRad           : BorderRadius -- preferred border radius
-  narrowBW            : BorderWidth  -- narrow border width
-  fatBW               : BorderWidth  -- broader border for major elements
   padding             : Length
   smallPadding        : Length
   largePadding        : Length
@@ -71,17 +67,13 @@ defaultVars =
   , titleHeight         = 2.5.em
   , titleSepWidth       = 3.px
 
-  , gap                 = 0.5.em
   , bardim              = 2.0.em
   , formLblWidth        = 8.em
   , barSepWidth         = 3.px
   , barSepMargin        = 0.4.em
   , formSepWidth        = 1.px
 
-  , cornerRad           = 0.25.em
   , widgetHeight        = 2.0.em
-  , narrowBW            = 1.px
-  , fatBW               = 2.px
   , smallPadding        = 0.2.em
   , padding             = 0.4.em
   , largePadding        = 0.6.em
