@@ -202,13 +202,12 @@ parameters {auto v : Vars}
 
     -- the drawing canvas
     , class moleculeCanvas $
-           width 100.perc
-        :: height 100.perc
-        :: minWidth 0.px    -- necessary to resize this when parent is resized
+           minWidth 0.px    -- necessary to resize this when parent is resized
         :: minHeight 0.px   -- necessary to resize this when parent is resized
         :: gridArea Draw
         :: outlineStyle None
         :: round4
+        :: overflow Hidden
         :: border1 compBorder
 
     -- drawing canvas: special states

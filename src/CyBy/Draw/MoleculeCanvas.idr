@@ -630,9 +630,9 @@ erase s =
 
 endResize : (h,w : Double) -> DrawState -> DrawState
 endResize h w s =
-  case h > 2 && w > 2 of
+  case h > 0 && w > 0 of
     False => s
-    True  => {dims := SD {sheight = h - 2, swidth = w - 2}} s
+    True  => {dims := SD {sheight = h, swidth = w}} s
 
 upd : DrawSettings => DrawEvent -> DrawState -> DrawState
 upd (ZoomIn b)    s = zoomIn b s
