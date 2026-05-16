@@ -18,50 +18,12 @@ type    = "local"
 path    = "cyby-css"
 ipkg    = "cyby-css.ipkg"
 
-[custom.all.css]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-css"
-commit = "latest:main"
-ipkg   = "css.ipkg"
-
-[custom.all.async-dom]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-async-dom"
-commit = "latest:main"
-ipkg   = "async-dom.ipkg"
-
-[custom.all.ref1]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-ref1"
-commit = "latest:main"
-ipkg   = "ref1.ipkg"
-
-[custom.all.indexed-graph]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-indexed-graph"
-commit = "latest:main"
-ipkg   = "indexed-graph.ipkg"
-
-[custom.all.ilex]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-ilex"
-commit = "latest:main"
-ipkg   = "ilex.ipkg"
-
-[custom.all.ilex-json]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-ilex"
-commit = "latest:main"
-ipkg   = "json/ilex-json.ipkg"
-
-[custom.all.chem]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-chem"
-commit = "latest:main"
-ipkg   = "chem.ipkg"
-
-[custom.all.chem-generators]
-type   = "git"
-url    = "https://github.com/stefan-hoeck/idris2-chem"
-commit = "latest:main"
-ipkg   = "chem-generators/chem-generators.ipkg"
+[custom.all]
+async-dom.commit       = "latest:main"
+chem-generators.commit = "latest:main"
+chem.commit            = "latest:main"
+css.commit             = "latest:main"
+ilex-json.commit       = "latest:main"
+ilex.commit            = "latest:main"
+indexed-graph.commit   = "latest:main"
+ref1.commit            = "latest:main"
