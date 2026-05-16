@@ -67,13 +67,13 @@ defaultVars =
   , titleHeight         = 2.5.em
   , titleSepWidth       = 3.px
 
-  , bardim              = 2.0.em
+  , bardim              = 1.8.em
   , formLblWidth        = 8.em
   , barSepWidth         = 3.px
   , barSepMargin        = 0.4.em
   , formSepWidth        = 1.px
 
-  , widgetHeight        = 2.0.em
+  , widgetHeight        = 1.8.em
   , smallPadding        = 0.2.em
   , padding             = 0.4.em
   , largePadding        = 0.6.em
