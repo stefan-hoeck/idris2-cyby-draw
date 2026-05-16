@@ -162,7 +162,7 @@ parameters {auto v : Vars}
         , width 100.perc
         , backgroundColor bg
         , color fg
-        , padding (All v.largePadding)
+        , padded
         , containerType Size
         ]
 
@@ -188,8 +188,15 @@ parameters {auto v : Vars}
           , [Elems, Draw,      Info     ]
           , [Dot,   Templates, Templates]
           ]
-        :: width 100.perc
-        :: height 100.perc
+
+        -- make sure the sketcher always fills the parent perfectly
+        -- without resizing the parent in case the sketcher's size
+        -- changes.
+        :: position Absolute
+        :: inset (All 0.px)
+
+        -- scroll bars in case the parent is too small
+        :: overflow Auto
         :: gridGaps
 
     -- the following rules make for a responsive design:
@@ -279,5 +286,8 @@ parameters {auto v : Vars}
   all : Rules
   all = general ++ components ++ forms ++ widgets
 
+  draw : Rules
+  draw = class sketcher [padded] :: all
+
 main : IO ()
-main = traverse_ (putStrLn . interpolate) (all @{defaultVars})
+main = traverse_ (putStrLn . interpolate) (draw @{defaultVars})
