@@ -228,9 +228,9 @@ parameters {auto v : Vars}
         [cursor [URL_ "data:image/png;base64,\{rotate}", Cursor.Auto]]
 
     -- CyBy Draw toolbars
-    , class drawUtils $ gridArea Util :: stretchSepRow
-    , class drawTemplates $ gridArea Templates :: stretchSepRow
-    , class drawElems $ gridArea Elems :: stretchSepCol
+    , class drawUtils $ gridArea Util :: centerSepRow
+    , class drawTemplates $ gridArea Templates :: centerSepRow
+    , class drawElems $ gridArea Elems :: centerSepCol
     , class drawInfo $ [containerType Size, gridArea Rules.Info] ++ stretchSepCol
     , sel (class drawUtils > class sep) hsep
     , sel (class drawElems > class sep) vsep
@@ -256,7 +256,7 @@ parameters {auto v : Vars}
   export
   forms : Rules
   forms =
-    [ elem Li startRow
+    [ elem Li startSepRow
     , sel (elem Li > elem Label) [width v.formLblWidth, fontWeight Bold]
     , Sel formValues [flex1]
     , Container "width < 300px"
