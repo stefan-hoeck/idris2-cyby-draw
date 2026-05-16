@@ -130,7 +130,8 @@ parameters {auto v : Vars}
   roundIconDecl = round :: iconDecl
 
   levelRule : LogLevel -> Color -> Rule n
-  levelRule l c = class (level l) [color c, width v.levelWidth]
+  levelRule l c =
+    class (level l) [fontWeight Normal, color c, width v.levelWidth]
 
 --------------------------------------------------------------------------------
 -- General
