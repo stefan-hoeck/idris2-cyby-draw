@@ -101,7 +101,9 @@ parameters {auto v : Vars}
   sectionHeader =
        backgroundColor headerBG
     :: color headerFG
-    :: hpadded
+    -- horizontal padding is for readability, vertical padding
+    -- is to make sure a separator bar does not cut the header in two
+    :: padding (VH v.smallPadding v.padding)
     :: exactHeight v.titleHeight
     ++ centerSepRow
 
