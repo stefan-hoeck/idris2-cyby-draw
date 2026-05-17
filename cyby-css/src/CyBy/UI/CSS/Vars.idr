@@ -36,6 +36,7 @@ record Vars where
   bardim              : Length       -- height of a horizontal toolbar
   formLblWidth        : Width        -- width of a label in a form
   barSepWidth         : Width        -- width of a separator in a toolbar
+  barSepRadius        : BorderRadius -- radius of toolbar separator
   barSepMargin        : Length       -- cross-axis margin of a separator in a toolbar
   formSepWidth        : Width        -- width of field separator in a form
 
@@ -69,7 +70,8 @@ defaultVars =
 
   , bardim              = 1.8.em
   , formLblWidth        = 8.em
-  , barSepWidth         = 3.px
+  , barSepWidth         = 4.px
+  , barSepRadius        = 2.px
   , barSepMargin        = 0.4.em
   , formSepWidth        = 1.px
 
@@ -150,4 +152,4 @@ parameters {auto v : Vars}
 
   export
   bar : Color
-  bar = v.gray.c700
+  bar = v.gray.c500

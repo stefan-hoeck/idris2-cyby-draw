@@ -297,7 +297,7 @@ parameters {auto de : Sink DrawEvent}
       , elemIcon s chlorine Cl
       , elemIcon s bromine Br
       , nodeSep
-      , icon [] StartPSE (pse s.mode) pseLong (Text pse)
+      , icon [pseIcon] StartPSE (pse s.mode) pseLong (Text pse)
       ]
 
   detailItems : (pre : String) -> DrawState -> HTMLNodes

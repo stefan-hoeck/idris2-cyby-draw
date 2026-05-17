@@ -112,13 +112,18 @@ parameters {auto v : Vars}
 
   export
   vsep : Declarations
-  vsep = margin (VH v.barSepMargin 0.px) :: exactHeight v.barSepWidth
+  vsep =
+       margin (VH v.barSepMargin 0.px)
+    :: width 100.perc
+    :: borderRadius v.barSepRadius
+    :: exactHeight v.barSepWidth
 
   export
   hsep : Declarations
   hsep =
        margin (VH 0.px v.barSepMargin)
     :: height 100.perc
+    :: borderRadius v.barSepRadius
     :: exactWidth v.barSepWidth
 
   export
@@ -274,6 +279,7 @@ parameters {auto v : Vars}
     [ class icon iconDecl
     , class roundIcon roundIconDecl
     , class elem [fontWeight Bold, justifyContent Center]
+    , class pseIcon [decl "letter-spacing" "-2px"]
     , sel [elem Button, Hover] [cursor [Pointer]]
     , sel [elem Button, Disabled] [cursor [NotAllowed]]
     , sel [class widget, Hover] [cursor [Pointer]]
