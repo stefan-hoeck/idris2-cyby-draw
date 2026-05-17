@@ -89,6 +89,10 @@ elem : Class
 elem = "cyby-draw-elem"
 
 export %inline
+pseIcon : Class
+pseIcon = "cyby-draw-pse-icon"
+
+export %inline
 moleculeCanvas : Class
 moleculeCanvas = "cyby-draw-molecule-canvas"
 
