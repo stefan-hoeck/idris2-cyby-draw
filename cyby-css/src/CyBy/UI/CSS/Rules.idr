@@ -109,8 +109,7 @@ parameters {auto v : Vars}
 
   export
   sectionList : Declarations
-  sectionList =
-    [flex1, overflowY Scroll, hbpadded] ++ stretchSepCol
+  sectionList = [flex1, overflowY Auto, hbpadded] ++ stretchSepCol
 
   export
   vsep : Declarations
