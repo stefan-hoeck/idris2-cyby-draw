@@ -19,7 +19,7 @@ path    = "cyby-css"
 ipkg    = "cyby-css.ipkg"
 
 [custom.all]
-async-dom.commit       = "latest:main"
+async-dom.commit       = "latest:refactor_editors"
 chem-generators.commit = "latest:main"
 chem.commit            = "latest:main"
 css.commit             = "latest:main"
