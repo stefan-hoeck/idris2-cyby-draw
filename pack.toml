@@ -19,9 +19,9 @@ path    = "cyby-css"
 ipkg    = "cyby-css.ipkg"
 
 [custom.all]
-http-types.commit      = "latest:i18n"
-http-client-api.commit = "latest:i18n"
-async-dom.commit       = "latest:i18n"
+http-types.commit      = "latest:main"
+http-client-api.commit = "latest:main"
+async-dom.commit       = "latest:main"
 chem-generators.commit = "latest:main"
 chem.commit            = "latest:main"
 css.commit             = "latest:main"
