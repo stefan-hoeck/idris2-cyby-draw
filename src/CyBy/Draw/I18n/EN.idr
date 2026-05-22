@@ -1,5 +1,6 @@
 module CyBy.Draw.I18n.EN
 
+import HTTP.API.Client.I18n.EN
 import public CyBy.Draw.I18n
 
 %default total
@@ -58,15 +59,6 @@ parameters {auto log : Logger JS}
 
     copied        = info "structure copied to clipboard"
     readErr x     = error "error when reading structure: \{x}"
-
-    logJSErr x    =
-      error
-        """
-        An error occurred in the user interface. This is a CyBy bug. Please
-        contact your CyBy admin and send them this error message.
-        
-        Error details: \{dispErr x}
-        """
 
     logOpened p     = info "file opened: \{p}"
     noMetadata p    = error "File \{p} does not contain any CyBy metadata. It might have been created or edited by another program."

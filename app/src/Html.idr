@@ -2,6 +2,7 @@ module Html
 
 import CyBy.Draw
 import CyBy.Draw.I18n.EN
+import HTTP.API.Client.I18n
 import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite

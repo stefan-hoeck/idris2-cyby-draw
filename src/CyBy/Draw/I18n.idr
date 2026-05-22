@@ -1,13 +1,13 @@
 module CyBy.Draw.I18n
 
+import public HTTP.API.Client.I18n
 import public CyBy.Draw.Event
-import public IO.Async.Logging
 import public Web.Async
 
 %default total
 
 public export
-interface DrawLocal where
+interface JSLocal => DrawLocal where
   abbreviations : String
   angle         : String
   atomType      : String
@@ -60,14 +60,10 @@ interface DrawLocal where
   copied        : JS es ()
   readErr       : String -> JS es ()
 
-  logJSErr      : JSErr -> JS es ()
   logDrawEvent  : DrawEvent -> JS es ()
   logOpened     : String -> JS es ()
   noMetadata    : String -> JS es ()
   wrongFileType : String -> JS es ()
-
-export %inline
-DrawLocal => Loggable JS JSErr where logLoggable = logJSErr
 
 export %inline
 DrawLocal => Loggable JS DrawEvent where logLoggable = logDrawEvent
