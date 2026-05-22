@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 mkdir -p draw
+MN_CSS="draw/modern_normalize.css"
 APP_CSS="draw/app.css"
-curl https://cdn.jsdelivr.net/npm/modern-normalize/modern-normalize.min.css > "$APP_CSS"
+cp -v "$MN_CSS" "$APP_CSS"
 pack --log-level silence exec cyby-css/src/CyBy/UI/CSS/Rules.idr >> "$APP_CSS"
