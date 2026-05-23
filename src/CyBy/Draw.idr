@@ -206,11 +206,11 @@ parameters {auto de : Sink DrawEvent}
 
   elements : MolAtomAT -> HTMLNode
   elements a =
-    selectFromListBy values (a.elem.elem ==) symbol ChgElem [title setElement]
+    selectFromListBy' values (a.elem.elem ==) symbol ChgElem [title setElement]
 
   charges : MolAtomAT -> HTMLNode
   charges a =
-    selectFromListBy chs (a.charge ==) (show . value) ChgCharge
+    selectFromListBy' chs (a.charge ==) (show . value) ChgCharge
       [title setCharge]
     where
       chs : List Charge
@@ -218,7 +218,7 @@ parameters {auto de : Sink DrawEvent}
 
   massNrs : MolAtomAT -> HTMLNode
   massNrs a =
-    selectFromListBy (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
+    selectFromListBy' (masses a.elem.elem) (a.elem.mass ==) dispMass ChgMass
       [title setMass]
     where
       dispMass : Maybe MassNr -> String
@@ -239,7 +239,7 @@ parameters {auto de : Sink DrawEvent}
 
   abbrs : (ds : DrawSettings) => (pre : String) -> DrawState -> HTMLNode
   abbrs pre s =
-    selectFromListBy
+    selectFromListBy'
       (Nothing :: map Just ds.abbreviations)
       (\v => currAbbr s.mode == map label v)
       (maybe abbreviations label)
