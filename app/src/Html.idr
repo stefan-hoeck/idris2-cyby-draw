@@ -68,7 +68,7 @@ parameters {auto st  : IORef ColorScheme}
           , onFileIn LoadMol
           , acceptAll [".mol",".smi",".svg"]
           ]
-      , selectFromList values (Just c) show SetColor [class widget]
+      , selectFromList' values (Just c) show SetColor [class widget]
       ]
 
   ext : Extension
