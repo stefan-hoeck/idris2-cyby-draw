@@ -1,6 +1,6 @@
 module CyBy.Draw.I18n.EN
 
-import HTTP.API.Client.I18n.EN
+import Web.Async.I18n.EN
 import public CyBy.Draw.I18n
 
 %default total
