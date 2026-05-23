@@ -43,7 +43,7 @@ appLog =
         [ label [] [Text "Log"]
         , spacer
         , button [onClick Clear] ["Clear"]
-        , selectFromList levels (Just Info) show Lvl []
+        , selectFromList' levels (Just Info) show Lvl []
         ]
     , ul [ref CyByLog] []
     ]
