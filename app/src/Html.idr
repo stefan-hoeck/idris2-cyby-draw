@@ -23,7 +23,7 @@ import Web.Internal.Types
 LoadIn : DomID
 LoadIn = "load-input"
 
-fileEdit : Editor FileEv
+fileEdit : DOMLocal => Editor FileEv
 fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 
 --------------------------------------------------------------------------------
