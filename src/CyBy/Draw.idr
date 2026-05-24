@@ -526,7 +526,7 @@ parameters {auto ex : Extension}
     let st := fromMol sd Init (maybe (G 0 empty) graph m)
     topadd <- ex.buttons (DE pre) st
     let nd := sketcher pre topadd st
-    pure $ Widget.Types.W nd $
+    pure $ Widget.Types.W [nd] $
       P.evalScans1 st (doact pre) es |> (\x => cons st x)
 
   ||| An editor for molecules.

@@ -113,7 +113,7 @@ ui = Prelude.do
   dst        <- newref {s = World} $ fromMol (SD 0 0) Init (G 0 empty)
   W mn ss    <- molWidget {ex = ext ast dst} getDS App (SD 300 200) Nothing
 
-  child Content mn
+  children Content mn
   append (infoID App) ln
   pure $ Concurrent.merge
     [ foreach (appEv ast dst) aes
