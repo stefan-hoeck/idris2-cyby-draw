@@ -32,7 +32,7 @@ ui = do
   L ln ls lg <- logger Info
   W mn ss    <- molWidget {ex = WordExt} getDS App (SD 300 200) Nothing
 
-  child Content mn
+  children Content mn
   append (infoID App) ln
 
   pure $ Concurrent.merge [ls, tryStream (drain ss)]
