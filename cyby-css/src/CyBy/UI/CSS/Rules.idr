@@ -10,6 +10,7 @@ import Text.CSS.Cursor
 import Text.HTML.DomID
 import Text.HTML.Ref
 import Text.HTML.Tag
+import Web.Async.Widget.Types
 
 %default total
 %language ElabReflection
@@ -79,11 +80,15 @@ parameters {auto v : Vars}
   wfocus : Declarations
   wfocus = [borderWidth $ All 2.px]
 
-  ||| Widget that has currently visible focus
-  ||| (has the `:focus-visible` pseudoclass).
+  ||| Currently invalid widget
   export
   winvalid : Declarations
   winvalid = [color v.errorColor]
+
+  ||| Mandatory widget with currently missing input
+  export
+  wmissing : Declarations
+  wmissing = [color missingFG]
 
   ||| Disabled widget (has the `:disabled` pseudoclass).
   export
@@ -139,6 +144,16 @@ parameters {auto v : Vars}
   levelRule l c =
     class (level l) [fontWeight Normal, color c, width v.levelWidth]
 
+  validIcon : Color.Color -> Declarations
+  validIcon c =
+    [ color c
+    , height v.widgetHeight
+    , aspectRatio 1
+    , position Absolute
+    , top 0.px
+    , right 5.px
+    ]
+
 --------------------------------------------------------------------------------
 -- General
 --------------------------------------------------------------------------------
@@ -156,6 +171,8 @@ parameters {auto v : Vars}
     , sel (elem Section > (elem Header > [s,Hover])) [backgroundColor hoverInvertBG]
     , sel [s, Disabled] wdisabled
     , sel [s, Invalid] winvalid
+    , sel [s, attr (validity {s = ()}) (Invalid "")] winvalid
+    , sel [s, attr (validity {s = ()}) Missing] wmissing
     ]
 
   export
@@ -288,6 +305,12 @@ parameters {auto v : Vars}
     , sel [elem Select, Hover] [cursor [Pointer]]
     , sel [elem Select, Disabled] [cursor [NotAllowed]]
     , sel [elem Input, attr type File] [display None]
+    , class iconPlaceholder [display None]
+    , class iconMissing $ validIcon v.warnColor
+    , class iconError $ validIcon v.errorColor
+    , class validatedInput $ position Relative :: flexRow
+    , sel (class validatedInput > elem Input) [flex1]
+    , sel (elem Li > class validatedInput) [flex1]
     ]
 
   export

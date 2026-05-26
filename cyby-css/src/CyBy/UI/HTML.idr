@@ -138,3 +138,8 @@ benzene = Raw "<svg viewBox='0 0 20 20'><g transform='matrix(0.45096964,0,0,0.45
 export
 rotate : String
 rotate = "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAATlJREFUOI2t1L8rt1EYx/HXhcQgkygZDKRkYkOZlNm/oWzKIFam58litTH4JwzKbPEjZZNsFE89OIbvwZfur/u+5arTqXN9rvc5netHpJT8prVVEUVE568CcRwRw5WUKaWWC71YxAtuMfedPqVUDEQP/uABqWnt1gZiCOe4xwbG8B9riFpAdOMEVxhtOl8oA7UCruEfJqoCWgJzxq+x81NYSulT2YxjAAcVS6nQmoGDeb+sGhwRXRFxGBFjRcDHvHfXeNAIZtFXBDzXqLXJGsDJHHPxdhDNwyEijvCSUpopI0VE4E0//e74UjYL+cal0vJgOWvnyzplG09YQUeBvwOreMbfKq3Xji2NgXCKdY0BsajRimfZt4n2SsMhg6ewjzsfw+EOe5hqFfcpKd8koD//902ptgqwjr0CIOjbf9SaOuwAAAAASUVORK5CYII="
+
+||| An icon showing a warning triangle with an exclamation mark
+export
+iwarn : HTMLNode
+iwarn = Raw "<svg viewBox='0 0 6.61 6.61'><g transform='matrix(.902 0 0 .902 .319 .685)' fill='none' stroke-width='.419'><g stroke='currentcolor' stroke-linecap='round' stroke-linejoin='round'><path transform='translate(1.35,3)' d='m4.86 2.42-2.9-2e-7-2.9 1e-7 2.9-5.03 1.45 2.51z' stroke-width='.419'/><path d='m3.31 2.05v1.71' stroke-width='.629'/><path d='m3.31 4.63v.0865' stroke-width='.629'/></g></g></svg>"
