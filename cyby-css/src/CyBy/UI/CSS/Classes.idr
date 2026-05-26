@@ -133,3 +133,27 @@ iconMissing = "cyby-icon-missing"
 export %inline
 iconError : Class
 iconError = "cyby-icon-error"
+
+export %inline
+expandIcon : Class
+expandIcon = "cyby-expand-icon"
+
+export %inline
+deleteIcon : Class
+deleteIcon = "cyby-delete-icon"
+
+export %inline
+okIcon : Class
+okIcon = "cyby-ok-icon"
+
+export %inline
+addIcon : Class
+addIcon = "cyby-add-icon"
+
+export %inline
+trueIcon : Class
+trueIcon = "cyby-true-icon"
+
+export %inline
+falseIcon : Class
+falseIcon = "cyby-false-icon"
