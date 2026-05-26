@@ -14,7 +14,7 @@ import Text.CSS.Color
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
-import Web.Async.Confirm as C
+import Web.Async.Confirm
 import Web.Internal.Types
 
 %default total
@@ -22,9 +22,6 @@ import Web.Internal.Types
 
 LoadIn : DomID
 LoadIn = "load-input"
-
-fileEdit : DOMLocal => Editor FileEv
-fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
 
 --------------------------------------------------------------------------------
 -- Logging

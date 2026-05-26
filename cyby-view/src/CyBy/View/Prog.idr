@@ -1,0 +1,92 @@
+module CyBy.View.Prog
+
+-- import CyBy.Draw
+-- import CyBy.Draw.I18n.EN
+-- import CyBy.UI.JS
+-- import Data.ByteString
+-- 
+-- %default total
+-- %hide Text.SVG.Types.Path.t
+-- 
+-- LoadIn : DomID
+-- LoadIn = "load-input"
+-- 
+-- --------------------------------------------------------------------------------
+-- -- Logging
+-- --------------------------------------------------------------------------------
+-- 
+-- App : String
+-- App = "view"
+-- 
+-- Content : Ref Tag.Body
+-- Content = Id "content"
+-- 
+-- --------------------------------------------------------------------------------
+-- -- App
+-- --------------------------------------------------------------------------------
+-- 
+-- data AppEvent : Type where
+--   SetColor : Sink DrawEvent => ColorScheme -> AppEvent
+--   LoadMol  : Sink DrawEvent => FileEv -> AppEvent
+-- 
+-- getDS : (r : IORef ColorScheme) => JS es DrawSettings
+-- getDS =
+--   map
+--     (\s => {elemColor := color s} (defaultSettings abbreviations))
+--     (readref r)
+-- 
+-- parameters {auto st  : IORef ColorScheme}
+--            {auto sae : Sink AppEvent}
+--            {auto loc : DrawLocal}
+--            (ast      : IORef ColorScheme)
+-- 
+--   btns : DrawEnv -> DrawState -> JS es HTMLNodes
+--   btns de@(DE {}) s = Prelude.do
+--     c <- readref ast 
+--     pure
+--       [ label [forID LoadIn, class widget] [Text loadTxt]
+--       , input
+--           [ ref LoadIn
+--           , type File
+--           , onFileIn LoadMol
+--           , acceptAll [".sdf",".mol"]
+--           ]
+--       , selectFromList' values (Just c) show SetColor [class widget]
+--       ]
+-- 
+--   loadFile : Sink DrawEvent => FileEv -> Act ()
+--   loadFile (FE f p) = Prelude.do
+--     logOpened p
+--     bs <- blobBytes (up f)
+--     case [<] <>< forget (String.split ('.' ==) p) of
+--       _:<"mol" =>
+--         case readMolfileE (cast bs) of
+--           Left x  => readErr x
+--           Right g => sink (Event.Load g)
+--       _:<"sdf" => ?foobar
+--       _ => wrongFileType p
+-- 
+--   appEv : AppEvent -> Async JS [] ()
+--   appEv (SetColor x) = writeref ast x >> sink Redraw
+--   appEv (LoadMol ev) = logErrs $ loadFile ev
+-- 
+-- ui : Act (AsyncStream JS [] Void)
+-- ui = Prelude.do
+--   L ln ls lg <- logger Info
+--   E aes      <- event {fs = []} AppEvent
+--   ast        <- newref CyBy
+--   ds         <- getDS
+--   dst        <- newref {s = World} $ fromMol (SD 0 0) Init (G 0 empty)
+--   W mn ss    <- molWidget {ex = ext ast dst} getDS App (SD 300 200) Nothing
+-- 
+--   children Content mn
+--   append (infoID App) ln
+--   pure $ Concurrent.merge
+--     [ foreach (appEv ast dst) aes
+--     , tryStream ss |> foreach (writeref dst)
+--     , ls
+--     ]
+-- 
+-- export covering
+-- app : IO ()
+-- app = runProg (exec ui >>= weakenErrors)
