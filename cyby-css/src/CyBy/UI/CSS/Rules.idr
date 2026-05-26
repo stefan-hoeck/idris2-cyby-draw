@@ -198,6 +198,7 @@ parameters {auto v : Vars}
 
     , class sep $ [backgroundColor bar, height v.formSepWidth]
     , class spacer [flex1]
+    , elem A [color widgetFG]
     ]
 
   ||| Rules the main UI components
@@ -311,6 +312,9 @@ parameters {auto v : Vars}
     , class validatedInput $ position Relative :: flexRow
     , sel (class validatedInput > elem Input) [flex1]
     , sel (elem Li > class validatedInput) [flex1]
+    , class deleteIcon $ color v.secondary.c600 :: roundIconDecl
+    , class okIcon roundIconDecl
+    , class addIcon roundIconDecl
     ]
 
   export
