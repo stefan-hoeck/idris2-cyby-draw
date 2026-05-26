@@ -1,0 +1,15 @@
+package cyby-view
+
+authors = "Stefan Höck"
+brief   = "A viewer for structure data files running in the browser"
+
+version = 0.1.0
+sourcedir = "src"
+depends = base        >= 0.7.0
+        , cyby-draw
+
+opts    = "--codegen javascript"
+
+main    = CyBy.View.Main
+
+executable = "cyby-view.js"
