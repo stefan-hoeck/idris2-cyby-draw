@@ -1,6 +1,7 @@
 module CyBy.UI.JS
 
 import Data.List
+import HTTP.API.Decode
 import Text.HTML.Select
 
 import public CyBy.UI.HTML
@@ -85,3 +86,91 @@ validated ed =
     pure $ W
       [div [class validatedInput] $ ns ++ [validIcon lbl $ Missing {t}]]
       (observe (replace lbl . validIcon lbl) vs)
+
+--------------------------------------------------------------------------------
+-- Select Editors
+--------------------------------------------------------------------------------
+
+parameters {auto loc : DOMLocal}
+           {auto eq  : Eq t}
+
+  export %inline
+  seledit : Maybe Class -> (v -> t) -> (v -> String) -> List v -> Editor t
+  seledit c f g vs = E $ Widget.sel f g vs $ class <$> toList c
+
+  export %inline
+  selEdit : (v -> t) -> (v -> String) -> List v -> Editor t
+  selEdit = seledit Nothing
+
+  export %inline
+  selEditC : Class -> (v -> t) -> (v -> String) -> List v -> Editor t
+  selEditC = seledit . Just
+
+--------------------------------------------------------------------------------
+-- Input Editors
+--------------------------------------------------------------------------------
+
+parameters {auto loc : DOMLocal}
+
+  export
+  input :
+       (dec : String -> EditRes t)
+    -> InputType
+    -> (init : Maybe t -> String)
+    -> Editor t
+  input dec tpe init = validated $ txtEdit dec tpe init []
+
+  ||| Specialized version of `input` for entering floating point numbers.
+  export
+  double : Editor Double
+  double = input read Text (maybe "0.0" show)
+
+  ||| Specialized version of `input` for natural numbers.
+  export
+  nat : Editor Nat
+  nat = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering integers.
+  export
+  integer : Editor Integer
+  integer = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 8-bit unsigned integers.
+  export
+  bits8 : Editor Bits8
+  bits8 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 16-bit unsigned integers.
+  export
+  bits16 : Editor Bits16
+  bits16 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 32-bit unsigned integers.
+  export
+  bits32 : Editor Bits32
+  bits32 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 64-bit unsigned integers.
+  export
+  bits64 : Editor Bits64
+  bits64 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 8-bit signed integers.
+  export
+  int8 : Editor Int8
+  int8 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 16-bit signed integers.
+  export
+  int16 : Editor Int16
+  int16 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 32-bit signed integers.
+  export
+  int32 : Editor Int32
+  int32 = input read Text (maybe "0" show)
+
+  ||| Specialized version of `input` for entering 64-bit signed integers.
+  export
+  int64 : Editor Int64
+  int64 = input read Text (maybe "0" show)
