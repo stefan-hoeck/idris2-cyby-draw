@@ -306,7 +306,7 @@ parameters {auto v : Vars}
     , sel [elem Select, Disabled] [cursor [NotAllowed]]
     , sel [elem Input, attr type File] [display None]
     , class iconPlaceholder [display None]
-    , class iconMissing $ validIcon v.warnColor
+    , class iconMissing $ validIcon missingFG
     , class iconError $ validIcon v.errorColor
     , class validatedInput $ position Relative :: flexRow
     , sel (class validatedInput > elem Input) [flex1]
