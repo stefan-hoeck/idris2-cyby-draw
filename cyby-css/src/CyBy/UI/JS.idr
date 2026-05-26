@@ -65,3 +65,23 @@ logger l = Prelude.do
   ref  <- newref l
   E es <- event LogEv
   pure $ L appLog (foreach onev es) uilog
+
+--------------------------------------------------------------------------------
+-- Input Validation
+--------------------------------------------------------------------------------
+
+validIcon : DOMLocal => Ref Tag.Div -> EditRes t -> HTMLNode
+validIcon r (Valid _)   = div [class iconPlaceholder, Id r] []
+validIcon r (Invalid s) = div [class iconError, Id r, title s] [iwarn]
+validIcon r Missing     =
+  div [class iconMissing, Id r, title $ editRes {t} Missing] [iwarn]
+
+export
+validated : DOMLocal => Editor t -> Editor t
+validated ed =
+  E $ \m => Prelude.do
+    lbl     <- uniqueRef Tag.Div
+    W ns vs <- ed.widget m
+    pure $ W
+      [div [class validatedInput] $ ns ++ [validIcon lbl $ Missing {t}]]
+      (observe (replace lbl . validIcon lbl) vs)

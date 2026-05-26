@@ -141,7 +141,6 @@ parameters {auto v : Vars}
   activeBG : Color
   activeBG = v.secondary.c600
 
-
   export
   disabledFG : Color
   disabledFG = v.gray.c500
@@ -149,6 +148,10 @@ parameters {auto v : Vars}
   export
   disabledBG : Color
   disabledBG = v.gray.c300
+
+  export
+  missingFG : Color
+  missingFG = v.debugColor
 
   export
   bar : Color

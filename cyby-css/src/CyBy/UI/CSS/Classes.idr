@@ -117,3 +117,19 @@ icon = "cyby-icon"
 export %inline
 roundIcon : Class
 roundIcon = "cyby-round-icon"
+
+export %inline
+validatedInput : Class
+validatedInput = "cyby-validated-input"
+
+export %inline
+iconPlaceholder : Class
+iconPlaceholder = "cyby-icon-placeholder"
+
+export %inline
+iconMissing : Class
+iconMissing = "cyby-icon-missing"
+
+export %inline
+iconError : Class
+iconError = "cyby-icon-error"
