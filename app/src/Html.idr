@@ -14,7 +14,7 @@ import Text.CSS.Color
 import Text.HTML.Select
 import Text.Molfile
 import Text.SVG
-import Web.Async.Confirm as C
+import Web.Async.Confirm
 import Web.Internal.Types
 
 %default total
@@ -23,22 +23,11 @@ import Web.Internal.Types
 LoadIn : DomID
 LoadIn = "load-input"
 
-fileEdit : DOMLocal => Editor FileEv
-fileEdit = E $ \_ => fileIn [acceptAll [".mol",".smi",".svg"]]
-
---------------------------------------------------------------------------------
--- Logging
---------------------------------------------------------------------------------
-
 App : String
 App = "app"
 
 Content : Ref Tag.Body
 Content = Id "content"
-
---------------------------------------------------------------------------------
--- App
---------------------------------------------------------------------------------
 
 data AppEvent : Type where
   SetColor : Sink DrawEvent => ColorScheme -> AppEvent
@@ -53,12 +42,10 @@ getDS =
 parameters {auto st  : IORef ColorScheme}
            {auto sae : Sink AppEvent}
            {auto loc : DrawLocal}
-           (ast      : IORef ColorScheme)
-           (dst      : IORef DrawState)
 
   btns : DrawEnv -> DrawState -> JS es HTMLNodes
   btns de@(DE {}) s = Prelude.do
-    c <- readref ast 
+    c <- readref st 
     pure
       [ expBtn saveTxt s
       , label [forID LoadIn, class widget] [Text loadTxt]
@@ -101,7 +88,7 @@ parameters {auto st  : IORef ColorScheme}
       _ => wrongFileType p
 
   appEv : AppEvent -> Async JS [] ()
-  appEv (SetColor x) = writeref ast x >> sink Redraw
+  appEv (SetColor x) = writeref st x >> sink Redraw
   appEv (LoadMol ev) = logErrs $ loadFile ev
 
 ui : Act (AsyncStream JS [] Void)
@@ -110,14 +97,13 @@ ui = Prelude.do
   E aes      <- event {fs = []} AppEvent
   ast        <- newref CyBy
   ds         <- getDS
-  dst        <- newref {s = World} $ fromMol (SD 0 0) Init (G 0 empty)
-  W mn ss    <- molWidget {ex = ext ast dst} getDS App (SD 300 200) Nothing
+  W mn ss    <- molWidget {ex = ext} getDS App (SD 300 200) Nothing
 
   children Content mn
   append (infoID App) ln
   pure $ Concurrent.merge
-    [ foreach (appEv ast dst) aes
-    , tryStream ss |> foreach (writeref dst)
+    [ foreach appEv aes
+    , drain $ tryStream ss
     , ls
     ]
 
