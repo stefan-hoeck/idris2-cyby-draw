@@ -3,14 +3,14 @@ module Html
 import CyBy.Draw
 import CyBy.Draw.Word
 import CyBy.Draw.Word.I18n.EN
-import CyBy.UI.JS
 import Data.List
+import HTTP.I18n.EN
 import Text.CSS.Color
-import Text.HTML.DomID
 import Text.Molfile
 import Text.SVG
-import Web.Async.Util
-import Web.Async.View
+import Web.Async.Extra.I18n.EN
+import Web.Async.Extra.I18n.EN
+import Web.Async.Extra.Widget
 
 %default total
 
@@ -29,7 +29,8 @@ getDS =
 ui : Act (AsyncStream JS [] Void)
 ui = do
   ast        <- newref CyBy
-  L ln ls lg <- logger Info
+  L ln ls lg <- logger @{HTTPEN} @{ExtraEN} Info
+  let den    := WordEN {log = lg}
   W mn ss    <- molWidget {ex = WordExt} getDS App (SD 300 200) Nothing
 
   children Content mn

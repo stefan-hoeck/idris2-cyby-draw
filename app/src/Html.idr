@@ -2,19 +2,20 @@ module Html
 
 import CyBy.Draw
 import CyBy.Draw.I18n.EN
-import HTTP.API.Client.I18n
-import CyBy.UI.JS
 import Data.ByteString
 import Data.Finite
 import Data.Linear.Sink
 import Data.List
 import Data.List1
 import Geom.Gen2D.Debug
+import HTTP.I18n.EN
 import Text.CSS.Color
-import Text.HTML.Select
+import Text.HTML.Extra
 import Text.Molfile
 import Text.SVG
 import Web.Async.Confirm
+import Web.Async.Extra.I18n.EN
+import Web.Async.Extra.Widget
 import Web.Internal.Types
 
 %default total
@@ -39,35 +40,32 @@ getDS =
     (\s => {elemColor := color s} (defaultSettings abbreviations))
     (readref r)
 
-parameters {auto st  : IORef ColorScheme}
-           {auto sae : Sink AppEvent}
+parameters {auto sae : Sink AppEvent}
            {auto loc : DrawLocal}
 
-  btns : DrawEnv -> DrawState -> JS es HTMLNodes
-  btns de@(DE {}) s = Prelude.do
-    c <- readref st 
-    pure
-      [ expBtn saveTxt s
-      , label [forID LoadIn, class widget] [Text loadTxt]
-      , input
-          [ ref LoadIn
-          , type File
-          , onFileIn LoadMol
-          , acceptAll [".mol",".smi",".svg"]
-          ]
-      , selectFromList' values (Just c) show SetColor [class widget]
-      ]
+  btns : DrawEnv -> DrawState -> ColorScheme -> HTMLNodes
+  btns de@(DE {}) s c =
+    [ expBtn saveTxt s
+    , label [forID LoadIn, class Class.btn] [Text loadTxt]
+    , input
+        [ ref LoadIn
+        , type File
+        , onFileIn LoadMol
+        , acceptAll [".mol",".smi",".svg"]
+        ]
+    , selectFromList' values (Just c) show SetColor []
+    ]
 
-  ext : Extension
-  ext =
+  ext : IORef ColorScheme => Extension
+  ext @{st} =
     E
       { doExport = storeSVG . exportSVG
-      , buttons  = btns
+      , buttons  = \e,x => btns e x <$> readref st
       , adjust   = \_,_,s => disableExport s
       }
 
-  loadFile : Sink DrawEvent => FileEv -> Act ()
-  loadFile (FE f p) = Prelude.do
+  loadFile : IORef ColorScheme => Sink DrawEvent => FileEv -> Act ()
+  loadFile @{st} (FE f p) = Prelude.do
     logOpened p
     bs <- blobBytes (up f)
     case [<] <>< forget (String.split ('.' ==) p) of
@@ -87,13 +85,14 @@ parameters {auto st  : IORef ColorScheme}
             Right g => sink (Event.Load g)
       _ => wrongFileType p
 
-  appEv : AppEvent -> Async JS [] ()
+  appEv : (st : IORef ColorScheme) => AppEvent -> Async JS [] ()
   appEv (SetColor x) = writeref st x >> sink Redraw
   appEv (LoadMol ev) = logErrs $ loadFile ev
 
 ui : Act (AsyncStream JS [] Void)
 ui = Prelude.do
-  L ln ls lg <- logger Info
+  L ln ls lg <- logger @{HTTPEN} @{ExtraEN} Info
+  let den    := DrawEN {log = lg}
   E aes      <- event {fs = []} AppEvent
   ast        <- newref CyBy
   ds         <- getDS

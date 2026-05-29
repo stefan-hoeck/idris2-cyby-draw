@@ -6,13 +6,10 @@ brief   = "An opinionated CSS framework written in Idris"
 version = 0.1.0
 sourcedir = "src"
 depends = base        >= 0.7.0
-        , async-dom
+        , async-dom-extra
         , chem
-        , css
 
 modules = CyBy.UI.CSS.Classes
         , CyBy.UI.CSS.Rules
-        , CyBy.UI.CSS.Tailwind
         , CyBy.UI.CSS.Vars
         , CyBy.UI.HTML
-        , CyBy.UI.JS

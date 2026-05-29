@@ -23,14 +23,14 @@ export
 formValues : List Selector
 formValues =
   [ elem Li > elem Div
-  , elem Li > class widget
   , elem Li > elem Input
   , elem Li > elem Select
+  , class btn
   ]
 
 export
 widgetSelectors : List Selector
-widgetSelectors = [Elem Button, Elem Input, Elem Select, Class widget]
+widgetSelectors = [Elem Button, Elem Input, Elem Select, class btn]
 
 --------------------------------------------------------------------------------
 -- Declarations
@@ -301,12 +301,9 @@ parameters {auto v : Vars}
     , class pseIcon [decl "letter-spacing" "-2px"]
     , sel [elem Button, Hover] [cursor [Pointer]]
     , sel [elem Button, Disabled] [cursor [NotAllowed]]
-    , sel [class widget, Hover] [cursor [Pointer]]
-    , sel [class widget, Disabled] [cursor [NotAllowed]]
     , sel [elem Select, Hover] [cursor [Pointer]]
     , sel [elem Select, Disabled] [cursor [NotAllowed]]
     , sel [elem Input, attr type File] [display None]
-    , class iconPlaceholder [display None]
     , class iconMissing $ validIcon missingFG
     , class iconError $ validIcon v.errorColor
     , class validatedInput $ position Relative :: flexRow
@@ -315,6 +312,8 @@ parameters {auto v : Vars}
     , class deleteIcon $ color v.secondary.c600 :: roundIconDecl
     , class okIcon roundIconDecl
     , class addIcon roundIconDecl
+    , sel [class btn, Hover] [cursor [Pointer]]
+    , sel [class btn, Disabled] [cursor [NotAllowed]]
     ]
 
   export
