@@ -8,7 +8,7 @@ import public CyBy.Draw.Word.I18n
 parameters {auto log : Logger JS}
 
   export
-  WordLocal where
+  [WordEN] WordLocal using DrawEN where
     emptyMol          = Caught "no or empty molecule"
     emptySel          = Caught "no or empty selection"
     emptySelection    = debug "no selection or no SVG image found: inserting new image"

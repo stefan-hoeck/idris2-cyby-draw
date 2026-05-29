@@ -1,13 +1,13 @@
 module CyBy.Draw.I18n
 
-import public Web.Async.I18n
+import public Web.Async.Extra.I18n
 import public CyBy.Draw.Event
 import public Web.Async
 
 %default total
 
 public export
-interface DOMLocal => DrawLocal where
+interface DOMLocal => ExtraLocal => DrawLocal where
   abbreviations : String
   angle         : String
   atomType      : String
@@ -18,7 +18,6 @@ interface DOMLocal => DrawLocal where
   centerTxt     : String
   charge        : String
   chlorine      : String
-  clearTxt      : String
   cyclobutane   : String
   cycloheptane  : String
   cyclohexane   : String

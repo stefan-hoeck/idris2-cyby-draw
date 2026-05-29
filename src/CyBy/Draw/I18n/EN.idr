@@ -1,13 +1,13 @@
 module CyBy.Draw.I18n.EN
 
-import Web.Async.I18n.EN
+import Web.Async.Extra.I18n.EN
 import public CyBy.Draw.I18n
 
 %default total
 
 parameters {auto log : Logger JS}
   export
-  DrawLocal where
+  [DrawEN] DrawLocal using DOMEN ExtraEN where
     abbreviations = "--abbreviations--"
     angle         = "Angle"
     atomType      = "Type"
@@ -18,7 +18,6 @@ parameters {auto log : Logger JS}
     centerTxt     = "center"
     charge        = "Charge"
     chlorine      = "chlorine"
-    clearTxt      = "clear"
     cyclobutane   = "cyclobutane"
     cycloheptane  = "cycloheptane"
     cyclohexane   = "cyclohexane"

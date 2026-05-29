@@ -18,6 +18,13 @@ type    = "local"
 path    = "cyby-css"
 ipkg    = "cyby-css.ipkg"
 
+[custom.all.async-dom-extra]
+type    = "git"
+url     = "https://github.com/stefan-hoeck/idris2-async-dom.git"
+commit  = "latest:main"
+ipkg    = "extra/async-dom-extra.ipkg"
+
+
 [custom.all]
 http-types.commit      = "latest:main"
 http-client-api.commit = "latest:main"
