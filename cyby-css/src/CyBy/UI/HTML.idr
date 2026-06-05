@@ -98,6 +98,9 @@ rotate : String
 -- Icons SVGs
 --------------------------------------------------------------------------------
 
+
+--Test
+
 pathNoStroke : String
 pathNoStroke = "path style='stroke:none;fill:currentcolor;'"
 
