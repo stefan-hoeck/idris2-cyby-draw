@@ -51,10 +51,6 @@ drawDetails : Class
 drawDetails = "cyby-draw-details"
 
 export %inline
-drawLog : Class
-drawLog = "cyby-draw-log"
-
-export %inline
 elem : Class
 elem = "cyby-draw-elem"
 

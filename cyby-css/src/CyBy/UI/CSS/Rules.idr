@@ -25,7 +25,6 @@ formValues =
   [ elem Li > elem Div
   , elem Li > elem Input
   , elem Li > elem Select
-  , class btn
   ]
 
 export
@@ -267,7 +266,6 @@ parameters {auto v : Vars}
     , class drawDetails [containerType Size, flex2]
 
     -- logging
-    , class drawLog [fontSize v.smallFont, containerType Size, flex1]
     , levelRule Fatal v.errorColor
     , levelRule Error v.errorColor
     , levelRule Warn  v.warnColor
@@ -321,7 +319,10 @@ parameters {auto v : Vars}
   all = general ++ components ++ forms ++ widgets
 
   draw : Rules
-  draw = class sketcher [padded] :: all
+  draw =
+       class sketcher [padded]
+    :: class asyncLog [fontSize v.smallFont, containerType Size, flex1]
+    :: all
 
 main : IO ()
 main = traverse_ (putStrLn . interpolate) (draw @{defaultVars})
