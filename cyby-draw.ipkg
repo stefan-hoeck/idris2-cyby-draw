@@ -37,5 +37,6 @@ modules = CyBy.Draw
 
         , CyBy.Draw.I18n
         , CyBy.Draw.I18n.EN
+        , CyBy.Draw.I18n.DE
 
         , Text.Measure
