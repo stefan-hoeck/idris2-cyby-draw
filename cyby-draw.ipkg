@@ -8,6 +8,7 @@ sourcedir = "src"
 depends = base        >= 0.7.0
         , array
         , async-dom
+        , async-dom-extra
         , chem
         , containers
         , cyby-css

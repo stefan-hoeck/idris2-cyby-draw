@@ -1,6 +1,6 @@
 module CyBy.Draw.I18n.DE
 
-import Web.Async.Extra.I18n.EN
+import Web.Async.Extra.I18n.DE
 import public CyBy.Draw.I18n
 
 %default total
