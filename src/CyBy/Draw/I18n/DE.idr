@@ -1,13 +1,14 @@
 module CyBy.Draw.I18n.DE
 
 import Web.Async.Extra.I18n.DE
+import Web.Async.I18n.DE
 import public CyBy.Draw.I18n
 
 %default total
 
 parameters {auto log : Logger JS}
   export
-  [DrawDE] DrawLocal using DOMEN ExtraEN where
+  [DrawDE] DrawLocal using DOMDE ExtraDE where
     abbreviations = "--Abkürzungen--"
     angle         = "Winkel"
     atomType      = "Typ"
