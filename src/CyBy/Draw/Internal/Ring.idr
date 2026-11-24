@@ -26,8 +26,8 @@ add n v = if n `mod` 2 == 0 then v / 2.0 else pi / (- 2.0)
 
 ||| Creates a regular, saturated n-cycle of carbon atoms.
 export
-nring : (n : Nat) -> {auto 0 p : LT 2 n} -> CDIGraph n
-nring n =
+ring : (n : Nat) -> {auto 0 p : LT 2 n} -> CDGraph
+ring n =
   let step := TwoPi / cast n
       plus := add (cast n) step
       as   := generate n (\f => angle $ cast (cast {to = Nat} f) * step + plus)
@@ -38,8 +38,3 @@ nring n =
    in adjAtomTypes $ mkGraph
         (toVect $ map (\a => elemAt C (translate (polar l a) origin) None) as)
         (ringBonds n)
-
-||| Creates a regular, saturated n-cycle of carbon atoms.
-export
-ring : (n : Nat) -> {auto 0 p : LT 2 n} -> CDGraph
-ring n = G n $ nring n

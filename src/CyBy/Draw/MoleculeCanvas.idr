@@ -27,13 +27,13 @@ public export
 record DepNode where
   constructor DN
   graph : CDGraph
-  node  : Fin graph.order
+  node  : Node graph
 
 %runElab derive "DepNode" [Show]
 
 export
 Eq DepNode where
-  (==) (DN g1 n1) (DN g2 n2) = g1 == g2 && finToNat n1 == finToNat n2
+  (==) (DN g1 n1) (DN g2 n2) = g1 == g2 && cast {to = Nat} n1 == cast n2
 
 --------------------------------------------------------------------------------
 --          Drawing Mode
@@ -133,10 +133,6 @@ toMolStr s c =
       let molFile := MkMolfile n i (MkMolLine c) g d
        in writeMolfile molFile
 
-export %inline
-(.imol) : (s : DrawState) -> CDIGraph s.mol.order
-s.imol = s.mol.graph
-
 ||| True, if the current mol graph is the empty graph.
 export %inline
 emptyGraph : DrawState -> Bool
@@ -200,7 +196,7 @@ parameters {auto ds : DrawSettings}
       factor x y = scale $ (x / (y + 4.0 * cast ds.core.fontSize))
 
   iniTrans : SceneDims -> ScaleMode -> CDGraph -> AffineTransformation
-  iniTrans sd sm (G _ g) =
+  iniTrans sd sm g =
     let (bs,sc) := scaleToBounds
      in scaleTrans (sceneCenter sd) sc $
           translate (sceneCenter sd - convert (center bs))
@@ -248,7 +244,7 @@ nextMol s =
       Erase            => s.mol
       Draw             => s.mol
       PTable _         => s.mol
-      SetAtom x        => addAtom s.imol x s.curPos
+      SetAtom x        => addAtom s.mol x s.curPos
       SetAbbr _        => s.mol
       Erasing p        => select p s.posId s.mol
       Translating _    => s.mol
@@ -258,9 +254,9 @@ nextMol s =
       SetTempl t       => addTemplate s.posMol t s.mol
       RotTempl p t     => addTemplate p (rotateTempl False p s.posMol t) s.mol
       RotTemplOvp g t p =>
-        addTemplateRot s.posMol (Right (g.node,t.node,p)) t.graph.graph g.graph.graph
-      RotTemplAtm g t => addTemplateRot s.posMol (Left g.node) t.graph g.graph.graph
-      Drawing Nothing  => addBond (s.modifier == Shift) (Just s.posMol) s.bond s.imol
+        addTemplateRot t.graph g.graph s.posMol (Right (g.node,t.node,p))
+      RotTemplAtm g t => addTemplateRot t g.graph s.posMol (Left g.node)
+      Drawing Nothing  => addBond (s.modifier == Shift) (Just s.posMol) s.bond s.mol
       Drawing (Just $ A l _ g) => setAbbreviation (s.modifier == Shift) l s.posId g s.mol
 
 --------------------------------------------------------------------------------
@@ -270,10 +266,10 @@ nextMol s =
 -- overwrites the current molecule, adding it to the `undo` stack
 updateMol : (CDGraph -> CDGraph) -> DrawState -> DrawState
 updateMol f s =
-  let G o g := cleanup $ f s.mol
-      cm    := clear s.mol
-   in if clear (G o g) == cm then s else
-        { mol := G o $ adjAtomTypes g
+  let g  := cleanup $ f s.mol
+      cm := clear s.mol
+   in if clear g == cm then s else
+        { mol := adjAtomTypes g
         , undos $= (cm ::), redos := []
         } s
 
@@ -284,13 +280,13 @@ modAtomWhere :
   -> (MolAtomAT -> MolAtomAT)
   -> DrawState
   -> DrawState
-modAtomWhere p f =
-  updateMol $ \(G o g) =>
-    let ns := filter (p . lab g) (nodes g)
-     in delNodes (groupNodes g ns) $ mapIf p {atom $= adj} g
-  where
-    adj : MolAtomAT -> MolAtomAT
-    adj = f . {label := Nothing}
+-- modAtomWhere p f =
+--   updateMol $ \g =>
+--     let ns := filter (p . lab) (nodes g)
+--      in delNodes (groupNodes ns) $ mapIf p {atom $= adj} g
+--   where
+--     adj : MolAtomAT -> MolAtomAT
+--     adj = f . {label := Nothing}
 
 -- adjusts the currently hovered atom with the given function
 -- this will delete any abbreviation associated with the hovered atom.
@@ -373,7 +369,7 @@ redo s = case s.redos of
 changeSelMode : DrawState -> DrawState
 changeSelMode s =
   let mode := if s.modifier == Shift then Many else One
-   in case hoveredItem s.imol of
+   in case hoveredItem s.mol of
         None => {mode := Selecting s.posId, mol $= selectHovered Ignore Ignore} s
         N _  => {mode := Dragging s.posMol, mol $= selectHovered Ignore mode} s
         E _  => {mode := Dragging s.posMol, mol $= selectHovered mode Ignore} s
@@ -391,7 +387,7 @@ parameters {auto ds : DrawSettings}
     -> a
   applyWhenSel s d r n =
     let pid := s.posId
-    in case hoveredItem s.imol of
+    in case hoveredItem s.mol of
          None => case selectionCorners s.mol of
            Nothing      => n
            Just (p1,p2) =>
@@ -416,9 +412,8 @@ parameters {auto ds : DrawSettings}
          in setTransform (translate v <+> s.transform) s
       PTable m      => {mode := PTable (hoveredElem s.dims p)} s
       m             =>
-        let G o g := s.mol
-            gh    := hover (hoverBond m s.bond) (hoverAtom m) (convert p) g
-         in { mol := G o gh, curPos := p} s
+        let gh := hover (hoverBond m s.bond) (hoverAtom m) (convert p) s.mol
+         in {mol := gh, curPos := p} s
 
   -- Pressing the left button typically begins an editing step
   -- If this step depends on the start and end position of the mouse,
@@ -439,39 +434,35 @@ parameters {auto ds : DrawSettings}
                 (changeSelMode s)
 
             Erase       =>
-              case hoveredItem s.imol of
+              case hoveredItem s.mol of
                 None => {mode := Erasing s.posId} s
                 N _  => delete $ {mol $= selectHovered Ignore One} s
                 E _  => delete $ {mol $= selectHovered One Ignore} s
 
             Draw        =>
-              case hoveredItem s.imol of
-                None => setMol (G _ $ insElemAt s.imol C pid HoverNew) s 
+              case hoveredItem s.mol of
+                None => setMol (insElemAt s.mol C pid HoverNew) s 
                 N x  =>
-                  if isJust (groupNr s.imol (fst x))
+                  if isJust (groupNr (fst x))
                      then s
                      else {mode := Drawing Nothing, mol $= ifHover Origin} s
-                E (E x y $ CB r b)  => 
+                E (LE x y $ CB r b)  => 
                   let b2 := newBond s.bond.type s.bond.stereo b
-                   in setMol (G _ $ insEdge (E x y $ CB r b2) s.imol) s
+                   in setMol (insEdge s.mol (LE x y $ CB r b2)) s
 
             SetAtom   i => setMol (nextMol s) s
             SetAbbr a   => {mode := Drawing (Just a), mol $= ifHover Origin} s
             SetTempl  t =>
-                case hoveredItem s.imol of
+                case hoveredItem s.mol of
                   -- adding template at hovered atom
                   N (f,_)  => {mode := RotTemplAtm (DN s.mol f) t} s
                   _        =>
-                   let t' := graph $ translateTemplate s.posMol t
-                    in case nodesToMerge s.imol t' of
+                   let t' := translateTemplate s.posMol t
+                    in case nodesToMerge s.mol t' of
                          -- exactly one overlap -> rotating around it possible
                          [(fm, ft)] =>
-                           {mode := RotTemplOvp
-                                      (DN (G _ s.imol) fm)
-                                      (DN (G _ t') ft)
-                                      (convert s.curPos)} s
-                         _          =>
-                           setMol (nextMol s) $ {mode := SetTempl t} s
+                           {mode := RotTemplOvp (DN s.mol fm) (DN t' ft) (convert s.curPos)} s
+                         _          => setMol (nextMol s) $ {mode := SetTempl t} s
             _ => s
     where updateMode : DrawState -> Mode -> DrawState
           updateMode s m = {mode := m} s
@@ -529,16 +520,16 @@ addBondShortcut :
   -> DrawState
   -> DrawState
 addBondShortcut bol bo bs s =
-  case hoveredItem s.imol of
-    N x => case inAbbreviation s.imol (fst x) of
+  case hoveredItem s.mol of
+    N x => case inAbbreviation (fst x) of
       True  => s
       False =>
-       let bnd   := MkBond bol bo bs
-           G _ g := ifHover Origin s.mol
+       let bnd := MkBond bol bo bs
+           g   := ifHover Origin s.mol
         in setMol (hoverIfNew (addBond {t = Id} False Nothing bnd g)) s
-    E (E x y $ CB r b) =>
+    E (LE x y $ CB r b) =>
       if bs == NoBondStereo then
-          setMol (G _ $ insEdge (E x y $ CB r (cast bo)) s.imol) s
+          setMol (insEdge s.mol (LE x y $ CB r (cast bo))) s
       else s
     _ => s  -- If not hovering over a valid atom or Edge, do nothing
 
@@ -551,14 +542,11 @@ addGroupShortcut :
      -> Bool -- To determine if anything should happen on an edge
      -> DrawState
 addGroupShortcut g s bol =
-  case hoveredItem s.imol of
-    N x => case inAbbreviation s.imol (fst x) of 
+  case hoveredItem s.mol of
+    N x => case inAbbreviation (fst x) of 
       True  => s 
-      False =>  
-           setMol (mergeGraphs s.posId s.mol g) s
-    E e => if bol then 
-                  setMol (mergeGraphs s.posId s.mol g) s
-            else s
+      False => setMol (mergeGraphs s.posId s.mol g) s
+    E e => if bol then setMol (mergeGraphs s.posId s.mol g) s else s
     _ => s 
 
 -- Adds an abbreviation to the molecule if hovering over a valid atom, 
@@ -570,13 +558,12 @@ addAbbrShortcut :
   -> DrawState
   -> DrawState
 addAbbrShortcut l g s =
-  case hoveredItem s.imol of
-    N x => case inAbbreviation s.imol (fst x) of
+  case hoveredItem s.mol of
+    N x => case inAbbreviation (fst x) of
       True  => s
       False =>
         let s := {mol $= ifHover Origin} s  -- First set the Origin flag 
-        in 
-        setMol (setAbbreviation False l s.posId g s.mol) s
+         in setMol (setAbbreviation False l s.posId g s.mol) s
     _   => s  -- If not hovering over a valid atom, do nothing
 
 -- Enables node-edge-node navigation by setting 'Hover' to the neighbor whose 
@@ -624,7 +611,7 @@ setMassNr m a = let MkI e _ := a.elem in {elem := MkI e m} a
 
 erase : DrawState -> DrawState
 erase s =
-  case selectedItems s.imol of
+  case selectedItems s.mol of
     None => {mode := Erase} s
     _    => delete s
 
@@ -657,7 +644,7 @@ upd (KeyUp x)     s = onKeyUp x s
 upd EraseMode     s = erase s
 upd Focus         s = {isActive := True} s
 upd Blur          s = {isActive := False} s
-upd Clear         s = setMol (G 0 empty) s
+upd Clear         s = setMol empty s
 upd Expand        s = updateMol expand s
 upd Center        s = reset s
 upd (SelAbbr a)   s = {mode := SetAbbr a, mol $= clear} s

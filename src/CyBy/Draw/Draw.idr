@@ -218,56 +218,55 @@ background deflt v =
 --------------------------------------------------------------------------------
 
 parameters {auto s : DrawSettings}
-           {k      : _}
-           (g      : CDIGraph k)
+           (g      : CDGraph)
 
   abbrText : AbbrPos -> String -> String
   abbrText AE t = t
   abbrText AW t = reverseLabel t s.abbreviations
   
   export
-  label : Fin k -> Label
+  label : Node g -> Label
   label x =
-    case visible g x of
+    case visible x of
       False => Hidden
-      True  => case labelVisible s.showC g x of
-        False => NoLabel (pointAt g x)
-        True  => case group (lab g x) of
+      True  => case labelVisible s.showC x of
+        False => NoLabel (pointAt x)
+        True  => case group (lab x) of
           Just (G _ a) =>
-            let ap := abbrPos g x
-                p  := pointAt g x
+            let ap := abbrPos x
+                p  := pointAt x
              in Abbreviation p $ abbrTextPos ap p (text False $ abbrText ap a)
           Nothing         =>
-            let atm := atom $ lab g x
+            let atm := atom $ lab x
                 sym := text False (symbol atm.elem.elem)
                 ch  := text True (chargeLabel atm.charge)
                 mn  := text True (massLabel atm.elem.mass)
                 hl  := text False (hlabel atm.hydrogen)
                 hc  := text True (hsubscript atm.hydrogen)
-             in Explicit $ setPositions (hpos g x) (pointId atm) (AL sym ch mn hl hc)
+             in Explicit $ setPositions (hpos x) (pointId atm) (AL sym ch mn hl hc)
 
   export
-  labels : Labels k
-  labels = generate k label
+  labels : Labels g
+  labels = generate g.order (Draw.label . N)
 
-  atomBG : Labels k -> Fin k -> TNodes
+  atomBG : Labels g -> Node g -> TNodes
   atomBG ls x ns =
-    let atm  := lab g x
+    let atm  := lab x
         dflt := if isInvalid atm.atom.type then Just s.errorBG else Nothing
      in case background dflt atm of
           Nothing => ns
-          Just c  => case at ls x of
+          Just c  => case atN ls x of
             Abbreviation _ abbr => abbrBG c abbr ns
             Explicit l          => foldl (flip $ labelBG c) ns (labels l)
             NoLabel p           => addCircle c p s.core.radiusAtom ns
             Hidden              => ns
 
-  drawAtom : Labels k -> Nodes -> Fin k -> Nodes
+  drawAtom : Labels g -> Nodes -> Node g -> Nodes
   drawAtom ls ns x =
     let ns2 := atomBG ls x ns
-     in case at ls x of
+     in case atN ls x of
           Abbreviation _ abbr => addLbl (text abbr) ns2
-          Explicit l => atmLabels (s.elemColor (cast $ lab g x)) l ns2
+          Explicit l => atmLabels (s.elemColor (cast $ lab x)) l ns2
           NoLabel p  => ns2
           Hidden     => ns2
 
@@ -277,9 +276,9 @@ parameters {auto s : DrawSettings}
   snglBond c x y Down   ns = wedgeDown x y $ wedgeBG c x y ns
   snglBond c x y _      ns = line x y $ lineBG c x y ns
 
-  dblBond : Maybe SVGColor -> Fin k -> Fin k -> Point Id -> Point Id -> TNodes
+  dblBond : Maybe SVGColor -> Node g -> Node g -> Point Id -> Point Id -> TNodes
   dblBond c x y px py ns =
-    let [a,b,d,e] := dblBond g x y (pointAt g x) (pointAt g y) px py
+    let [a,b,d,e] := dblBond x y (pointAt x) (pointAt y) px py
      in line a b . line d e . lineBG c a b $ lineBG c d e ns
 
   trplBond : Maybe SVGColor -> Point Id -> Point Id -> TNodes
@@ -293,7 +292,7 @@ parameters {auto s : DrawSettings}
   addBond :
        MolBond
     -> Maybe SVGColor
-    -> (x,y : Fin k)
+    -> (x,y : Node g)
     -> (px,py : Point Id)
     -> TNodes
   addBond (MkBond True  Single st) c x y px py = snglBond c px py st
@@ -301,21 +300,21 @@ parameters {auto s : DrawSettings}
   addBond (MkBond _     Dbl    _ ) c x y px py = dblBond c x y px py
   addBond (MkBond _     Triple _ ) c x y px py = trplBond c px py
 
-  drawBond : Labels k -> Nodes -> Edge k CDBond -> Nodes
-  drawBond ls ns (E x y b) =
+  drawBond : Labels g -> Nodes -> LEdg g -> Nodes
+  drawBond ls ns (LE x y b) =
     let c  := background Nothing b
-        px := pointAt g x
-        py := pointAt g y
-        lx := at ls x
-        ly := at ls y
+        px := pointAt x
+        py := pointAt y
+        lx := atN ls x
+        ly := atN ls y
         Just (qx,qy) := endpoints px py lx ly | Nothing => ns
      in addBond b.molBond c x y qx qy ns
 
 export
-drawMolecule : DrawSettings => CDGraph -> List SVGNode
-drawMolecule (G o g) = toNodes (scene $ labels g)
+drawMolecule : DrawSettings => (g : CDGraph) -> List SVGNode
+drawMolecule g = toNodes (scene $ labels g)
   where
-    scene : Labels o -> TNodes
+    scene : Labels g -> TNodes
     scene ls ns =
       foldl (drawAtom g ls) (foldl (drawBond g ls) ns (edges g)) (nodes g)
 

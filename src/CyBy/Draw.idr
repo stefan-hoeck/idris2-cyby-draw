@@ -302,9 +302,9 @@ parameters {auto de : Sink DrawEvent}
 
   detailItems : (pre : String) -> DrawState -> HTMLNodes
   detailItems pre s =
-    case selectedNodes s.imol False of
+    case selectedNodes s.mol False of
       [n] =>
-        let atm     := atom $ lab s.imol n
+        let atm     := atom $ lab n
             tpe     := atm.type.name
             [x,y,_] := atm.position
             cx      := dispCoordShort x
@@ -316,10 +316,10 @@ parameters {auto de : Sink DrawEvent}
             , detail xcoord   $ div [] [Text cx]
             , detail ycoord   $ div [] [Text cy]
             ]
-      _   => case selectedEdges s.imol of
-        [(x,y)] =>
-          let px := point $ position $ atom $ lab s.imol x
-              py := point $ position $ atom $ lab s.imol y
+      _   => case selectedEdges s.mol of
+        [EG x y] =>
+          let px := point $ position $ atom $ lab x
+              py := point $ position $ atom $ lab y
               d  := printDouble 3 $ distance px py
               a  := angleOrZero (px - py)
               a' := printDouble (S Z) $ toDegree $ if a >= Angle.pi then (a - Angle.pi) else a

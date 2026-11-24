@@ -68,20 +68,19 @@ HalfParallelDistance = 0.5 * ParallelDistance
 -- `ox` and `oy` are the original positions of the atoms,
 -- while `px` and `py` are the visible bond endings.
 parameters {auto cd     : CoreDims}
-           {k           : Nat}
-           (g           : CDIGraph k)
-           (x,y         : Fin k)
+           {g           : CDGraph}
+           (x,y         : Node g)
            (ox,oy,px,py : Point Id)
 
-  countMBs : Nat -> List (Fin k) -> Nat
+  countMBs : Nat -> Nodes g -> Nat
   countMBs n (a::t@(b::_)) =
-    case (type . molBond) <$> elab g a b of
+    case (type . molBond) <$> elab a b of
       Just Dbl    => countMBs (S n) t
       Just Triple => countMBs (S n) t
       _           => countMBs n t
   countMBs n _             = n
 
-  ringSize : (nx,ny : Fin k) -> RingSize
+  ringSize : (nx,ny : Node g) -> RingSize
   ringSize nx ny =
     case limitedBfs g [x,y] nx ny of
       Nothing => NoRing
@@ -107,15 +106,15 @@ parameters {auto cd     : CoreDims}
         (x,y) := parallelLine HalfParallelDistance False px py
      in [v,w,x,y]
 
-  notXorY : Fin k -> Bool
+  notXorY : Node g -> Bool
   notXorY n = n /= x && n /= y
 
-  leftOfY : Angle -> Fin k -> Bool
+  leftOfY : Angle -> Node g -> Bool
   leftOfY phi n =
-    let Just chi := angle (pointAt g n - px) | Nothing => False
+    let Just chi := angle (pointAt n - px) | Nothing => False
      in chi - phi <= Angle.pi
 
-  dominantNode : Fin k -> Vect 4 (Point Id)
+  dominantNode : Node g -> Vect 4 (Point Id)
   dominantNode n =
     let Just phi := angle (py - px) | Nothing => deflt
         (v,w)    := parallelLine ParallelDistance (leftOfY phi n) dx dy
@@ -124,7 +123,7 @@ parameters {auto cd     : CoreDims}
   export
   dblBond : Vect 4 (Point Id)
   dblBond =
-    case (filter (y /=) (neighbours g x), filter (x /=) (neighbours g y)) of
+    case (filter (y /=) (neighbours x), filter (x /=) (neighbours y)) of
       ([nx1,nx2],[ny1,ny2]) =>
         let r1 := max (ringSize nx1 ny1) (ringSize nx2 ny1)
             r2 := max (ringSize nx1 ny2) (ringSize nx2 ny2)

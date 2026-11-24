@@ -271,8 +271,8 @@ data Label : Type where
   Explicit     : AtomLabels (Point Id) -> Label
 
 public export
-0 Labels : Nat -> Type
-Labels k = IArray k Label
+0 Labels : (g : Graph e n) -> Type
+Labels g = IArray g.order Label
 
 circleBounds : (cd : CoreDims) => Point Id -> Bounds2D Id
 circleBounds (P x y) =
@@ -351,9 +351,9 @@ endpoints x y lx          ly          =
 ||| Relative position, where the label of an abbreviated group will be
 ||| placed.
 export
-abbrPos : CDIGraph k -> Fin k -> AbbrPos
-abbrPos g x =
-  let [a] := bondAngles g x | _ => AE
+abbrPos : {g : CDGraph} -> Node g -> AbbrPos
+abbrPos x =
+  let [a] := bondAngles x | _ => AE
    in if a <= halfPi || a >= (negate halfPi) then AW else AE
 
 ||| Determines the position of the "H"-label depending on the angles of
@@ -375,8 +375,8 @@ bestHPos xs =
 ||| of all bonds leading to an atom's neighbours and tries to find
 ||| a direction (north, west, south, or east) without any neighbouring bonds
 export
-hpos : CDIGraph k -> Fin k -> HPos
-hpos g x =
-  case Atom.hydrogen . atom $ lab g x of
+hpos : {g : CDGraph} -> Node g -> HPos
+hpos x =
+  case Atom.hydrogen . atom $ lab x of
     0 => NoH
-    _ => bestHPos (bondAngles g x)
+    _ => bestHPos (bondAngles x)
