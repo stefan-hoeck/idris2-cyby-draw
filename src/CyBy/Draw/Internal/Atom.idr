@@ -61,9 +61,6 @@ export %inline
 Cast (Adj k b CDAtom) Role where cast = cast . label
 
 export %inline
-Cast (Context k b CDAtom) Role where cast = cast . label
-
-export %inline
 ModRole CDAtom where modRole f = {role $= f}
 
 public export

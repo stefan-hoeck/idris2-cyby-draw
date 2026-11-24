@@ -64,11 +64,6 @@ public export
 0 CDGraph : Type
 CDGraph = Graph CDBond CDAtom
 
-||| Order-indexed graph type used for drawing molecules.
-public export
-0 CDIGraph : Nat -> Type
-CDIGraph k = IGraph k CDBond CDAtom
-
 export %inline
 toMolGraph : Graph CDBond CDAtom -> MolGraphAT
 toMolGraph = bimap CDBond.molBond CDAtom.atom
@@ -82,7 +77,7 @@ toMolfile g = MkMolfile "" "created by cyby-draw 1.0" "" (toMolGraph g) []
 ||| molecule to a bond-length of 1.25 Angstrom.
 export
 initGraph : MolGraphAT -> CDGraph
-initGraph (G o g) = G o $ bimap (CB None) (CA None) (normalizeMol g)
+initGraph g = bimap (CB None) (CA None) (normalizeMol g)
 
 ||| Reads and initializes a `CDGraph` from a mol-file string.
 export
@@ -99,9 +94,9 @@ readMolfile = either (const $ G 0 empty) id . readMolfileE
 
 ||| Re-calculates the atom types of a mol graph.
 export
-adjAtomTypes : {k : _} -> CDIGraph k -> CDIGraph k 
-adjAtomTypes =
-  mapWithAdj (\(A (CA r a) ns) => CA r $ calcMolAtomType (map molBond ns) a)
+adjAtomTypes : CDGraph -> CDGraph
+adjAtomTypes g =
+  mapWithAdj g (\(A (CA r a) ns) => CA r $ calcMolAtomType (map molBond ns) a)
 
 --------------------------------------------------------------------------------
 -- Bond CyCling
@@ -138,9 +133,9 @@ hlAdj arr x (A l ns) =
 ||| Highlight the nodes corresponding to the given natural numbers.
 export
 highlight : List Nat -> CDGraph -> CDGraph
-highlight ns (G o $ IG gr) =
+highlight ns (G o gr) =
   let arr := fromPairs o False (map (,True) ns)
-   in G o $ IG (mapWithIndex (hlAdj arr) gr)
+   in G o $ mapWithIndex (hlAdj arr) gr
 
 --------------------------------------------------------------------------------
 -- Visibility and Abbreviations
@@ -148,22 +143,22 @@ highlight ns (G o $ IG gr) =
 
 ||| Returns the number of the abbreviation group of an atom (if any).
 export %inline
-groupNr : CDIGraph k -> Fin k -> Maybe Nat
-groupNr g = map nr . label . atom . lab g
+groupNr : {g : CDGraph} -> Node g -> Maybe Nat
+groupNr = map nr . label . atom . lab
 
 ||| True, if the given node is part of an abbreviation.
 export
-inAbbreviation : CDIGraph k -> Fin k -> Bool
-inAbbreviation g = isJust . groupNr g
+inAbbreviation : {g : CDGraph} -> Node g -> Bool
+inAbbreviation = isJust . groupNr
 
 ||| Returns the largest group number in the given graph.
 export %inline
-maxGroupNr : {k : _} -> CDIGraph k -> Nat
+maxGroupNr : CDGraph -> Nat
 maxGroupNr = foldr (\a,n => maybe n (max n . nr) a.atom.label) 0
 
 ||| Returns the group numbers found in a molecule
 export
-groupNrs : {k : _} -> CDIGraph k -> SortedSet Nat
+groupNrs : CDGraph -> SortedSet Nat
 groupNrs =
   foldr (\a,ss => maybe ss ((`insert` ss) . nr) a.atom.label) SortedSet.empty
 
@@ -182,7 +177,7 @@ groupMap used m (x::xs) =
 ||| in the new (merged) molecule, which would then all be expanded at
 ||| the same time with a single double click.
 export
-adjTemplate : {k,m : _} -> CDIGraph k -> CDIGraph m -> CDIGraph m
+adjTemplate : CDGraph -> CDGraph -> CDGraph
 adjTemplate c t  =
   let mp := groupMap (groupNrs c) empty (Prelude.toList $ groupNrs t)
    in map (adj mp) t
@@ -197,32 +192,32 @@ adjTemplate c t  =
 ||| True, if any neighbour of the given node is part of the given
 ||| abbreviation (given as its ID).
 export
-anyNotInGroup : CDIGraph k -> Fin k -> Nat -> Bool
-anyNotInGroup g x n = any (not . inGroup n) (neighbourLabels g x)
+anyNotInGroup : {g : CDGraph} -> Node g -> Nat -> Bool
+anyNotInGroup x n = any (not . inGroup n) (neighbourLabels x)
 
 ||| Custom label to be displayed for a node (if any).
 export
-customLabel : CDIGraph k -> Fin k -> Maybe String
-customLabel  g x = do
-  G n lbl <- label . atom $ lab g x
-  guard $ lbl /= "" && anyNotInGroup g x n
+customLabel : {g : CDGraph} -> Node g -> Maybe String
+customLabel x = do
+  G n lbl <- label . atom $ lab x
+  guard $ lbl /= "" && anyNotInGroup x n
   pure lbl
 
 ||| An atom is visible, if a) it is not part of an abbreviation, or b),
 ||| at least one of its neighbours is not part of an abbreviation.
 export
-visible : CDIGraph k -> Fin k -> Bool
-visible g x =
-  case Atom.label . atom $ lab g x of
+visible : {g : CDGraph} -> Node g -> Bool
+visible x =
+  case Atom.label . atom $ lab x of
     Nothing      => True
-    Just (G n _) => anyNotInGroup g x n
+    Just (G n _) => anyNotInGroup x n
 
 ||| We show an atom's label if a) it is a non-carbon, b) it is an isolate
 ||| carbon (no explicit neighbours), or c) `s.showC` is set to `True`
 export
-labelVisible : (showC : Bool) -> CDIGraph k -> Fin k -> Bool
-labelVisible showC g x =
-  let A (CA _ a) ns  := adj g x
+labelVisible : {g : CDGraph} -> (showC : Bool) -> Node g -> Bool
+labelVisible showC x =
+  let A (CA _ a) ns  := adj x
       MkI e m := a.elem
    in    showC
       || null ns
@@ -230,61 +225,61 @@ labelVisible showC g x =
       || e /= C 
       || isJust m
       || a.charge /= 0
-      || isJust (customLabel g x)
+      || isJust (customLabel x)
 
 ||| Returns a list of those nodes of a molecule that will be visible
 ||| in the drawing, that is, nodes that are not hidden because
 ||| they are part of an abbreviation.
 export
-visibleNodes : {k : _} -> CDIGraph k -> List (Fin k)
-visibleNodes g = filter (visible g) (nodes g)
+visibleNodes : (g : CDGraph) -> Nodes g
+visibleNodes g = filter visible (nodes g)
 
 ||| Returns the visible nodes that within the given bounds.
 export
-atomsIn : {k : _} -> CDIGraph k -> Bounds2D Mol ->  List (Fin k)
+atomsIn : (g : CDGraph) -> Bounds2D Mol ->  Nodes g
 atomsIn g bs =
-  filter (\n => visible g n && inBounds (point $ lab g n) bs) (nodes g)
+  filter (\n => visible n && inBounds (point $ lab n) bs) (nodes g)
 
-nonAbbreviatedNodes : {k : _} -> CDIGraph k -> List (Fin k)
-nonAbbreviatedNodes g = filter (not . inAnyGroup . lab g) (nodes g)
+nonAbbreviatedNodes : (g : CDGraph) -> Nodes g
+nonAbbreviatedNodes g = filter (not . inAnyGroup . lab) (nodes g)
 
 ||| Returns the list of visible neighbours of an atome, that is,
 ||| neighbours that are not hidded because they are part of an
 ||| abbreviation.
 export
-visibleNeighbours : CDIGraph k -> Fin k -> List (Fin k)
-visibleNeighbours g x = filter (visible g) (neighbours g x)
+visibleNeighbours : {g : CDGraph} -> Node g -> Nodes g
+visibleNeighbours x = filter visible (neighbours x)
 
 ||| Returns a list of those nodes of a molecule that are hidden
 ||| because they are part of an abbreviation.
 export
-hiddenNodes : {k : _} -> CDIGraph k -> List (Fin k)
-hiddenNodes g = filter (not . visible g) (nodes g)
+hiddenNodes : (g : CDGraph) -> Nodes g
+hiddenNodes g = filter (not . visible) (nodes g)
 
 ||| Returns a list of those edges of a molecule that will be visible
 ||| in the drawing, that is, edges that are not hidden because
 ||| they are part of an abbreviation.
 export
-visibleEdges : {k : _} -> CDIGraph k -> List (Edge k CDBond)
-visibleEdges g = filter (\(E x y _) => visible g x && visible g y) (edges g)
+visibleEdges : (g : CDGraph) -> List (LEdg g)
+visibleEdges g = filter (\(LE x y _) => visible x && visible y) (edges g)
 
 ||| Given a list `ns` of nodes in a molecule, returns a list containing
 ||| also the other nodes belonging to the same abbreviations (if any)
 ||| as the nodes in `ns`.
 ||| transitively via abbreviations.
 export
-groupNodes : {k : _} -> CDIGraph k -> (ns : List (Fin k)) -> List (Fin k)
-groupNodes g ns =
-  let gs@(_::_) := ns >>= toList . groupNr g | Nil => Nil
-   in filter (any (`elem` gs) . groupNr g) (hiddenNodes g)
+groupNodes : {g : CDGraph} -> (ns : Nodes g) -> Nodes g
+groupNodes ns =
+  let gs@(_::_) := ns >>= toList . groupNr | Nil => Nil
+   in filter (any (`elem` gs) . groupNr) (hiddenNodes g)
 
 ||| Given a list `ns` of nodes in a molecule, returns a list containing
 ||| also the other nodes belonging to the same abbreviations (if any)
 ||| as the nodes in `ns`.
 ||| transitively via abbreviations.
 export
-plusGroupNodes : {k : _} -> CDIGraph k -> (ns : List (Fin k)) -> List (Fin k)
-plusGroupNodes g ns = ns ++ groupNodes g ns
+plusGroupNodes : {g : CDGraph} -> (ns : Nodes g) -> Nodes g
+plusGroupNodes ns = ns ++ groupNodes ns
 
 --------------------------------------------------------------------------------
 -- Geometry
@@ -292,76 +287,75 @@ plusGroupNodes g ns = ns ++ groupNodes g ns
 
 ||| Returns the position of the given node in a mol graph.
 export %inline
-pointAt : CDIGraph k -> Fin k -> Point Id
-pointAt g = pointId . lab g
+pointAt : {g : CDGraph} -> Node g -> Point Id
+pointAt = pointId . lab
 
 ||| Computes the angles of all visible bonds connecting the given node.
 export
-bondAngles : CDIGraph k -> Fin k -> List Angle
-bondAngles g x =
-  let p  := pointId (lab g x)
-      ns := lab g <$> visibleNeighbours g x
+bondAngles : {g : CDGraph} -> Node g -> List Angle
+bondAngles x =
+  let p  := pointId (lab x)
+      ns := lab <$> visibleNeighbours x
    in mapMaybe (\k => angle $ pointId k - p) ns
 
-parameters {k : Nat}
-           {auto cd : CoreDims}
+parameters {auto cd : CoreDims}
+           (g : CDGraph)
 
   ||| Returns the node closest to the given point,
   ||| but only if it is closer than the defined atom radius.
   export
-  closestNodeList : List (Fin k) -> Point Id -> CDIGraph k -> Maybe (Fin k)
-  closestNodeList ks p g = do
-    x <- minBy (distance p . pointId . lab g) ks
-    let q := pointAt g x
-    guard $ near p q cd.radiusAtom
+  closestNodeList : Nodes g -> Point Id -> Maybe (Node g)
+  closestNodeList ks p = do
+    x <- minBy (distance p . pointId . lab) ks
+    guard $ near p (pointAt x) cd.radiusAtom
     pure x
 
   ||| Finds the visible node closest to the given point, but only
   ||| if it is closer than the defined atom radius and it fulfills
   ||| the given predicate.
   export
-  closestNodeWhere : (Fin k -> Bool) -> Point Id -> CDIGraph k -> Maybe (Fin k)
-  closestNodeWhere pred p g = closestNodeList (filter pred $ nodes g) p g
+  closestNodeWhere : (Node g -> Bool) -> Point Id -> Maybe (Node g)
+  closestNodeWhere pred p = closestNodeList (filter pred $ nodes g) p
 
   ||| Finds the visible node closest to the given point, but only
   ||| if it is closer than the defined atom radius.
   export %inline
-  closestNode : Point Id -> CDIGraph k -> Maybe (Fin k)
-  closestNode p g = closestNodeWhere (visible g) p g
+  closestNode : Point Id -> Maybe (Node g)
+  closestNode p = closestNodeWhere visible p
 
   ||| Finds the visible edge closest to the given point, but only
   ||| if it is closer than the defined atom radius.
   export
-  closestEdge : Point Id -> CDIGraph k -> Maybe (Edge k CDBond)
-  closestEdge p g = do 
+  closestEdge : Point Id -> Maybe (LEdg g)
+  closestEdge p = do 
     ed <- minBy distEdge $ visibleEdges g
     guard $ distEdge ed <= cd.radiusAtom
     pure ed
 
     where
-      distEdge : Edge k n -> Double
-      distEdge (E x y _) = distanceToLineSegment p (pointAt g x) (pointAt g y)
+      distEdge : LEdg g -> Double
+      distEdge (LE x y _) = distanceToLineSegment p (pointAt x) (pointAt y)
 
   ||| Returns the item (node or edge) closest to the current mouse position.
   export
-  closestItem : Point Id -> CDIGraph k -> NOE (Fin k) (Edge k CDBond)
-  closestItem p g = noe (closestNode p g) (closestEdge p g)
+  closestItem : Point Id -> NOE (Node g) (LEdg g)
+  closestItem p = noe (closestNode p) (closestEdge p)
 
   ||| Generously approximates the bounds of an atom in the drawing.
   export
-  approxBounds : CDIGraph k -> Fin k -> Bounds2D Id
-  approxBounds g x =
-    case visible g x of
+  approxBounds : Node g -> Bounds2D Id
+  approxBounds x =
+    case visible x of
       False => neutral
-      True  => case group $ lab g x of
+      True  => case group $ lab x of
         Nothing      =>
           let r := 2 * cd.radiusAtom
-              P x y := pointAt g x
+              P x y := pointAt x
            in BS (range (x-r) (x+r)) (range (y-r) (y+r))
         Just (G _ l) =>
           let w := cast {to = Double} (length l * cd.fontSize)
               h := cast {to = Double} cd.fontSize
-              P x y := pointAt g x
+              P x y := pointAt x
            in BS (range (x-w) (x+w)) (range (y-h) (y+h))
 
 --------------------------------------------------------------------------------
@@ -379,11 +373,15 @@ cleanup : CDGraph -> CDGraph
 cleanup = bimap (keep Persistent) (keep Persistent)
 
 %inline
-unHover : {k : _} -> CDIGraph k -> CDIGraph k
+unHover : CDGraph -> CDGraph
 unHover = bimap (unset Hover) (unset Hover)
 
-hoverE : Fin k -> Fin k -> Fin k -> Adj k CDBond CDAtom -> Adj k CDBond CDAtom
-hoverE x y z (A a ns) =
+hoverE :
+     (x,y : Node g)
+  -> Fin g.order
+  -> Adj g.order CDBond CDAtom
+  -> Adj g.order CDBond CDAtom
+hoverE (N x) (N y) z (A a ns) =
   if x == z || y == z
      then A a $ mapKV (\w => setIf Hover (w == x || w == y)) ns
      else A a ns
@@ -406,23 +404,22 @@ hoverE x y z (A a ns) =
 ||| to at least one atom in an abbreviation group)
 export
 hover :
-     {k : _}
-  -> {auto cd : CoreDims}
+     {auto cd : CoreDims}
   -> (hbond : CDBond -> Bool-> Bool)
   -> (hatom : CDAtom -> Bool)
   -> Point Id
-  -> CDIGraph k
-  -> CDIGraph k
+  -> CDGraph
+  -> CDGraph
 hover hbond hatom p g0 =
   let g := unHover g0
-   in case closestItem p g of
+   in case closestItem g p of
         N n         =>
-          if hatom (lab g n)
-             then mapWithCtxt (\x,(A a _) => setIf Hover (x == n) a) g
+          if hatom (lab n)
+             then mapWithCtxt g (\x,(A a _) => setIf Hover (x == n.node) a)
              else g
-        E (E x y b) =>
-          if hbond b (inAnyGroup (lab g x) || inAnyGroup (lab g y))
-             then mapCtxt (hoverE x y) g
+        E (LE x y b) =>
+          if hbond b (inAnyGroup (lab x) || inAnyGroup (lab y))
+             then mapCtxt g (hoverE x y)
              else g
         None        => g
 
@@ -451,7 +448,7 @@ hoverIfNew = map (New `replaceWith` Hover)
 
 ||| Returns the currently hovered edges or atoms atoms
 export %inline
-hoveredItem : {k : _} -> CDIGraph k -> NOE (Fin k, CDAtom) (Edge k CDBond)
+hoveredItem : (g : CDGraph) -> NOE (Node g, CDAtom) (LEdg g)
 hoveredItem g =
   eon (find (is Hover . snd) (labNodes g)) (find (is Hover . label) (edges g))
 
@@ -467,686 +464,686 @@ selectHovered em nm = bimap (selectIfHovered em) (selectIfHovered nm)
 --------------------------------------------------------------------------------
 --          Selecting Nodes
 --------------------------------------------------------------------------------
-
-public export
-record SelectZones where
-  constructor SZ
-  dragUL : Point Id -- upper left corner for dragging
-  dragLR : Point Id -- lower right corner for dragging
-  rotUL  : Point Id -- upper left corner for rotating
-  rotLR  : Point Id -- lower right corner for rotating
-
-||| Selects all nodes that are a) currently being hovered over, or visible
-||| and in the given rectangle.
-export
-select : (start,end : Point Id) -> CDGraph -> CDGraph
-select s e (G o g) = G o $ mapWithCtxt sel g
-  where
-    sel : Fin o -> Adj o CDBond CDAtom -> CDAtom
-    sel n (A a _) =
-      let p := pointId a
-       in setIf Selected (is Hover a || (visible g n && inRectangle p s e)) a
-
-||| Returns `True` if the given node is currently selected.
-|||
-||| In case the `includeEdges` flag is set to `True`, this will also
-||| return `True` if one of the edges connecting the node is currently
-||| selected.
-export
-isSelected : CDIGraph k -> (includeEdges : Bool) -> Fin k -> Bool
-isSelected g include n =
-  let A a bs := adj g n
-   in is Selected a || (include && any (is Selected) bs)
-
-||| The list of currently selected nodes.
-export
-selectedNodes : {k : _} -> CDIGraph k -> (includeEdges : Bool) -> List (Fin k)
-selectedNodes g include = filter (isSelected g include) (nodes g)
-
-||| The list of currently selected edges.
-export
-selectedEdges : {k : _} -> CDIGraph k -> List (Fin k, Fin k)
-selectedEdges =
-  mapMaybe (\(E x y b) => if is Selected b then Just (x,y) else Nothing) . edges
-
-export
-selectedItems : {k : _} -> CDIGraph k -> NOE (List $ Fin k) (List (Fin k, Fin k))
-selectedItems g = eons (selectedNodes g False) (selectedEdges g)
-
-nodeBounds : CDIGraph k -> Fin k -> Bounds2D Mol
-nodeBounds g = bounds . lab g
-
-edgeBounds : CDIGraph k -> (Fin k,Fin k) -> Bounds2D Mol
-edgeBounds g (x,y) = bounds (lab g x) <+> bounds (lab g y)
-
-||| Computes the top left and bottom right corner of the bounding box
-||| containing the currently selected atoms (if any)
-export
-selectionCorners : CDGraph -> Maybe (Point Mol, Point Mol)
-selectionCorners (G o g) =
-  case selectedItems g of
-    N ns@(_ :: _ :: _) => corners $ foldMap (nodeBounds g) ns
-    E ps               => corners $ foldMap (edgeBounds g) ps
-    _                  => Nothing
-
-||| Checks, if there is enough space to grab the box in the canvas.
-export
-selectZones : (s : CoreDims) => (p1,p2 : Point Id) -> SelectZones
-selectZones p1 p2 =
-  let b  := s.selectBufferSize
-      bs := bounds p1 <+> bounds p2
-
-      -- translation vector for the two corners of the inner buffer
-      -- this is zero if the bounding box formed by `p1` and `p2` is
-      -- already large enough, otherwise both dimensions are expanded as
-      -- needed
-      vd := scale 0.5 $ V (max 0 (b - width bs)) (max 0 (b - height bs))
-      vr := vid b b
-      d1 := translate (negate vd) p1
-      d2 := translate vd p2
-   in SZ d1 d2 (translate (negate vr) d1) (translate vr d2)
-
---------------------------------------------------------------------------------
---          Editing Molecules
---------------------------------------------------------------------------------
-
-||| Creates an uncharged atom at the given position and with the given role.
-export
-isotopeAt : Isotope -> Point Id -> Role -> CDAtom
-isotopeAt i p r =
-  let pos := toCoords (convert p) [0,0,0]
-   in CA r (MkAtom i 0 pos NoRadical 0 unknown () Nothing)
-
-||| Creates an uncharged atom at the given position and with the given role.
-export %inline
-elemAt : Elem -> Point Id -> Role -> CDAtom
-elemAt = isotopeAt . cast
-
-||| Inserts an uncharged atom at the given position and with the given
-||| role.
-export %inline
-insIsotopeAt :
-     {k : _}
-  -> CDIGraph k
-  -> Isotope
-  -> Point Id
-  -> Role
-  -> CDIGraph (S k)
-insIsotopeAt g i p r = insNode g (isotopeAt i p r)
-
-||| Inserts an uncharged atom at the given position and with the given
-||| role.
-export %inline
-insElemAt : {k : _} -> CDIGraph k -> Elem -> Point Id -> Role -> CDIGraph (S k)
-insElemAt g = insIsotopeAt g . cast
-
-||| Computes the preferred angle for a new bond based on the bond type
-||| and angles to already existing bonds.
-export
-preferredAngle : (isLinear : Bool) -> List Angle -> Angle
-preferredAngle _     []  = (negate 1.0 / 6.0) * pi
-preferredAngle True  [x] = x + pi
-preferredAngle False [x] =
-  if (x >= zero && x <= halfPi) || (x >= pi && x <= threeHalfPi)
-     then x + twoThirdPi
-     else x - twoThirdPi
-preferredAngle _     xs  = largestBisector xs
-
--- Checks if the geometry at an atom is linear.
-isLinear : List BondOrder -> Bool
-isLinear [Triple,_] = True
-isLinear [_,Triple] = True
-isLinear [Dbl,Dbl]  = True
-isLinear _          = False
-
-||| Preferred position for a new atom bound to an existing one based on the
-||| largest bisector of angles between existing bonds
-export
-bestPos : CDIGraph k -> MolBond -> Fin k -> Point Id -> Point Id
-bestPos g b n p =
-  let orders   := b.type :: map (type . molBond) (edgeLabels g n)
-      newAngle := preferredAngle (isLinear orders) (bondAngles g n)
-   in translate (polar BondLengthInPixels newAngle) p
-
-||| Equally spaced sequence of `s.angleSteps` angles from 0 until 2pi.
-export
-stepAngles : (s : CoreDims) => List Angle
-stepAngles =
-  let step = angle (TwoPi / cast s.angleSteps)
-   in map (\x => cast x * step) [0.. pred s.angleSteps]
-
-||| Suggested position for a new atom based on the current mouse position.
-||| The boolean flag indicates if "Shift" is currently down, in which case
-||| we just return the current point.
-export
-suggestedPos : CoreDims => Bool -> (atom, current : Point Id) -> Point Id
-suggestedPos True pa pc = pc
-suggestedPos False pa pc =
-  let Just mouseAngle := angle (pc - pa) | Nothing => pc
-      Just bondAngle  := closestAngle mouseAngle stepAngles | Nothing => pc
-   in translate (polar BondLengthInPixels bondAngle) pa
-
-||| Draws a new bond from the given node to the suggested position.
-||| If another atom is already close to the current mouse position
-||| or the suggested position, connect the two atoms instead.
-export
-bondTo :
-     {k : _}
-  -> {auto s : CoreDims}
-  -> CDBond
-  -> Fin k
-  -> (current, suggested : Point Id)
-  -> CDIGraph k
-  -> Either (CDIGraph k) (CDIGraph $ S k)
-bondTo b n pc ps g =
-  maybe
-    (Right $ insEdge (edge n b) (insElemAt g C ps New))
-    (\e => Left $ insEdge e g)
-    (closeEdge pc <|> closeEdge ps)
-  where
-    closeEdge : Point Id -> Maybe (Edge k CDBond)
-    closeEdge p = closestNode p g >>= \k => mkEdge n k b
-
-||| From two graphs, returns pairs of visible nodes closest
-||| to each other (but no farther apart than `s.radiusAtom`).
-export
-nodesToMerge :
-     {k,m : _}
-  -> {auto s : CoreDims}
-  -> CDIGraph k
-  -> CDIGraph m
-  -> List (Fin k, Fin m)
-nodesToMerge g t =
- let area := overlap {margin = s.radiusAtom }(bounds g) (Geom.Bounds.bounds t)
-     ng   := g `atomsIn` area
-     nt   := t `atomsIn` area
-  in mapMaybe (\x => (x,) <$> closestNodeList nt (pointAt g x) t) ng
-
--- Offset between origin atom and template atoms as a vector in `Mol` space.
-offset : CDIGraph k -> CDIGraph m -> List (Fin k, Fin m) -> Vector (transform Mol)
-offset _  _  []             = vzero
-offset g1 g2 ((n1,n2) :: _) = point (lab g1 n1) - point (lab g2 n2)
-
--- create new bonds between the merging template atoms and the corresponding
--- neighbours of the original molecule
-newEdges :
-     {k,m : _}
-  -> CDIGraph m
-  -> List (Fin k, Fin m)
-  -> List (Fin k, Fin m, CDBond)
-newEdges t ps = do
-  (a1,a2) <- ps
-  (\(x,l) => (a1,x,l)) <$> neighboursAsPairs t a2
-
-inBond : {m : _} -> (n1,n2 : Fin m) -> Edge m CDBond -> Bool
-inBond n1 n2 bnd =
-  (n1 == bnd.node1 && n2 == bnd.node2) || (n2 == bnd.node1 && n1 == bnd.node2)
-
--- if there is a template bond which would be deleted due to the node merging,
--- create the bond between the corresponding origin molecule nodes
-createStableBond :
-     {k,m : _}
-  -> List (Fin k, Fin m)
-  -> List (Edge k CDBond)
-  -> Edge m CDBond
-  -> Maybe $ Edge k CDBond
-createStableBond nsToMerge bondsG bnd =
-  case filter (\(_,nt) => nt == bnd.node1 || nt == bnd.node2) nsToMerge of
-    [(nm1,_),(nm2,_)] =>
-      if any (inBond nm1 nm2) bondsG
-         then Nothing
-         else mkEdge nm1 nm2 $ CB None ({type := Single} bnd.label.molBond)
-    _                  => Nothing
-
-incNode : {m : _} -> (k : Nat) -> Fin m -> Maybe (Fin $ k + m)
-incNode k x = tryNatToFin (k + finToNat x)
-
-||| After moving or rotating the selected nodes in a graph,
-||| check for pairs of close nodes and merge them.
-export
-mergeCloseNodes : CoreDims => {k:_} -> CDIGraph k -> CDGraph
-mergeCloseNodes g =
-  let ns        := filter (not . inAbbreviation g) (selectedNodes g True)
-      lMergeN   := mapMaybe closestPair ns
-      offset    := negate $ offset g g lMergeN
-      lnewBonds := mapMaybe (\(x,y,l) => mkEdge x y l) (newEdges g lMergeN)
-      mol'      := insEdges lnewBonds $ mapIf doAdjust (translate offset) g
-   in delNodes (map snd lMergeN) mol'
-
-  where
-    canSelfMerge : Fin k -> Bool
-    canSelfMerge x =
-      let a := lab g x in not (isSelected g True x || inAnyGroup a)
-
-    doAdjust : CDAtom -> Bool
-    doAdjust a = is Selected a
-
-    closestPair : Fin k -> Maybe (Fin k, Fin k)
-    closestPair x = (x,) <$> closestNodeWhere canSelfMerge (pointAt g x) g
-
-||| Merges two graphs and merges atoms, which are overlapping.
-||| If bonds should be added between the two graphs, the last argument
-||| allows a list of the according nodes and its bond type.
-export
-mergeGraphs' :
-     {auto _ : CoreDims}
-  -> {k,m:_}
-  -> CDIGraph k
-  -> CDIGraph m
-  -> List (Fin k, Fin m, CDBond)
-  -> CDGraph
-mergeGraphs' g t bs =
-  let t'        := adjTemplate g t
-      lMergeN   := nodesToMerge g t'
-      offset    := offset g t' lMergeN
-      lnewBonds := newEdges t' lMergeN ++ bs
-      mergeEsG  := lMergeN >>= edgesTo g . fst
-      mergeEsT  := lMergeN >>= edgesTo t' . snd
-      -- replaces bonds between merging (and therefore to be deleted) template
-      -- atoms and origin atoms
-      -- this is only done if there isn't already a bond from the origin
-      -- molecule present at the same position
-      mol'      :=
-        insEdges (mapMaybe (createStableBond lMergeN mergeEsG) mergeEsT) g
-      mol''     := mergeGraphsWithEdges mol' (translate offset t') lnewBonds
-   in delNodes (mapMaybe (incNode k . snd) lMergeN) mol''
-
--- This connects a template to a graph by connecting the template's
--- zero node via a single bond with the given node of the current molecule.
--- The template is rotated and translated in such a way that we get
--- preferrable bond angles both at the current graph and the template.
-mergeGraphsOnAtom : CoreDims => {k,m : _} -> Fin k -> CDIGraph k -> CDIGraph m -> CDGraph
-mergeGraphsOnAtom {m = 0}   _ g _ = G _ g
-mergeGraphsOnAtom {m = S _} n g t =
-  let as     := bondAngles g n
-      an     := preferredAngle False as
-      a0     := preferredAngle False (bondAngles t 0)
-      tr     := rotate (an - a0 + pi) t
-      offset := point (lab g n) - point (lab tr 0)
-      v      := polar BondLengthInAngstrom an + offset
-      bond   := CB New $ cast Single
-   in mergeGraphs' g (translate v tr) [(n,0,bond)]
-
--- This connects a template to a graph by replacing the template's
--- smallest edge given edge of the current molecule.
--- The template is rotated and translated in such a way that the two
--- edges are properly aligned.
---
--- There are two ways to align the bonds of template and
--- molecule, so we try both and keep the one with its
--- center closer to the mouse position. This allows us to
--- flip between the two placements by moving the mouse
--- from one side of a bond to the other.
-mergeGraphsOnBond :
-     {k,m : _}
-  -> {auto cd : CoreDims}
-  -> Point Mol
-  -> Edge k CDBond
-  -> CDIGraph k
-  -> CDIGraph m
-  -> CDGraph
-mergeGraphsOnBond p (E n1 n2 _) g t =
-  case edges t of
-    []      => G k g
-    E n3 n4 _ :: _ =>
-      let Just ag := angle (pointAt g n1 - pointAt g n2) | Nothing => G k g
-          Just at := angle (pointAt t n3 - pointAt t n4) | Nothing => G k g
-          tr1     := rotate (ag - at) t
-          tt1     := translate (point (lab g n1) - point (lab tr1 n3)) tr1
-          tr2     := rotate (ag - at + pi) t
-          tt2     := translate (point (lab g n1) - point (lab tr2 n4)) tr2
-       in if distance p (center tt1) <= distance p (center tt2)
-             then mergeGraphs' g tt1 []
-             else mergeGraphs' g tt2 []
-
-||| Add the template to the existing graph depending on clicking on an atom,
-||| a bond or elsewhere on the canvas.
-export
-mergeGraphs : CoreDims => Point Id -> (g, t : CDGraph) -> CDGraph
-mergeGraphs c (G o1 g) (G o2 t) =
-  case hoveredItem g of
-    N k  => mergeGraphsOnAtom (fst k) g t
-    E e  => mergeGraphsOnBond (convert c) e g t
-    None => mergeGraphs' g t []
-
--- Rotating of the template around the clicked atom. The template will
--- be connected to this atom by a new bond.
--- First the template is placed in such a way that preferrable bond angles are
--- created. Then, if the mouse cursor is moving away (min 1/4 of a std-bond
--- length) from the clicked atom, the template and its connecting bond rotat
--- around the clicked atom of the original molecule.
-rotTemplOnAtom :
-     {auto _ : CoreDims}
-  -> {s,k,m : _}
-  -> (cursor : Point s)
-  -> (clickedAtom : Fin k)
-  -> (mol : CDIGraph k)
-  -> (templ : CDIGraph m)
-  -> CDIGraph m
-rotTemplOnAtom {m = 0}   _ _ _ t = t
-rotTemplOnAtom {m = S _} p n g t =
-  let pMol    := point $ lab g n
-      a0      := preferredAngle False (bondAngles t 0)
-      an      := preferredAngle False (bondAngles g n)
-      angle   := an - a0 + pi
-      tr      := rotate angle t
-      offset  := pMol - point (lab tr 0)
-      v       := polar BondLengthInAngstrom an + offset
-      tr'     := translate v tr
-      Just aT := Vector.angle (pMol - center tr') | Nothing => tr'
-      Just aM := Vector.angle (pMol - convert p)  | Nothing => tr'
-      aSteps  := fromMaybe (aM - aT) (closestAngle (aM - aT) stepAngles)
-   in if distance (convert p) (point (lab g n)) <
-         value (BondLengthInAngstrom / 4)
-         then tr'
-         else rotateAt pMol aSteps tr'
-
--- If one atom of the template and another atom of the origin molecule overlap,
--- rotate the template around the overlapping point in accordance of the cursor
--- movement.
--- Here, rotating the template is only allowed in defined step angles.
--- To avoid unwanted rotation, the cursor has to be moved a minimum of
--- 1/4 of a standard bond length from its initial position (left mouse
--- button click).
-rotTemplAroundOverlap :
-     {auto _ : CoreDims}
-  -> {s,k,m : _}
-  -> (initCursor,cursor : Point s)
-  -> (aMol : Fin k)
-  -> (aTempl : Fin m)
-  -> (mol : CDIGraph k)
-  -> (templ : CDIGraph m)
-  -> CDGraph
-rotTemplAroundOverlap ip p nm nt g t =
-  let pMol    := point $ lab g nm
-      pTemA   := point $ lab t nt
-      offset  := pMol - pTemA
-      t'      := translate offset t
-      Just a0 := angle (pMol - center t') | Nothing => G _ t'
-      Just aM := angle (pMol - convert p) | Nothing => G _ t'
-      angle   := aM - a0
-      aSteps  := fromMaybe angle (closestAngle angle stepAngles)
-   in if distance ip p > value (BondLengthInAngstrom / 4)
-         then G _ $ rotateAt pMol aSteps t'
-         else G _ t'
-
-||| Attaches an atom to a mol graph.
-|||
-||| Depending on the current mouse position and whether "Shift" is
-||| pressed or not, the drawing tool suggest a different bond length
-||| and angle for the new bond.
-export
-addBondE :
-     {k : _}
-  -> {t : _}
-  -> {auto cd   : CoreDims}
-  -> (shiftDown : Bool)
-  -> (mousePos  : Maybe $ Point t)
-  -> (newBond   : MolBond)
-  -> CDIGraph k
-  -> Either (CDIGraph k) (CDIGraph $ S k)
-addBondE @{cd} shiftDown p mb g =
-  let b          := CB New mb -- new `CDBond`
-      Just (n,a) := find (is Origin . snd) (labNodes g) | Nothing => Left g
-      pa         := pointId a -- position of atom we attach new bond to
-      pc         := maybe pa pointId p -- current mouse position
-      
-   in if near pa pc cd.radiusAtom
-         -- if mouse is close to origin atom
-         -- use largest bisector as new bond angle and draw a bond
-         -- of preferred length
-         then bondTo b n pc (bestPos g mb n pa) g
-  
-         -- else use an angle close to the one of the vector connecting
-         -- the origin atom and the mouse pointer, unless "Shift" is down,
-         -- in which case we use the mouse position without modification
-         else bondTo b n pc (suggestedPos shiftDown pa pc) g
-
-||| Attaches an atom to a mol graph.
-|||
-||| Depending on the current mouse position and whether "Shift" is
-||| pressed or not, the drawing tool suggest a different bond length
-||| and angle for the new bond.
-export
-addBond :
-     {k : _}
-  -> {t : _}
-  -> {auto cd   : CoreDims}
-  -> (shiftDown : Bool)
-  -> (mousePos  : Maybe $ Point t)
-  -> (newBond   : MolBond)
-  -> CDIGraph k
-  -> CDGraph
-addBond sd p mb g = either (G k) (G $ S k) (addBondE sd p mb g)
-
-||| Adds an uncharged atom of the given isotope at the given position.
-|||
-||| This either replaces the currently hovered atom, or it inserts a new
-||| isolate atom.
-export
-addAtom :
-     {auto cd : CoreDims}
-  -> {t : _}
-  -> {k : _}
-  -> CDIGraph k
-  -> Isotope
-  -> Point t
-  -> CDGraph
-addAtom g i p =
-  case hoveredItem g of
-    N (x,_) => 
-      let g2 := setNode x (isotopeAt i (pointAt g x) New) g
-       in delNodes (groupNodes g [x]) g2
-    _       => case closestNode (convert p) g of
-      Nothing => G _ $ insIsotopeAt g i (convert p) New
-
-      -- in the `Just` case, we have a node close to the mouse pointer
-      -- that is not set to "hovered". This means, replacing that node is
-      -- a non-op. We don't want to insert another atom on top of it, so
-      -- we return the graph unmodified.
-      Just _  => G _ g
-
-export
-setAbbreviationAt :
-     {auto cd : CoreDims}
-  -> {k,m        : Nat}
-  -> (lbl        : String)
-  -> (node,neigh : Fin k)
-  -> (abbr       : CDIGraph (S m))
-  -> (mol        : CDIGraph k)
-  -> CDGraph
-setAbbreviationAt lbl n1 n2 a g =
-  let nr      := S (maxGroupNr g)
-      pn      := point (lab g n1) -- position of label
-      pc      := point (lab g n2) -- node to which label is connected
-      Just an := angle (pn - pc) | Nothing => G k g
-      a0      := preferredAngle False (bondAngles a 0)
-      ar      := rotate (an-a0+pi) (setGroup (G nr lbl) <$> a)
-      at      := translate (pn - point (lab ar 0)) ar
-      bond    := CB New $ maybe (cast Single) molBond (elab g n1 n2)
-      gm      := mergeGraphsWithEdges g at [(n2,0,bond)]
-   in delNodes (plusGroupNodes gm [weakenN _ n1]) gm
-
-||| Replaces the atom or abbreviation at the given position with
-||| an abbreviation.
-export
-setAbbreviation :
-     {auto cd : CoreDims}
-  -> (shiftDown : Bool)
-  -> (lbl       : String)
-  -> (mouse     : Point Id)
-  -> (abbr      : CDGraph)
-  -> (mol       : CDGraph)
-  -> CDGraph
-setAbbreviation _  lbl mouse (G 0 _) g = g
-setAbbreviation sd lbl mouse (G (S m) a) (G k g) =
-  case find (is Origin . snd) (labNodes g) of
-    Nothing     => G k g
-    Just (n1,_) => case visibleNeighbours g n1 of
-      [n2] => setAbbreviationAt lbl n1 n2 a g
-      _    => case addBondE sd (Just mouse) (cast Single) g of
-        Left _   => G k g
-        Right g2 => setAbbreviationAt lbl last (weaken n1) a g2
-
-||| Expands the currently hovered-over abbreviation (if any)
-export
-expand : CDGraph -> CDGraph
-expand (G o g) =
-  let N (n1,CA _ a) := hoveredItem g | _ => G o g
-      Just (G n _)  := label a       | _ => G o g
-   in G o $ map (clearGroup n) g
-
-%inline new : CDBond -> CDBond
-new = {role := New}
-
-%inline translateTemplateAtom : Vector (transform Mol) -> CDAtom -> CDAtom
-translateTemplateAtom v (CA _ a) = CA None $ translate v a
-
-export
-||| Translating the template to the mouse position and setting the roles to new.
-translateTemplate :
-     {auto _ : CoreDims}
-  -> {s : _}
-  -> Point s
-  -> (t : CDGraph)
-  -> CDGraph
-translateTemplate p t =
-  let v := convert p - center t in bimap new (translateTemplateAtom v) t
-
-||| Merges a template graph with the current mol graph based on the
-||| current mouse position.
-export
-addTemplate : CoreDims => {s : _} -> Point s -> (t, mol : CDGraph) -> CDGraph
-addTemplate p t mol =
-  let v := convert p - center t
-   in mergeGraphs (convert p) mol (bimap new (translateTemplateAtom v) t)
-
-||| Merges a template graph with the current mol graph based on the
-||| current mouse position. If an atom is clicked on, the template
-||| can be rotated around it by the mouse cursor.
-||| If exactly two atoms (molecule and template) overlap, the template
-||| can be rotated around the overlapping atoms by holding down the
-||| the mouse button and moving the cursor.
-export
-addTemplateRot :
-     {auto _ : CoreDims}
-  -> {s,k,n : _}
-  -> (cursor : Point s)
-  -> Either (Fin n) (Fin n, Fin k, Point s)
-  -> (templ : CDIGraph k)
-  -> (mol : CDIGraph n)
-  -> CDGraph
-addTemplateRot {n = S j,k = S i} p (Left f) t m =
-  let rotTemp := rotTemplOnAtom p f m t
-      bnd     := CB New $ cast Single
-   in mergeGraphs' m rotTemp [(f,0,bnd)]
-addTemplateRot {n = S j,k = S i} p (Right (fm,ft,ip)) t m =
-  let (G _ rotTemp) := rotTemplAroundOverlap ip p fm ft m t
-   in mergeGraphs' m rotTemp []
-addTemplateRot _ _ _ m = G _ m
-
-||| Remove the abbreviation labels from orphaned abbreviation atoms.
-||| The list of nodes have had an edge remove and now belong to potentially
-||| orphaned abbreviation groups.
-export
-clearOrphanGroups : {k : _} -> List (Fin k) -> CDIGraph k -> CDIGraph k 
-clearOrphanGroups ns g =
-  let gs@(_::_) := ns >>= toList . groupNr g | Nil => g
-   in map (\x => foldl (flip clearGroup) x gs) g
-
-||| Deletes all selected nodes or edge from the graph
-||| (including nodes selected transitively via abbreviations).
-|||
-||| When we delete an edge, we are at risk of creating an orphaned
-||| abbreviation: An invisible set of abbreviated nodes no longer
-||| connected to the visible part of the molecule. In such a case,
-||| we could either delete the whole abbreviation, or make the
-||| orphaned nodes visible. Here, we opt for the latter. If users
-||| want to delete the whole abbreviation, they can do so by
-||| deleting the atom in question.
-|||
-||| If no nodes or edges are currently selected, this deletes the
-||| node or edge that is currently being hovered over.
-export
-deleteSelected : CDGraph -> CDGraph
-deleteSelected (G o g) =
-  case selectedItems g of
-    None => case hoveredItem g of
-      None => G o g
-      N x  => delNS [fst x]
-      E x  => delES [(node1 x, node2 x)]
-    N ns => delNS ns
-    E es => delES es
-
-  where
-    delNS : List (Fin o) -> CDGraph
-    delNS ns = delNodes (plusGroupNodes g ns) g
-
-    delES : List (Fin o,Fin o) -> CDGraph
-    delES es =
-      let ns := es >>= \(x,y) => [x,y]
-       in G o $ clearOrphanGroups ns (delEdges es g)
-
-mapNodeIf : {k : _} -> (Fin k -> Bool) -> (n -> n) -> IGraph k e n -> IGraph k e n
-mapNodeIf p f = mapWithCtxt (\n,a => if p n then f a.label else a.label) 
-
-groupSelected : CDIGraph k -> List Nat -> Fin k -> Bool
-groupSelected g ns n =
-  let (CA _ a) := lab g n
-   in isSelected g True n || any ((`elem` ns) . nr) a.label
-
-||| Translates the selected atoms in a molecule by a vector given
-||| as a start and end point.
-export
-moveSelected :
-     {auto _ : CoreDims}
-  -> (start, end : Point Mol)
-  -> CDGraph
-  -> CDGraph
-moveSelected start end (G o g) =
-  let gs := selectedNodes g True >>= toList . groupNr g
-   in mergeCloseNodes $ mapNodeIf (groupSelected g gs) (translate $ end - start) g
-
-export
-rotateTempl :
-     {auto cd : CoreDims}
-  -> Bool
-  -> (start, end : Point Mol)
-  -> CDGraph
-  -> CDGraph
-rotateTempl cont start end g =
-  let Just d := angle (end   - start) | Nothing => g
-      phi    := fromMaybe d (closestAngle d $ if cont then [] else stepAngles)
-   in rotateAt start phi g
-
-||| Rotates the selected atoms around the center of the selection
-||| by an angle defined by the two points.
-|||
-||| If the `Bool` argument is set to `False`, we use step-wise rotation
-||| as defined in the `CoreDims` argument, otherwise, we use 
-||| continuous rotation.
-export
-rotateSelected :
-     {auto cd : CoreDims}
-  -> Bool
-  -> (start, end : Point Mol)
-  -> CDGraph
-  -> CDGraph
-rotateSelected cont start end (G o g) =
-  let ns := selectedNodes g True
-      c  := center $ foldMap (bounds . lab g) ns
-      Just ae := angle (end   - c) | Nothing => G o g
-      Just as := angle (start - c) | Nothing => G o g
-      d       := ae - as
-      phi     := fromMaybe d (closestAngle d $ if cont then [] else stepAngles)
-      gs := ns >>= toList . groupNr g
-   in mergeCloseNodes $ mapNodeIf (groupSelected g gs) (rotateAt c phi) g
-
-||| Extracts the selected subgraph (or the whole graph, if no atoms are
-||| selected) from a drawing graph.
-export
-selectedSubgraph : (includeEmptySelection : Bool) -> CDGraph -> CDGraph
-selectedSubgraph b (G o g) =
-  case plusGroupNodes g (selectedNodes g False) of
-    [] => if b then G o g else G 0 empty
-    ns => snd <$> subgraphL g ns
+-- 
+-- public export
+-- record SelectZones where
+--   constructor SZ
+--   dragUL : Point Id -- upper left corner for dragging
+--   dragLR : Point Id -- lower right corner for dragging
+--   rotUL  : Point Id -- upper left corner for rotating
+--   rotLR  : Point Id -- lower right corner for rotating
+-- 
+-- ||| Selects all nodes that are a) currently being hovered over, or visible
+-- ||| and in the given rectangle.
+-- export
+-- select : (start,end : Point Id) -> CDGraph -> CDGraph
+-- select s e (G o g) = G o $ mapWithCtxt sel g
+--   where
+--     sel : Fin o -> Adj o CDBond CDAtom -> CDAtom
+--     sel n (A a _) =
+--       let p := pointId a
+--        in setIf Selected (is Hover a || (visible g n && inRectangle p s e)) a
+-- 
+-- ||| Returns `True` if the given node is currently selected.
+-- |||
+-- ||| In case the `includeEdges` flag is set to `True`, this will also
+-- ||| return `True` if one of the edges connecting the node is currently
+-- ||| selected.
+-- export
+-- isSelected : CDIGraph k -> (includeEdges : Bool) -> Fin k -> Bool
+-- isSelected g include n =
+--   let A a bs := adj g n
+--    in is Selected a || (include && any (is Selected) bs)
+-- 
+-- ||| The list of currently selected nodes.
+-- export
+-- selectedNodes : {k : _} -> CDIGraph k -> (includeEdges : Bool) -> List (Fin k)
+-- selectedNodes g include = filter (isSelected g include) (nodes g)
+-- 
+-- ||| The list of currently selected edges.
+-- export
+-- selectedEdges : {k : _} -> CDIGraph k -> List (Fin k, Fin k)
+-- selectedEdges =
+--   mapMaybe (\(E x y b) => if is Selected b then Just (x,y) else Nothing) . edges
+-- 
+-- export
+-- selectedItems : {k : _} -> CDIGraph k -> NOE (List $ Fin k) (List (Fin k, Fin k))
+-- selectedItems g = eons (selectedNodes g False) (selectedEdges g)
+-- 
+-- nodeBounds : CDIGraph k -> Fin k -> Bounds2D Mol
+-- nodeBounds g = bounds . lab g
+-- 
+-- edgeBounds : CDIGraph k -> (Fin k,Fin k) -> Bounds2D Mol
+-- edgeBounds g (x,y) = bounds (lab g x) <+> bounds (lab g y)
+-- 
+-- ||| Computes the top left and bottom right corner of the bounding box
+-- ||| containing the currently selected atoms (if any)
+-- export
+-- selectionCorners : CDGraph -> Maybe (Point Mol, Point Mol)
+-- selectionCorners (G o g) =
+--   case selectedItems g of
+--     N ns@(_ :: _ :: _) => corners $ foldMap (nodeBounds g) ns
+--     E ps               => corners $ foldMap (edgeBounds g) ps
+--     _                  => Nothing
+-- 
+-- ||| Checks, if there is enough space to grab the box in the canvas.
+-- export
+-- selectZones : (s : CoreDims) => (p1,p2 : Point Id) -> SelectZones
+-- selectZones p1 p2 =
+--   let b  := s.selectBufferSize
+--       bs := bounds p1 <+> bounds p2
+-- 
+--       -- translation vector for the two corners of the inner buffer
+--       -- this is zero if the bounding box formed by `p1` and `p2` is
+--       -- already large enough, otherwise both dimensions are expanded as
+--       -- needed
+--       vd := scale 0.5 $ V (max 0 (b - width bs)) (max 0 (b - height bs))
+--       vr := vid b b
+--       d1 := translate (negate vd) p1
+--       d2 := translate vd p2
+--    in SZ d1 d2 (translate (negate vr) d1) (translate vr d2)
+-- 
+-- --------------------------------------------------------------------------------
+-- --          Editing Molecules
+-- --------------------------------------------------------------------------------
+-- 
+-- ||| Creates an uncharged atom at the given position and with the given role.
+-- export
+-- isotopeAt : Isotope -> Point Id -> Role -> CDAtom
+-- isotopeAt i p r =
+--   let pos := toCoords (convert p) [0,0,0]
+--    in CA r (MkAtom i 0 pos NoRadical 0 unknown () Nothing)
+-- 
+-- ||| Creates an uncharged atom at the given position and with the given role.
+-- export %inline
+-- elemAt : Elem -> Point Id -> Role -> CDAtom
+-- elemAt = isotopeAt . cast
+-- 
+-- ||| Inserts an uncharged atom at the given position and with the given
+-- ||| role.
+-- export %inline
+-- insIsotopeAt :
+--      {k : _}
+--   -> CDIGraph k
+--   -> Isotope
+--   -> Point Id
+--   -> Role
+--   -> CDIGraph (S k)
+-- insIsotopeAt g i p r = insNode g (isotopeAt i p r)
+-- 
+-- ||| Inserts an uncharged atom at the given position and with the given
+-- ||| role.
+-- export %inline
+-- insElemAt : {k : _} -> CDIGraph k -> Elem -> Point Id -> Role -> CDIGraph (S k)
+-- insElemAt g = insIsotopeAt g . cast
+-- 
+-- ||| Computes the preferred angle for a new bond based on the bond type
+-- ||| and angles to already existing bonds.
+-- export
+-- preferredAngle : (isLinear : Bool) -> List Angle -> Angle
+-- preferredAngle _     []  = (negate 1.0 / 6.0) * pi
+-- preferredAngle True  [x] = x + pi
+-- preferredAngle False [x] =
+--   if (x >= zero && x <= halfPi) || (x >= pi && x <= threeHalfPi)
+--      then x + twoThirdPi
+--      else x - twoThirdPi
+-- preferredAngle _     xs  = largestBisector xs
+-- 
+-- -- Checks if the geometry at an atom is linear.
+-- isLinear : List BondOrder -> Bool
+-- isLinear [Triple,_] = True
+-- isLinear [_,Triple] = True
+-- isLinear [Dbl,Dbl]  = True
+-- isLinear _          = False
+-- 
+-- ||| Preferred position for a new atom bound to an existing one based on the
+-- ||| largest bisector of angles between existing bonds
+-- export
+-- bestPos : CDIGraph k -> MolBond -> Fin k -> Point Id -> Point Id
+-- bestPos g b n p =
+--   let orders   := b.type :: map (type . molBond) (edgeLabels g n)
+--       newAngle := preferredAngle (isLinear orders) (bondAngles g n)
+--    in translate (polar BondLengthInPixels newAngle) p
+-- 
+-- ||| Equally spaced sequence of `s.angleSteps` angles from 0 until 2pi.
+-- export
+-- stepAngles : (s : CoreDims) => List Angle
+-- stepAngles =
+--   let step = angle (TwoPi / cast s.angleSteps)
+--    in map (\x => cast x * step) [0.. pred s.angleSteps]
+-- 
+-- ||| Suggested position for a new atom based on the current mouse position.
+-- ||| The boolean flag indicates if "Shift" is currently down, in which case
+-- ||| we just return the current point.
+-- export
+-- suggestedPos : CoreDims => Bool -> (atom, current : Point Id) -> Point Id
+-- suggestedPos True pa pc = pc
+-- suggestedPos False pa pc =
+--   let Just mouseAngle := angle (pc - pa) | Nothing => pc
+--       Just bondAngle  := closestAngle mouseAngle stepAngles | Nothing => pc
+--    in translate (polar BondLengthInPixels bondAngle) pa
+-- 
+-- ||| Draws a new bond from the given node to the suggested position.
+-- ||| If another atom is already close to the current mouse position
+-- ||| or the suggested position, connect the two atoms instead.
+-- export
+-- bondTo :
+--      {k : _}
+--   -> {auto s : CoreDims}
+--   -> CDBond
+--   -> Fin k
+--   -> (current, suggested : Point Id)
+--   -> CDIGraph k
+--   -> Either (CDIGraph k) (CDIGraph $ S k)
+-- bondTo b n pc ps g =
+--   maybe
+--     (Right $ insEdge (edge n b) (insElemAt g C ps New))
+--     (\e => Left $ insEdge e g)
+--     (closeEdge pc <|> closeEdge ps)
+--   where
+--     closeEdge : Point Id -> Maybe (Edge k CDBond)
+--     closeEdge p = closestNode p g >>= \k => mkEdge n k b
+-- 
+-- ||| From two graphs, returns pairs of visible nodes closest
+-- ||| to each other (but no farther apart than `s.radiusAtom`).
+-- export
+-- nodesToMerge :
+--      {k,m : _}
+--   -> {auto s : CoreDims}
+--   -> CDIGraph k
+--   -> CDIGraph m
+--   -> List (Fin k, Fin m)
+-- nodesToMerge g t =
+--  let area := overlap {margin = s.radiusAtom }(bounds g) (Geom.Bounds.bounds t)
+--      ng   := g `atomsIn` area
+--      nt   := t `atomsIn` area
+--   in mapMaybe (\x => (x,) <$> closestNodeList nt (pointAt g x) t) ng
+-- 
+-- -- Offset between origin atom and template atoms as a vector in `Mol` space.
+-- offset : CDIGraph k -> CDIGraph m -> List (Fin k, Fin m) -> Vector (transform Mol)
+-- offset _  _  []             = vzero
+-- offset g1 g2 ((n1,n2) :: _) = point (lab g1 n1) - point (lab g2 n2)
+-- 
+-- -- create new bonds between the merging template atoms and the corresponding
+-- -- neighbours of the original molecule
+-- newEdges :
+--      {k,m : _}
+--   -> CDIGraph m
+--   -> List (Fin k, Fin m)
+--   -> List (Fin k, Fin m, CDBond)
+-- newEdges t ps = do
+--   (a1,a2) <- ps
+--   (\(x,l) => (a1,x,l)) <$> neighboursAsPairs t a2
+-- 
+-- inBond : {m : _} -> (n1,n2 : Fin m) -> Edge m CDBond -> Bool
+-- inBond n1 n2 bnd =
+--   (n1 == bnd.node1 && n2 == bnd.node2) || (n2 == bnd.node1 && n1 == bnd.node2)
+-- 
+-- -- if there is a template bond which would be deleted due to the node merging,
+-- -- create the bond between the corresponding origin molecule nodes
+-- createStableBond :
+--      {k,m : _}
+--   -> List (Fin k, Fin m)
+--   -> List (Edge k CDBond)
+--   -> Edge m CDBond
+--   -> Maybe $ Edge k CDBond
+-- createStableBond nsToMerge bondsG bnd =
+--   case filter (\(_,nt) => nt == bnd.node1 || nt == bnd.node2) nsToMerge of
+--     [(nm1,_),(nm2,_)] =>
+--       if any (inBond nm1 nm2) bondsG
+--          then Nothing
+--          else mkEdge nm1 nm2 $ CB None ({type := Single} bnd.label.molBond)
+--     _                  => Nothing
+-- 
+-- incNode : {m : _} -> (k : Nat) -> Fin m -> Maybe (Fin $ k + m)
+-- incNode k x = tryNatToFin (k + finToNat x)
+-- 
+-- ||| After moving or rotating the selected nodes in a graph,
+-- ||| check for pairs of close nodes and merge them.
+-- export
+-- mergeCloseNodes : CoreDims => {k:_} -> CDIGraph k -> CDGraph
+-- mergeCloseNodes g =
+--   let ns        := filter (not . inAbbreviation g) (selectedNodes g True)
+--       lMergeN   := mapMaybe closestPair ns
+--       offset    := negate $ offset g g lMergeN
+--       lnewBonds := mapMaybe (\(x,y,l) => mkEdge x y l) (newEdges g lMergeN)
+--       mol'      := insEdges lnewBonds $ mapIf doAdjust (translate offset) g
+--    in delNodes (map snd lMergeN) mol'
+-- 
+--   where
+--     canSelfMerge : Fin k -> Bool
+--     canSelfMerge x =
+--       let a := lab g x in not (isSelected g True x || inAnyGroup a)
+-- 
+--     doAdjust : CDAtom -> Bool
+--     doAdjust a = is Selected a
+-- 
+--     closestPair : Fin k -> Maybe (Fin k, Fin k)
+--     closestPair x = (x,) <$> closestNodeWhere canSelfMerge (pointAt g x) g
+-- 
+-- ||| Merges two graphs and merges atoms, which are overlapping.
+-- ||| If bonds should be added between the two graphs, the last argument
+-- ||| allows a list of the according nodes and its bond type.
+-- export
+-- mergeGraphs' :
+--      {auto _ : CoreDims}
+--   -> {k,m:_}
+--   -> CDIGraph k
+--   -> CDIGraph m
+--   -> List (Fin k, Fin m, CDBond)
+--   -> CDGraph
+-- mergeGraphs' g t bs =
+--   let t'        := adjTemplate g t
+--       lMergeN   := nodesToMerge g t'
+--       offset    := offset g t' lMergeN
+--       lnewBonds := newEdges t' lMergeN ++ bs
+--       mergeEsG  := lMergeN >>= edgesTo g . fst
+--       mergeEsT  := lMergeN >>= edgesTo t' . snd
+--       -- replaces bonds between merging (and therefore to be deleted) template
+--       -- atoms and origin atoms
+--       -- this is only done if there isn't already a bond from the origin
+--       -- molecule present at the same position
+--       mol'      :=
+--         insEdges (mapMaybe (createStableBond lMergeN mergeEsG) mergeEsT) g
+--       mol''     := mergeGraphsWithEdges mol' (translate offset t') lnewBonds
+--    in delNodes (mapMaybe (incNode k . snd) lMergeN) mol''
+-- 
+-- -- This connects a template to a graph by connecting the template's
+-- -- zero node via a single bond with the given node of the current molecule.
+-- -- The template is rotated and translated in such a way that we get
+-- -- preferrable bond angles both at the current graph and the template.
+-- mergeGraphsOnAtom : CoreDims => {k,m : _} -> Fin k -> CDIGraph k -> CDIGraph m -> CDGraph
+-- mergeGraphsOnAtom {m = 0}   _ g _ = G _ g
+-- mergeGraphsOnAtom {m = S _} n g t =
+--   let as     := bondAngles g n
+--       an     := preferredAngle False as
+--       a0     := preferredAngle False (bondAngles t 0)
+--       tr     := rotate (an - a0 + pi) t
+--       offset := point (lab g n) - point (lab tr 0)
+--       v      := polar BondLengthInAngstrom an + offset
+--       bond   := CB New $ cast Single
+--    in mergeGraphs' g (translate v tr) [(n,0,bond)]
+-- 
+-- -- This connects a template to a graph by replacing the template's
+-- -- smallest edge given edge of the current molecule.
+-- -- The template is rotated and translated in such a way that the two
+-- -- edges are properly aligned.
+-- --
+-- -- There are two ways to align the bonds of template and
+-- -- molecule, so we try both and keep the one with its
+-- -- center closer to the mouse position. This allows us to
+-- -- flip between the two placements by moving the mouse
+-- -- from one side of a bond to the other.
+-- mergeGraphsOnBond :
+--      {k,m : _}
+--   -> {auto cd : CoreDims}
+--   -> Point Mol
+--   -> Edge k CDBond
+--   -> CDIGraph k
+--   -> CDIGraph m
+--   -> CDGraph
+-- mergeGraphsOnBond p (E n1 n2 _) g t =
+--   case edges t of
+--     []      => G k g
+--     E n3 n4 _ :: _ =>
+--       let Just ag := angle (pointAt g n1 - pointAt g n2) | Nothing => G k g
+--           Just at := angle (pointAt t n3 - pointAt t n4) | Nothing => G k g
+--           tr1     := rotate (ag - at) t
+--           tt1     := translate (point (lab g n1) - point (lab tr1 n3)) tr1
+--           tr2     := rotate (ag - at + pi) t
+--           tt2     := translate (point (lab g n1) - point (lab tr2 n4)) tr2
+--        in if distance p (center tt1) <= distance p (center tt2)
+--              then mergeGraphs' g tt1 []
+--              else mergeGraphs' g tt2 []
+-- 
+-- ||| Add the template to the existing graph depending on clicking on an atom,
+-- ||| a bond or elsewhere on the canvas.
+-- export
+-- mergeGraphs : CoreDims => Point Id -> (g, t : CDGraph) -> CDGraph
+-- mergeGraphs c (G o1 g) (G o2 t) =
+--   case hoveredItem g of
+--     N k  => mergeGraphsOnAtom (fst k) g t
+--     E e  => mergeGraphsOnBond (convert c) e g t
+--     None => mergeGraphs' g t []
+-- 
+-- -- Rotating of the template around the clicked atom. The template will
+-- -- be connected to this atom by a new bond.
+-- -- First the template is placed in such a way that preferrable bond angles are
+-- -- created. Then, if the mouse cursor is moving away (min 1/4 of a std-bond
+-- -- length) from the clicked atom, the template and its connecting bond rotat
+-- -- around the clicked atom of the original molecule.
+-- rotTemplOnAtom :
+--      {auto _ : CoreDims}
+--   -> {s,k,m : _}
+--   -> (cursor : Point s)
+--   -> (clickedAtom : Fin k)
+--   -> (mol : CDIGraph k)
+--   -> (templ : CDIGraph m)
+--   -> CDIGraph m
+-- rotTemplOnAtom {m = 0}   _ _ _ t = t
+-- rotTemplOnAtom {m = S _} p n g t =
+--   let pMol    := point $ lab g n
+--       a0      := preferredAngle False (bondAngles t 0)
+--       an      := preferredAngle False (bondAngles g n)
+--       angle   := an - a0 + pi
+--       tr      := rotate angle t
+--       offset  := pMol - point (lab tr 0)
+--       v       := polar BondLengthInAngstrom an + offset
+--       tr'     := translate v tr
+--       Just aT := Vector.angle (pMol - center tr') | Nothing => tr'
+--       Just aM := Vector.angle (pMol - convert p)  | Nothing => tr'
+--       aSteps  := fromMaybe (aM - aT) (closestAngle (aM - aT) stepAngles)
+--    in if distance (convert p) (point (lab g n)) <
+--          value (BondLengthInAngstrom / 4)
+--          then tr'
+--          else rotateAt pMol aSteps tr'
+-- 
+-- -- If one atom of the template and another atom of the origin molecule overlap,
+-- -- rotate the template around the overlapping point in accordance of the cursor
+-- -- movement.
+-- -- Here, rotating the template is only allowed in defined step angles.
+-- -- To avoid unwanted rotation, the cursor has to be moved a minimum of
+-- -- 1/4 of a standard bond length from its initial position (left mouse
+-- -- button click).
+-- rotTemplAroundOverlap :
+--      {auto _ : CoreDims}
+--   -> {s,k,m : _}
+--   -> (initCursor,cursor : Point s)
+--   -> (aMol : Fin k)
+--   -> (aTempl : Fin m)
+--   -> (mol : CDIGraph k)
+--   -> (templ : CDIGraph m)
+--   -> CDGraph
+-- rotTemplAroundOverlap ip p nm nt g t =
+--   let pMol    := point $ lab g nm
+--       pTemA   := point $ lab t nt
+--       offset  := pMol - pTemA
+--       t'      := translate offset t
+--       Just a0 := angle (pMol - center t') | Nothing => G _ t'
+--       Just aM := angle (pMol - convert p) | Nothing => G _ t'
+--       angle   := aM - a0
+--       aSteps  := fromMaybe angle (closestAngle angle stepAngles)
+--    in if distance ip p > value (BondLengthInAngstrom / 4)
+--          then G _ $ rotateAt pMol aSteps t'
+--          else G _ t'
+-- 
+-- ||| Attaches an atom to a mol graph.
+-- |||
+-- ||| Depending on the current mouse position and whether "Shift" is
+-- ||| pressed or not, the drawing tool suggest a different bond length
+-- ||| and angle for the new bond.
+-- export
+-- addBondE :
+--      {k : _}
+--   -> {t : _}
+--   -> {auto cd   : CoreDims}
+--   -> (shiftDown : Bool)
+--   -> (mousePos  : Maybe $ Point t)
+--   -> (newBond   : MolBond)
+--   -> CDIGraph k
+--   -> Either (CDIGraph k) (CDIGraph $ S k)
+-- addBondE @{cd} shiftDown p mb g =
+--   let b          := CB New mb -- new `CDBond`
+--       Just (n,a) := find (is Origin . snd) (labNodes g) | Nothing => Left g
+--       pa         := pointId a -- position of atom we attach new bond to
+--       pc         := maybe pa pointId p -- current mouse position
+--       
+--    in if near pa pc cd.radiusAtom
+--          -- if mouse is close to origin atom
+--          -- use largest bisector as new bond angle and draw a bond
+--          -- of preferred length
+--          then bondTo b n pc (bestPos g mb n pa) g
+--   
+--          -- else use an angle close to the one of the vector connecting
+--          -- the origin atom and the mouse pointer, unless "Shift" is down,
+--          -- in which case we use the mouse position without modification
+--          else bondTo b n pc (suggestedPos shiftDown pa pc) g
+-- 
+-- ||| Attaches an atom to a mol graph.
+-- |||
+-- ||| Depending on the current mouse position and whether "Shift" is
+-- ||| pressed or not, the drawing tool suggest a different bond length
+-- ||| and angle for the new bond.
+-- export
+-- addBond :
+--      {k : _}
+--   -> {t : _}
+--   -> {auto cd   : CoreDims}
+--   -> (shiftDown : Bool)
+--   -> (mousePos  : Maybe $ Point t)
+--   -> (newBond   : MolBond)
+--   -> CDIGraph k
+--   -> CDGraph
+-- addBond sd p mb g = either (G k) (G $ S k) (addBondE sd p mb g)
+-- 
+-- ||| Adds an uncharged atom of the given isotope at the given position.
+-- |||
+-- ||| This either replaces the currently hovered atom, or it inserts a new
+-- ||| isolate atom.
+-- export
+-- addAtom :
+--      {auto cd : CoreDims}
+--   -> {t : _}
+--   -> {k : _}
+--   -> CDIGraph k
+--   -> Isotope
+--   -> Point t
+--   -> CDGraph
+-- addAtom g i p =
+--   case hoveredItem g of
+--     N (x,_) => 
+--       let g2 := setNode x (isotopeAt i (pointAt g x) New) g
+--        in delNodes (groupNodes g [x]) g2
+--     _       => case closestNode (convert p) g of
+--       Nothing => G _ $ insIsotopeAt g i (convert p) New
+-- 
+--       -- in the `Just` case, we have a node close to the mouse pointer
+--       -- that is not set to "hovered". This means, replacing that node is
+--       -- a non-op. We don't want to insert another atom on top of it, so
+--       -- we return the graph unmodified.
+--       Just _  => G _ g
+-- 
+-- export
+-- setAbbreviationAt :
+--      {auto cd : CoreDims}
+--   -> {k,m        : Nat}
+--   -> (lbl        : String)
+--   -> (node,neigh : Fin k)
+--   -> (abbr       : CDIGraph (S m))
+--   -> (mol        : CDIGraph k)
+--   -> CDGraph
+-- setAbbreviationAt lbl n1 n2 a g =
+--   let nr      := S (maxGroupNr g)
+--       pn      := point (lab g n1) -- position of label
+--       pc      := point (lab g n2) -- node to which label is connected
+--       Just an := angle (pn - pc) | Nothing => G k g
+--       a0      := preferredAngle False (bondAngles a 0)
+--       ar      := rotate (an-a0+pi) (setGroup (G nr lbl) <$> a)
+--       at      := translate (pn - point (lab ar 0)) ar
+--       bond    := CB New $ maybe (cast Single) molBond (elab g n1 n2)
+--       gm      := mergeGraphsWithEdges g at [(n2,0,bond)]
+--    in delNodes (plusGroupNodes gm [weakenN _ n1]) gm
+-- 
+-- ||| Replaces the atom or abbreviation at the given position with
+-- ||| an abbreviation.
+-- export
+-- setAbbreviation :
+--      {auto cd : CoreDims}
+--   -> (shiftDown : Bool)
+--   -> (lbl       : String)
+--   -> (mouse     : Point Id)
+--   -> (abbr      : CDGraph)
+--   -> (mol       : CDGraph)
+--   -> CDGraph
+-- setAbbreviation _  lbl mouse (G 0 _) g = g
+-- setAbbreviation sd lbl mouse (G (S m) a) (G k g) =
+--   case find (is Origin . snd) (labNodes g) of
+--     Nothing     => G k g
+--     Just (n1,_) => case visibleNeighbours g n1 of
+--       [n2] => setAbbreviationAt lbl n1 n2 a g
+--       _    => case addBondE sd (Just mouse) (cast Single) g of
+--         Left _   => G k g
+--         Right g2 => setAbbreviationAt lbl last (weaken n1) a g2
+-- 
+-- ||| Expands the currently hovered-over abbreviation (if any)
+-- export
+-- expand : CDGraph -> CDGraph
+-- expand (G o g) =
+--   let N (n1,CA _ a) := hoveredItem g | _ => G o g
+--       Just (G n _)  := label a       | _ => G o g
+--    in G o $ map (clearGroup n) g
+-- 
+-- %inline new : CDBond -> CDBond
+-- new = {role := New}
+-- 
+-- %inline translateTemplateAtom : Vector (transform Mol) -> CDAtom -> CDAtom
+-- translateTemplateAtom v (CA _ a) = CA None $ translate v a
+-- 
+-- export
+-- ||| Translating the template to the mouse position and setting the roles to new.
+-- translateTemplate :
+--      {auto _ : CoreDims}
+--   -> {s : _}
+--   -> Point s
+--   -> (t : CDGraph)
+--   -> CDGraph
+-- translateTemplate p t =
+--   let v := convert p - center t in bimap new (translateTemplateAtom v) t
+-- 
+-- ||| Merges a template graph with the current mol graph based on the
+-- ||| current mouse position.
+-- export
+-- addTemplate : CoreDims => {s : _} -> Point s -> (t, mol : CDGraph) -> CDGraph
+-- addTemplate p t mol =
+--   let v := convert p - center t
+--    in mergeGraphs (convert p) mol (bimap new (translateTemplateAtom v) t)
+-- 
+-- ||| Merges a template graph with the current mol graph based on the
+-- ||| current mouse position. If an atom is clicked on, the template
+-- ||| can be rotated around it by the mouse cursor.
+-- ||| If exactly two atoms (molecule and template) overlap, the template
+-- ||| can be rotated around the overlapping atoms by holding down the
+-- ||| the mouse button and moving the cursor.
+-- export
+-- addTemplateRot :
+--      {auto _ : CoreDims}
+--   -> {s,k,n : _}
+--   -> (cursor : Point s)
+--   -> Either (Fin n) (Fin n, Fin k, Point s)
+--   -> (templ : CDIGraph k)
+--   -> (mol : CDIGraph n)
+--   -> CDGraph
+-- addTemplateRot {n = S j,k = S i} p (Left f) t m =
+--   let rotTemp := rotTemplOnAtom p f m t
+--       bnd     := CB New $ cast Single
+--    in mergeGraphs' m rotTemp [(f,0,bnd)]
+-- addTemplateRot {n = S j,k = S i} p (Right (fm,ft,ip)) t m =
+--   let (G _ rotTemp) := rotTemplAroundOverlap ip p fm ft m t
+--    in mergeGraphs' m rotTemp []
+-- addTemplateRot _ _ _ m = G _ m
+-- 
+-- ||| Remove the abbreviation labels from orphaned abbreviation atoms.
+-- ||| The list of nodes have had an edge remove and now belong to potentially
+-- ||| orphaned abbreviation groups.
+-- export
+-- clearOrphanGroups : {k : _} -> List (Fin k) -> CDIGraph k -> CDIGraph k 
+-- clearOrphanGroups ns g =
+--   let gs@(_::_) := ns >>= toList . groupNr g | Nil => g
+--    in map (\x => foldl (flip clearGroup) x gs) g
+-- 
+-- ||| Deletes all selected nodes or edge from the graph
+-- ||| (including nodes selected transitively via abbreviations).
+-- |||
+-- ||| When we delete an edge, we are at risk of creating an orphaned
+-- ||| abbreviation: An invisible set of abbreviated nodes no longer
+-- ||| connected to the visible part of the molecule. In such a case,
+-- ||| we could either delete the whole abbreviation, or make the
+-- ||| orphaned nodes visible. Here, we opt for the latter. If users
+-- ||| want to delete the whole abbreviation, they can do so by
+-- ||| deleting the atom in question.
+-- |||
+-- ||| If no nodes or edges are currently selected, this deletes the
+-- ||| node or edge that is currently being hovered over.
+-- export
+-- deleteSelected : CDGraph -> CDGraph
+-- deleteSelected (G o g) =
+--   case selectedItems g of
+--     None => case hoveredItem g of
+--       None => G o g
+--       N x  => delNS [fst x]
+--       E x  => delES [(node1 x, node2 x)]
+--     N ns => delNS ns
+--     E es => delES es
+-- 
+--   where
+--     delNS : List (Fin o) -> CDGraph
+--     delNS ns = delNodes (plusGroupNodes g ns) g
+-- 
+--     delES : List (Fin o,Fin o) -> CDGraph
+--     delES es =
+--       let ns := es >>= \(x,y) => [x,y]
+--        in G o $ clearOrphanGroups ns (delEdges es g)
+-- 
+-- mapNodeIf : {k : _} -> (Fin k -> Bool) -> (n -> n) -> IGraph k e n -> IGraph k e n
+-- mapNodeIf p f = mapWithCtxt (\n,a => if p n then f a.label else a.label) 
+-- 
+-- groupSelected : CDIGraph k -> List Nat -> Fin k -> Bool
+-- groupSelected g ns n =
+--   let (CA _ a) := lab g n
+--    in isSelected g True n || any ((`elem` ns) . nr) a.label
+-- 
+-- ||| Translates the selected atoms in a molecule by a vector given
+-- ||| as a start and end point.
+-- export
+-- moveSelected :
+--      {auto _ : CoreDims}
+--   -> (start, end : Point Mol)
+--   -> CDGraph
+--   -> CDGraph
+-- moveSelected start end (G o g) =
+--   let gs := selectedNodes g True >>= toList . groupNr g
+--    in mergeCloseNodes $ mapNodeIf (groupSelected g gs) (translate $ end - start) g
+-- 
+-- export
+-- rotateTempl :
+--      {auto cd : CoreDims}
+--   -> Bool
+--   -> (start, end : Point Mol)
+--   -> CDGraph
+--   -> CDGraph
+-- rotateTempl cont start end g =
+--   let Just d := angle (end   - start) | Nothing => g
+--       phi    := fromMaybe d (closestAngle d $ if cont then [] else stepAngles)
+--    in rotateAt start phi g
+-- 
+-- ||| Rotates the selected atoms around the center of the selection
+-- ||| by an angle defined by the two points.
+-- |||
+-- ||| If the `Bool` argument is set to `False`, we use step-wise rotation
+-- ||| as defined in the `CoreDims` argument, otherwise, we use 
+-- ||| continuous rotation.
+-- export
+-- rotateSelected :
+--      {auto cd : CoreDims}
+--   -> Bool
+--   -> (start, end : Point Mol)
+--   -> CDGraph
+--   -> CDGraph
+-- rotateSelected cont start end (G o g) =
+--   let ns := selectedNodes g True
+--       c  := center $ foldMap (bounds . lab g) ns
+--       Just ae := angle (end   - c) | Nothing => G o g
+--       Just as := angle (start - c) | Nothing => G o g
+--       d       := ae - as
+--       phi     := fromMaybe d (closestAngle d $ if cont then [] else stepAngles)
+--       gs := ns >>= toList . groupNr g
+--    in mergeCloseNodes $ mapNodeIf (groupSelected g gs) (rotateAt c phi) g
+-- 
+-- ||| Extracts the selected subgraph (or the whole graph, if no atoms are
+-- ||| selected) from a drawing graph.
+-- export
+-- selectedSubgraph : (includeEmptySelection : Bool) -> CDGraph -> CDGraph
+-- selectedSubgraph b (G o g) =
+--   case plusGroupNodes g (selectedNodes g False) of
+--     [] => if b then G o g else G 0 empty
+--     ns => snd <$> subgraphL g ns
