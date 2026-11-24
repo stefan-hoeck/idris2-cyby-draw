@@ -314,9 +314,9 @@ export
 drawMolecule : DrawSettings => (g : CDGraph) -> List SVGNode
 drawMolecule g = toNodes (scene $ labels g)
   where
-    scene : Labels g -> TNodes
+    scene : {h : CDGraph} -> Labels h -> TNodes
     scene ls ns =
-      foldl (drawAtom g ls) (foldl (drawBond g ls) ns (edges g)) (nodes g)
+      foldl (drawAtom h ls) (foldl (drawBond h ls) ns (edges h)) (nodes h)
 
 --------------------------------------------------------------------------------
 --          Drawing Utilities
